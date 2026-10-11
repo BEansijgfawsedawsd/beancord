@@ -228,29 +228,39 @@ async function openServer(id){
   srvId=id;delete unreadSrv[id];delete mentSrv[id];await loadProfiles();await loadServers();
   const s=servers.find(x=>x.id===id);
   const [c,m]=await Promise.all([sb.from('channels').select('*').eq('server_id',id).order('position',{nullsFirst:false}).order('created_at'),sb.from('server_members').select('*').eq('server_id',id)]);
-  channels=c.data||[];channels.forEach(x=>chanSrv[x.id]=id);members=m.data||[];roles={};members.forEach(x=>roles[x.user_id]=x.role);if((servers.find(x=>x.id===id)||{}).is_default){defRole=roles[me.id];$('newsrvbtn').classList.toggle('hidden',defRole!=='owner')}
+  channels=c.data||[];channels.forEach(x=>chanSrv[x.id]=id);members=m.data||[];roles={};members.forEach(x=>roles[x.user_id]=x.role);if((servers.find(x=>x.id===id)||{}).is_default){defRole=roles[me.id];const nb=$('newsrvbtn');if(nb)nb.classList.toggle('hidden',defRole!=='owner')}
   bans=[];if(isStaff()){const {data:b}=await sb.from('server_bans').select('*').eq('server_id',id);bans=b||[]}
   {const {data:cd}=await sb.from('custom_roles').select('*').eq('server_id',id);croles=cd||[];cr={};members.forEach(x=>{if(x.custom_role)cr[x.user_id]=croles.find(y=>y.id===x.custom_role)})}
   $('sh').innerHTML=`<span class="truncate">${esc(s.name)}</span><span class="flex items-center gap-2 flex-shrink-0">${defRole==='owner'?'<button onclick="openRoles()" title="Manage roles" class="text-base text-[#949ba4] hover:text-white">⚙</button>':''}${(isStaff()||myPerm('manage_channels'))?'<button onclick="newChannel()" class="text-xl text-[#949ba4] hover:text-white">+</button>':''}</span>`;
-  $('mem').classList.remove('hidden');drawMembers();drawChannels();if(channels[0])await openChannel(channels[0].id);
+  $('mem').classList.remove('hidden');drawChannels();try{drawMembers()}catch(e){console.error('drawMembers failed:',e);$('mem').innerHTML='<p class="text-xs text-[#f23f43]">Member list failed to load. Check the browser console (F12) for details.</p>'}
+  if(channels[0])await openChannel(channels[0].id);
 }
 function drawMembers(){
   const nm=m=>dn(profiles[m.user_id]||{username:'?'});
   const def=(servers.find(x=>x.id===srvId)||{}).is_default;
   const b=(t,fn)=>`<button onclick="${fn}" class="hover:text-[#f23f43]">${t}</button>`;
-  const list=[...members].sort((a,b)=>rank(b.role)-rank(a.role)||nm(a).localeCompare(nm(b)));
-  $('mem').innerHTML='<div class="text-[11px] font-bold text-[#949ba4] uppercase mb-2">Members — '+list.length+'</div>'+list.map(m=>{
-    const p=profiles[m.user_id]||{},self=m.user_id===me.id,u=m.user_id,acts=[];
-    if(canManage(m.role)&&!self){
-      const opts=(myRole()==='owner'?['admin','goodgirl','mod','member']:['mod','member']).map(r=>`<option ${r===m.role?'selected':''}>${r}</option>`).join('');
-      acts.push(`<select onchange="setRole('${u}',this.value)" class="bg-[#1e1f22] rounded px-1">${opts}</select>`,b('Kick',`kick('${u}')`));
-    }
-    if(def&&!self){
-      if(until(p,'banned_until')){if(canBan(m.role))acts.push(b('Unban',`punish('${u}','ban',0)`))}else if(canBan(m.role))acts.push(b('Ban',`askBan('${u}')`));
-      if(until(p,'muted_until')){if(canMute(m.role))acts.push(b('Unmute',`punish('${u}','mute',0)`))}else if(canMute(m.role))acts.push(b('Mute',`askMute('${u}')`));
-    }
-    const tags=(until(p,'banned_until')?' 🚫':'')+(until(p,'muted_until')?' 🔇':'');
-    return `<div data-uid="${u}" class="py-1.5"><div class="flex items-center justify-between gap-1"><span onclick="showProfile('${u}')" class="flex items-center gap-2 min-w-0 cursor-pointer">${av(p,6)}${dot(u)}<span class="text-sm truncate" style="color:${col(p)}">${esc(nm(m))}${tags}</span>${utag(p)}</span>${tag(p,m.role)}</div>${roleSel(m,u,self)}</div>`}).join('');
+  const groupsMap={};
+  members.forEach(m=>{
+    const custom=m.custom_role?croles.find(r=>r.id===m.custom_role):null;
+    const key=custom?('c_'+custom.id):('b_'+m.role);
+    if(!groupsMap[key])groupsMap[key]={label:custom?custom.name:m.role.charAt(0).toUpperCase()+m.role.slice(1),color:custom?custom.color:null,rankVal:rank(custom?custom.base:m.role),pos:custom?(custom.position||0):0,items:[]};
+    groupsMap[key].items.push(m);
+  });
+  const groups=Object.values(groupsMap).sort((ga,gb)=>gb.rankVal-ga.rankVal||gb.pos-ga.pos||ga.label.localeCompare(gb.label));
+  $('mem').innerHTML=groups.map(g=>{
+    const rows=g.items.sort((a,b2)=>nm(a).localeCompare(nm(b2))).map(m=>{
+      const p=profiles[m.user_id]||{},self=m.user_id===me.id,u=m.user_id,acts=[];
+      if(canManage(m.role)&&!self)acts.push(b('Kick',`kick('${u}')`));
+      if(def&&!self){
+        if(until(p,'banned_until')){if(canBan(m.role))acts.push(b('Unban',`punish('${u}','ban',0)`))}else if(canBan(m.role))acts.push(b('Ban',`askBan('${u}')`));
+        if(until(p,'muted_until')){if(canMute(m.role))acts.push(b('Unmute',`punish('${u}','mute',0)`))}else if(canMute(m.role))acts.push(b('Mute',`askMute('${u}')`));
+      }
+      const tagline=(until(p,'banned_until')?'🚫 banned':'')+(until(p,'banned_until')&&until(p,'muted_until')?' · ':'')+(until(p,'muted_until')?'🔇 muted':'');
+      const onlineNow=u===me.id||online.has(u);
+      return `<div data-uid="${u}" class="py-1.5 px-1.5 -mx-1.5 rounded-md hover:bg-[#35373c] transition-colors"><div class="flex items-center gap-2.5"><span onclick="showProfile('${u}')" class="relative flex-shrink-0 cursor-pointer">${av(p,9)}<span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#2b2d31] ${onlineNow?'bg-[#23a55a]':'bg-[#80848e]'}"></span></span><div class="min-w-0 flex-1 cursor-pointer" onclick="showProfile('${u}')"><div class="flex items-center justify-between gap-2"><span class="text-sm font-semibold truncate" style="color:${col(p)}">${esc(nm(m))}</span>${utag(p)?`<span class="flex-shrink-0">${utag(p)}</span>`:''}</div>${p.bio?`<div class="text-[11px] text-[#949ba4] truncate">${esc(p.bio)}</div>`:''}${tagline?`<div class="text-[10px] text-[#f23f43] truncate">${tagline}</div>`:''}</div></div>${acts.length?`<div class="flex gap-2 mt-1 pl-[2.75rem] text-[10px] text-[#949ba4]">${acts.join('')}</div>`:''}</div>`
+    }).join('');
+    return `<div class="mb-5"><div class="text-[11px] font-bold uppercase tracking-wide px-1.5 mb-2" style="color:${g.color||'#949ba4'}">${esc(g.label)} <span class="text-[#80848e] font-normal normal-case">— ${g.items.length}</span></div><div class="space-y-0.5">${rows}</div></div>`;
+  }).join('')+banHtml();
 }
 async function setRole(uid,role){const {error}=await sb.from('server_members').update({role}).eq('server_id',srvId).eq('user_id',uid);if(error)alert(error.message);openServer(srvId)}
 async function kick(uid){if(!confirm('Kick this member?'))return;const {error}=await sb.from('server_members').delete().eq('server_id',srvId).eq('user_id',uid);if(error)alert(error.message);openServer(srvId)}
@@ -362,7 +372,7 @@ async function addByName(){const n=$('fadd').value.trim().toLowerCase().replace(
   if(error)return say(error.message);await loadFriends();drawPeople();$('fmsg').textContent='Request sent to '+u.username}
 async function runCmd(line){
   const [c,name,arg]=line.slice(1).trim().split(/\s+/);const cmd=(c||'').toLowerCase();
-  if(cmd==='help')return sys('Commands: /ban user hours · /unban user · /mute user minutes · /unmute user · /kick user · /role user manager|admin|goodgirl|mod|verified|member · /nick user newname · /newrole name #color member|verified|mod|admin · /giverole user rolename|none · /delrole name · /deleteuser user · /gift user amount · /switch user · /delserver servername · /banword word · /unbanword word · /banwords · /auditlog');
+  if(cmd==='help')return sys('Commands: /ban user hours · /unban user · /mute user minutes · /unmute user · /kick user · /nick user newname · /newrole name #color member|verified|mod|admin · /giverole user rolename|none · /delrole name · /deleteuser user · /gift user amount · /switch user · /delserver servername · /banword word · /unbanword word · /banwords · /auditlog. Built-in roles are managed only from the gear icon.');
   const P=line.slice(1).trim().split(/\s+/);
   const rpc=async(f,a,ok)=>{const {error}=await sb.rpc(f,a);if(error)return sys(error.message);if(srvId)await openServer(srvId);sys(ok)};
   if(cmd==='newrole'){if(!srvId)return sys('Open a server first.');const n=P[1],c=P[2],b=(P[3]||'').toLowerCase();if(!n||!/^#[0-9a-fA-F]{6}$/.test(c||'')||!['member','verified','mod','admin'].includes(b))return sys('Usage: /newrole name #hexcolor member|verified|mod|admin');return rpc('create_role',{sid:srvId,rname:n,rcolor:c,rbase:b},'Role "'+n+'" created. Give it with /giverole username '+n)}
@@ -386,18 +396,16 @@ async function runCmd(line){
   if(cmd==='gift'){const amt=parseInt(arg,10);if(!amt)return sys('Usage: /gift username amount');const {error}=await sb.rpc('admin_gift_beans',{uid:u.id,amt});if(error)return sys(error.message);await loadProfiles();return sys('Gave '+amt+' beans to '+u.username)}
   if(cmd==='switch')return switchTo(u.id);
   if(cmd==='unblock'){const {error}=await sb.from('blocks').delete().eq('blocked',u.id).eq('blocker',me.id);if(error)return sys(error.message);blocked.delete(u.id);return sys('Unblocked '+u.username)}
-  if(cmd==='kick'||cmd==='role'){
+  if(cmd==='kick'){
     if(!srvId)return sys('Open a server channel first.');
-    if(cmd==='kick'){const {error,count}=await sb.from('server_members').delete({count:'exact'}).eq('server_id',srvId).eq('user_id',u.id);
-      if(error)return sys(error.message);if(!count)return sys('Not allowed, or they are not in this server.');await openServer(srvId);return sys(u.username+' was kicked')}
-    const role=(arg||'').toLowerCase();if(!['manager','admin','goodgirl','mod','verified','member'].includes(role))return sys('Usage: /role username manager|admin|goodgirl|mod|verified|member');
-    const {error,count}=await sb.from('server_members').update({role},{count:'exact'}).eq('server_id',srvId).eq('user_id',u.id);
-    if(error)return sys(error.message);if(!count)return sys('Not allowed.');await openServer(srvId);return sys(u.username+' is now '+role);
+    const {error,count}=await sb.from('server_members').delete({count:'exact'}).eq('server_id',srvId).eq('user_id',u.id);
+    if(error)return sys(error.message);if(!count)return sys('Not allowed, or they are not in this server.');await openServer(srvId);return sys(u.username+' was kicked');
   }
+  if(cmd==='role')return sys('/role has been retired. Manage roles from the gear icon next to the server name.');
   sys('Unknown command. Type /help');
 }
 let ment={},sugList=[],sugIdx=0,sugStart=0,sugAt=false;
-const CMDS=['ban','unban','mute','unmute','kick','role','nick','giverole','newrole','delrole','deleteuser','gift','switch','delserver','banword','unbanword','banwords','auditlog','unblock','reports','help'],ROLES=['manager','admin','goodgirl','mod','verified','member'];
+const CMDS=['ban','unban','mute','unmute','kick','nick','giverole','newrole','delrole','deleteuser','gift','switch','delserver','banword','unbanword','banwords','auditlog','unblock','reports','help'],ROLES=['manager','admin','goodgirl','mod','verified','member'];
 function roleSel(m,u,self){if(self||!canManage(m.role))return '';const o=ROLES.filter(r=>rank(r)<rank(myRole())).map(r=>`<option ${r===m.role?'selected':''}>${r}</option>`).join('');return `<select onchange="setRole('${u}',this.value)" class="mt-1 bg-[#1e1f22] text-[10px] text-[#949ba4] rounded px-1">${o}</select>`}
 function mention(t){return t.replace(/@(everyone|here|[a-z0-9_]+)/gi,(x,n)=>{const l=n.toLowerCase();return(l==='everyone'||l==='here'||Object.values(profiles).some(p=>p.username===l)||Object.keys(RANK).includes(l))?`<span class="bg-[#5865f2]/30 text-[#c9cdfb] rounded px-0.5">@${l}</span>`:x})}
 function mentionsMe(m){if(m.sender_id===me.id)return false;
@@ -409,7 +417,7 @@ function names(){return Object.values(profiles).map(p=>p.username).sort()}
 function suggest(){
   const el=$('i'),v=el.value.slice(0,el.selectionStart);let m,list=[],start=0;sugAt=false;
   if(m=v.match(/^\/(\w*)$/)){start=1;list=CMDS.filter(c=>c.startsWith(m[1].toLowerCase()))}
-  else if(m=v.match(/^\/(ban|unban|mute|unmute|kick|role|unblock|nick|giverole|deleteuser|gift|switch)\s+@?(\w*)$/i)){start=v.length-m[2].length;list=names().filter(n=>n.startsWith(m[2].toLowerCase()))}
+  else if(m=v.match(/^\/(ban|unban|mute|unmute|kick|unblock|nick|giverole|deleteuser|gift|switch)\s+@?(\w*)$/i)){start=v.length-m[2].length;list=names().filter(n=>n.startsWith(m[2].toLowerCase()))}
   else if(m=v.match(/^\/role\s+\S+\s+(\w*)$/i)){start=v.length-m[1].length;list=ROLES.filter(r=>r.startsWith(m[1].toLowerCase()))}
   else if(m=v.match(/(?:^|\s)@(\w*)$/)){sugAt=true;start=v.length-m[1].length;
     const roleNames=cur.type==='ch'?[...new Set(Object.values(roles))]:[];
@@ -575,7 +583,7 @@ async function switchTo(uid){if(defRole!=='owner')return;const target=profiles[u
     const res=await fetch('https://ilmzklhvkacnljfgnxvq.supabase.co/functions/v1/rapid-task',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({uid})});
     let j;try{j=await res.json()}catch(e2){return alert('Function returned a non-JSON response (status '+res.status+'). Check the function logs in Supabase.')}
     if(!res.ok)return alert('Switch failed: '+(j.error||('HTTP '+res.status)));
-    const {error}=await sb.auth.verifyOtp({type:'magiclink',token_hash:j.hashed_token,email:j.email});
+    const {error}=await sb.auth.verifyOtp({type:'magiclink',token_hash:j.hashed_token});
     if(error)return alert('Sign-in step failed: '+error.message);
     location.reload();
   }catch(e){console.error('switchTo error:',e);alert('Switch failed before reaching the server: '+(e&&e.message?e.message:String(e)))}
@@ -665,12 +673,14 @@ let rfEditing=null;
 function openRoles(){if(!srvId)return;drawRoles();$('rmform').classList.add('hidden');$('rm').classList.remove('hidden')}
 function closeRoles(){$('rm').classList.add('hidden')}
 function drawRoles(){
-  $('rmlist').innerHTML=croles.length?croles.map(r=>{
+  const sorted=[...croles].sort((a,b)=>(b.position||0)-(a.position||0));
+  $('rmlist').innerHTML=sorted.length?sorted.map((r,i)=>{
     const count=members.filter(m=>m.custom_role===r.id).length;
     const p=r.perms||{};const plist=p.administrator?'Administrator (all permissions)':(PERMS.filter(([k])=>p[k]).map(([k,l])=>l).join(', ')||'No extra permissions');
-    return `<div class="bg-[#2b2d31] rounded-lg px-3 py-2"><div class="flex items-center justify-between"><div class="flex items-center gap-2 min-w-0"><span class="text-[9px] font-black uppercase px-1.5 rounded text-white flex-shrink-0" style="background:${esc(r.color)}">${esc(r.name)}</span><span class="text-xs text-[#949ba4] truncate">${r.base} tier · ${count} member${count===1?'':'s'}</span></div><div class="flex gap-2 text-xs flex-shrink-0"><button onclick="assignRole('${r.id}')" class="text-[#5865f2]">Assign</button><button onclick="roleForm('${r.id}')" class="text-[#949ba4] hover:text-white">Edit</button><button onclick="removeRole('${r.id}')" class="text-[#f23f43]">Delete</button></div></div><div class="text-[10px] text-[#80848e] mt-1 truncate">${esc(plist)}</div></div>`
-  }).join(''):'<p class="text-xs text-[#949ba4]">No custom roles yet.</p>';
+    return `<div class="bg-[#2b2d31] rounded-lg px-3 py-2"><div class="flex items-center justify-between"><div class="flex items-center gap-2 min-w-0"><span class="flex flex-col text-[10px] text-[#949ba4] flex-shrink-0 -my-1"><button onclick="moveRole('${r.id}',1)" ${i===0?'disabled':''} class="${i===0?'opacity-20':'hover:text-white'}">▲</button><button onclick="moveRole('${r.id}',-1)" ${i===sorted.length-1?'disabled':''} class="${i===sorted.length-1?'opacity-20':'hover:text-white'}">▼</button></span><span class="text-[9px] font-black uppercase px-1.5 rounded text-white flex-shrink-0" style="background:${esc(r.color)}">${esc(r.name)}</span><span class="text-xs text-[#949ba4] truncate">${r.base} tier · ${count} member${count===1?'':'s'}</span></div><div class="flex gap-2 text-xs flex-shrink-0"><button onclick="assignRole('${r.id}')" class="text-[#5865f2]">Assign</button><button onclick="roleForm('${r.id}')" class="text-[#949ba4] hover:text-white">Edit</button><button onclick="removeRole('${r.id}')" class="text-[#f23f43]">Delete</button></div></div><div class="text-[10px] text-[#80848e] mt-1 truncate">${esc(plist)}</div></div>`
+  }).join(''):'<p class="text-xs text-[#949ba4]">No custom roles yet. Higher roles in this list show above lower ones in the member list.</p>';
 }
+async function moveRole(rid,delta){const {error}=await sb.rpc('move_role',{rid,delta});if(error)return alert(error.message);await openServer(srvId);openRoles()}
 function roleForm(rid){
   rfEditing=rid;const r=rid?croles.find(x=>x.id===rid):null;
   $('rf_name').value=r?r.name:'';$('rf_color').value=r?r.color:'#5865f2';$('rf_base').value=r?r.base:'member';
@@ -706,5 +716,7 @@ function readPermChecks(){
   return o;
 }
 function myPerm(key){const c=cr[me.id];return !!(c&&c.perms&&(c.perms[key]||c.perms.administrator))}
+function banHtml(){if(!isStaff()||!bans.length)return '';return '<div class="text-[11px] font-bold text-[#949ba4] uppercase mt-4 mb-2">Banned — '+bans.length+'</div>'+bans.map(b=>`<div class="flex justify-between text-xs py-1"><span>${esc((profiles[b.user_id]||{username:'?'}).username)}</span><button onclick="unbanFromList('${b.user_id}')" class="text-[#949ba4] hover:text-white">Unban</button></div>`).join('')}
+async function unbanFromList(uid){const {error}=await sb.rpc('punish',{uid,kind:'ban',mins:0});if(error)return alert(error.message);await openServer(srvId)}
 start();
 </script></body></html>
