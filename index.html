@@ -251,15 +251,16 @@ function drawMembers(){
     const rows=g.items.sort((a,b2)=>nm(a).localeCompare(nm(b2))).map(m=>{
       const p=profiles[m.user_id]||{},self=m.user_id===me.id,u=m.user_id,acts=[];
       if(canManage(m.role)&&!self)acts.push(b('Kick',`kick('${u}')`));
+      const builtinSel=(defRole==='owner'&&!self&&m.role!=='owner')?`<select onchange="setBuiltinRole('${u}',this.value)" class="bg-[#1e1f22] text-[10px] text-white rounded px-1.5 py-0.5 mt-1">${['member','verified','mod','admin','manager'].map(r=>`<option value="${r}" ${r===m.role?'selected':''}>${r}</option>`).join('')}</select>`:'';
       if(def&&!self){
         if(until(p,'banned_until')){if(canBan(m.role))acts.push(b('Unban',`punish('${u}','ban',0)`))}else if(canBan(m.role))acts.push(b('Ban',`askBan('${u}')`));
         if(until(p,'muted_until')){if(canMute(m.role))acts.push(b('Unmute',`punish('${u}','mute',0)`))}else if(canMute(m.role))acts.push(b('Mute',`askMute('${u}')`));
       }
       const tagline=(until(p,'banned_until')?'🚫 banned':'')+(until(p,'banned_until')&&until(p,'muted_until')?' · ':'')+(until(p,'muted_until')?'🔇 muted':'');
       const onlineNow=u===me.id||online.has(u);
-      return `<div data-uid="${u}" class="py-1.5 px-1.5 -mx-1.5 rounded-md hover:bg-[#35373c] transition-colors"><div class="flex items-center gap-2.5"><span onclick="showProfile('${u}')" class="relative flex-shrink-0 cursor-pointer">${av(p,9)}<span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#2b2d31] ${onlineNow?'bg-[#23a55a]':'bg-[#80848e]'}"></span></span><div class="min-w-0 flex-1 cursor-pointer" onclick="showProfile('${u}')"><div class="flex items-center justify-between gap-2"><span class="text-sm font-semibold truncate" style="color:${col(p)}">${esc(nm(m))}</span>${utag(p)?`<span class="flex-shrink-0">${utag(p)}</span>`:''}</div>${p.bio?`<div class="text-[11px] text-[#949ba4] truncate">${esc(p.bio)}</div>`:''}${tagline?`<div class="text-[10px] text-[#f23f43] truncate">${tagline}</div>`:''}</div></div>${acts.length?`<div class="flex gap-2 mt-1 pl-[2.75rem] text-[10px] text-[#949ba4]">${acts.join('')}</div>`:''}</div>`
+      return `<div data-uid="${u}" class="py-1.5 px-1.5 -mx-1.5 rounded-md hover:bg-[#35373c] transition-colors"><div class="flex items-center gap-2.5"><span onclick="showProfile('${u}')" class="relative flex-shrink-0 cursor-pointer">${av(p,9)}<span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#2b2d31] ${onlineNow?'bg-[#23a55a]':'bg-[#80848e]'}"></span></span><div class="min-w-0 flex-1 cursor-pointer" onclick="showProfile('${u}')"><div class="flex items-center justify-between gap-2"><span class="text-sm font-semibold truncate" style="color:${col(p)}">${esc(nm(m))}</span>${utag(p)?`<span class="flex-shrink-0">${utag(p)}</span>`:''}</div>${p.bio?`<div class="text-[11px] text-[#949ba4] truncate">${esc(p.bio)}</div>`:''}${tagline?`<div class="text-[10px] text-[#f23f43] truncate">${tagline}</div>`:''}</div></div>${(builtinSel||acts.length)?`<div class="flex items-center gap-2 mt-1 pl-[2.75rem] text-[10px] text-[#949ba4]">${builtinSel}${acts.join('')}</div>`:''}</div>`
     }).join('');
-    return `<div class="mb-5"><div class="text-[11px] font-bold uppercase tracking-wide px-1.5 mb-2" style="color:${g.color||'#949ba4'}">${esc(g.label)} <span class="text-[#80848e] font-normal normal-case">— ${g.items.length}</span></div><div class="space-y-0.5">${rows}</div></div>`;
+    return `<div class="mb-5"><div class="flex items-center gap-2 px-1.5 mb-2"><span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded text-white" style="background:${g.color||'#4e5058'}">${esc(g.label)}</span><span class="text-[11px] text-[#80848e]">— ${g.items.length}</span></div><div class="space-y-0.5">${rows}</div></div>`;
   }).join('')+banHtml();
 }
 async function setRole(uid,role){const {error}=await sb.from('server_members').update({role}).eq('server_id',srvId).eq('user_id',uid);if(error)alert(error.message);openServer(srvId)}
@@ -372,14 +373,14 @@ async function addByName(){const n=$('fadd').value.trim().toLowerCase().replace(
   if(error)return say(error.message);await loadFriends();drawPeople();$('fmsg').textContent='Request sent to '+u.username}
 async function runCmd(line){
   const [c,name,arg]=line.slice(1).trim().split(/\s+/);const cmd=(c||'').toLowerCase();
-  if(cmd==='help')return sys('Commands: /ban user hours · /unban user · /mute user minutes · /unmute user · /kick user · /nick user newname · /newrole name #color member|verified|mod|admin · /giverole user rolename|none · /delrole name · /deleteuser user · /gift user amount · /switch user · /delserver servername · /banword word · /unbanword word · /banwords · /auditlog. Built-in roles are managed only from the gear icon.');
+  if(cmd==='help')return sys('Commands: /ban user hours · /unban user · /mute user minutes · /unmute user · /kick user · /nick user newname · /newrole name #color member|verified|mod|admin · /giverole user rolename|none · /delrole name · /deleteuser user · /gift user amount · /switch user · /banword word · /unbanword word · /banwords · /auditlog. Built-in roles are managed only from the gear icon. Deleting a server is only in its right-click menu.');
   const P=line.slice(1).trim().split(/\s+/);
   const rpc=async(f,a,ok)=>{const {error}=await sb.rpc(f,a);if(error)return sys(error.message);if(srvId)await openServer(srvId);sys(ok)};
   if(cmd==='newrole'){if(!srvId)return sys('Open a server first.');const n=P[1],c=P[2],b=(P[3]||'').toLowerCase();if(!n||!/^#[0-9a-fA-F]{6}$/.test(c||'')||!['member','verified','mod','admin'].includes(b))return sys('Usage: /newrole name #hexcolor member|verified|mod|admin');return rpc('create_role',{sid:srvId,rname:n,rcolor:c,rbase:b},'Role "'+n+'" created. Give it with /giverole username '+n)}
   if(cmd==='delrole'){const r=croles.find(x=>x.name.toLowerCase()===(P[1]||'').toLowerCase());if(!r)return sys('No custom role with that name.');return rpc('delete_role',{rid:r.id},'Role deleted')}
   if(cmd==='banword'||cmd==='unbanword')return rpc(cmd==='banword'?'ban_word':'unban_word',{w:(P[1]||'').toLowerCase()},cmd+': '+P[1]);
   if(cmd==='banwords'){const {data,error}=await sb.rpc('list_banned_words');return sys(error?error.message:'Banned words: '+(data||[]).join(', '))}
-  if(cmd==='delserver'){const nm=P.slice(1).join(' ').trim();const sv=servers.find(x=>x.name.toLowerCase()===nm.toLowerCase());if(!sv)return sys('No server named "'+nm+'"');return delServer(sv.id)}
+  if(cmd==='delserver')return sys('/delserver has been retired. Right-click a server icon and choose Delete server instead.');
   if(cmd==='auditlog'){if(!srvId)return sys('Open a server first.');const {data,error}=await sb.from('audit_log').select('*').eq('server_id',srvId).order('created_at',{ascending:false}).limit(20);if(error)return sys(error.message);if(!data.length)return sys('No audit log entries yet.');data.forEach(e=>{const a=profiles[e.actor],t=profiles[e.target];sys((a?a.username:'someone')+' '+e.action+(t?' '+t.username:'')+(e.detail?' ('+e.detail+')':'')+' — '+new Date(e.created_at).toLocaleString())});return;}
   if(cmd==='reports')return showReports();const u=Object.values(profiles).find(p=>p.username===(name||'').toLowerCase().replace(/^@/,''));
   if(!u)return sys('No user named "'+(name||'')+'". Usage: /'+cmd+' username');
@@ -405,7 +406,7 @@ async function runCmd(line){
   sys('Unknown command. Type /help');
 }
 let ment={},sugList=[],sugIdx=0,sugStart=0,sugAt=false;
-const CMDS=['ban','unban','mute','unmute','kick','nick','giverole','newrole','delrole','deleteuser','gift','switch','delserver','banword','unbanword','banwords','auditlog','unblock','reports','help'],ROLES=['manager','admin','goodgirl','mod','verified','member'];
+const CMDS=['ban','unban','mute','unmute','kick','nick','giverole','newrole','delrole','deleteuser','gift','switch','banword','unbanword','banwords','auditlog','unblock','reports','help'],ROLES=['manager','admin','goodgirl','mod','verified','member'];
 function roleSel(m,u,self){if(self||!canManage(m.role))return '';const o=ROLES.filter(r=>rank(r)<rank(myRole())).map(r=>`<option ${r===m.role?'selected':''}>${r}</option>`).join('');return `<select onchange="setRole('${u}',this.value)" class="mt-1 bg-[#1e1f22] text-[10px] text-[#949ba4] rounded px-1">${o}</select>`}
 function mention(t){return t.replace(/@(everyone|here|[a-z0-9_]+)/gi,(x,n)=>{const l=n.toLowerCase();return(l==='everyone'||l==='here'||Object.values(profiles).some(p=>p.username===l)||Object.keys(RANK).includes(l))?`<span class="bg-[#5865f2]/30 text-[#c9cdfb] rounded px-0.5">@${l}</span>`:x})}
 function mentionsMe(m){if(m.sender_id===me.id)return false;
@@ -718,5 +719,6 @@ function readPermChecks(){
 function myPerm(key){const c=cr[me.id];return !!(c&&c.perms&&(c.perms[key]||c.perms.administrator))}
 function banHtml(){if(!isStaff()||!bans.length)return '';return '<div class="text-[11px] font-bold text-[#949ba4] uppercase mt-4 mb-2">Banned — '+bans.length+'</div>'+bans.map(b=>`<div class="flex justify-between text-xs py-1"><span>${esc((profiles[b.user_id]||{username:'?'}).username)}</span><button onclick="unbanFromList('${b.user_id}')" class="text-[#949ba4] hover:text-white">Unban</button></div>`).join('')}
 async function unbanFromList(uid){const {error}=await sb.rpc('punish',{uid,kind:'ban',mins:0});if(error)return alert(error.message);await openServer(srvId)}
+async function setBuiltinRole(uid,newrole){const {error}=await sb.rpc('set_builtin_role',{sid:srvId,uid,newrole});if(error)return alert(error.message);await openServer(srvId)}
 start();
 </script></body></html>
