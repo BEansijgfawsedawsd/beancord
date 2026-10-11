@@ -149,6 +149,7 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
    <div><label class="block text-xs text-[#949ba4] mb-1">Hierarchy position <span class="text-[10px]">(who this role can act on, and who can act on it)</span></label>
    <select id="rf_base" class="w-full bg-[#1e1f22] rounded px-3 py-2 text-white text-sm outline-none">
     <option value="member">Member tier</option>
+    <option value="coowner">Co-Owner tier</option>
     <option value="verified">Verified tier</option>
     <option value="mod">Mod tier</option>
     <option value="admin">Admin tier</option>
@@ -183,7 +184,7 @@ function toggleLeft(){$('leftcol').classList.toggle('open');$('backdrop').classL
 function closeLeftMobile(){$('leftcol').classList.remove('open');$('backdrop').classList.remove('open')}
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clean=u=>u.toLowerCase().replace(/[^a-z0-9_]/g,'');
-const RANK={owner:6,manager:5,admin:4,goodgirl:4,mod:3,verified:2,member:1},BADGE={owner:'bg-[#8b5a2b]',manager:'bg-lime-400 !text-black',admin:'bg-red-600',goodgirl:'bg-pink-500',mod:'bg-green-600',verified:'bg-sky-500',member:'bg-[#4e5058]'};
+const RANK={owner:7,coowner:6,manager:5,admin:4,goodgirl:4,mod:3,verified:2,member:1},BADGE={owner:'bg-[#8b5a2b]',coowner:'bg-amber-500 !text-black',manager:'bg-lime-400 !text-black',admin:'bg-red-600',goodgirl:'bg-pink-500',mod:'bg-green-600',verified:'bg-sky-500',member:'bg-[#4e5058]'};
 const rank=r=>RANK[r]||1;
 const dn=p=>(p&&p.nickname)||(p&&p.username)||'unknown';
 let friends=[];
@@ -251,7 +252,7 @@ function drawMembers(){
     const rows=g.items.sort((a,b2)=>nm(a).localeCompare(nm(b2))).map(m=>{
       const p=profiles[m.user_id]||{},self=m.user_id===me.id,u=m.user_id,acts=[];
       if(canManage(m.role)&&!self)acts.push(b('Kick',`kick('${u}')`));
-      const builtinSel=(defRole==='owner'&&!self&&m.role!=='owner')?`<select onchange="setBuiltinRole('${u}',this.value)" class="bg-[#1e1f22] text-[10px] text-white rounded px-1.5 py-0.5 mt-1">${['member','verified','mod','admin','manager'].map(r=>`<option value="${r}" ${r===m.role?'selected':''}>${r}</option>`).join('')}</select>`:'';
+      const builtinSel=(defRole==='owner'&&!self&&m.role!=='owner')?`<select onchange="setBuiltinRole('${u}',this.value)" class="bg-[#1e1f22] text-[10px] text-white rounded px-1.5 py-0.5 mt-1">${['member','verified','mod','admin','manager','coowner'].map(r=>`<option value="${r}" ${r===m.role?'selected':''}>${r}</option>`).join('')}</select>`:'';
       if(def&&!self){
         if(until(p,'banned_until')){if(canBan(m.role))acts.push(b('Unban',`punish('${u}','ban',0)`))}else if(canBan(m.role))acts.push(b('Ban',`askBan('${u}')`));
         if(until(p,'muted_until')){if(canMute(m.role))acts.push(b('Unmute',`punish('${u}','mute',0)`))}else if(canMute(m.role))acts.push(b('Mute',`askMute('${u}')`));
@@ -376,7 +377,7 @@ async function runCmd(line){
   if(cmd==='help')return sys('Commands: /ban user hours · /unban user · /mute user minutes · /unmute user · /kick user · /nick user newname · /newrole name #color member|verified|mod|admin · /giverole user rolename|none · /delrole name · /deleteuser user · /gift user amount · /switch user · /banword word · /unbanword word · /banwords · /auditlog. Built-in roles are managed only from the gear icon. Deleting a server is only in its right-click menu.');
   const P=line.slice(1).trim().split(/\s+/);
   const rpc=async(f,a,ok)=>{const {error}=await sb.rpc(f,a);if(error)return sys(error.message);if(srvId)await openServer(srvId);sys(ok)};
-  if(cmd==='newrole'){if(!srvId)return sys('Open a server first.');const n=P[1],c=P[2],b=(P[3]||'').toLowerCase();if(!n||!/^#[0-9a-fA-F]{6}$/.test(c||'')||!['member','verified','mod','admin'].includes(b))return sys('Usage: /newrole name #hexcolor member|verified|mod|admin');return rpc('create_role',{sid:srvId,rname:n,rcolor:c,rbase:b},'Role "'+n+'" created. Give it with /giverole username '+n)}
+  if(cmd==='newrole'){if(!srvId)return sys('Open a server first.');const n=P[1],c=P[2],b=(P[3]||'').toLowerCase();if(!n||!/^#[0-9a-fA-F]{6}$/.test(c||'')||!['member','verified','mod','admin','manager','coowner'].includes(b))return sys('Usage: /newrole name #hexcolor member|verified|mod|admin|manager|coowner');return rpc('create_role',{sid:srvId,rname:n,rcolor:c,rbase:b},'Role "'+n+'" created. Give it with /giverole username '+n)}
   if(cmd==='delrole'){const r=croles.find(x=>x.name.toLowerCase()===(P[1]||'').toLowerCase());if(!r)return sys('No custom role with that name.');return rpc('delete_role',{rid:r.id},'Role deleted')}
   if(cmd==='banword'||cmd==='unbanword')return rpc(cmd==='banword'?'ban_word':'unban_word',{w:(P[1]||'').toLowerCase()},cmd+': '+P[1]);
   if(cmd==='banwords'){const {data,error}=await sb.rpc('list_banned_words');return sys(error?error.message:'Banned words: '+(data||[]).join(', '))}
@@ -559,7 +560,7 @@ async function loadChanMap(){const {data}=await sb.from('channels').select('id,s
 function drawServerNav(){$('srv').innerHTML=servers.map(s=>{const u=unreadSrv[s.id],m=mentSrv[s.id],act=srvId===s.id;
   return `<div class="relative"><button onclick="openServer('${s.id}')" oncontextmenu="return srvMenu(event,'${s.id}')" title="${esc(s.name)}" class="w-12 h-12 overflow-hidden ${act?'bg-[#5865f2] rounded-xl':'bg-[#35373c] rounded-3xl'} hover:rounded-xl hover:bg-[#5865f2] text-white font-bold ${u&&!act?'ring-2 ring-white':''}">${s.image&&s.image.startsWith('data:image/')?`<img src="${esc(s.image)}" class="w-full h-full object-cover">`:esc(s.name[0].toUpperCase())}</button>${m?`<span class="absolute -bottom-1 -right-1 min-w-5 h-5 px-1 flex items-center justify-center rounded-full bg-[#f23f43] text-white text-[11px] font-black border-2 border-[#1e1f22]">${m>99?'99+':m}</span>`:''}</div>`}).join('')}
 function srvMenu(e,id){e.preventDefault();e.stopPropagation();const s=servers.find(x=>x.id===id);let h='';
-  if(s.owner_id===me.id||myPerm('manage_server'))h+=mi('🖼','Change server image',`srvImg('${id}')`)+mi('✎','Rename server',`renameSrv('${id}')`)+sep;
+  if(defRole==='owner')h+=mi('🖼','Change server image',`srvImg('${id}')`)+mi('✎','Rename server',`renameSrv('${id}')`)+sep;
   if(!s.is_default&&(s.owner_id===me.id||defRole==='owner'))h+=mi('🗑','Delete server',`delServer('${id}')`,1)+sep;
   showCtx(e.clientX,e.clientY,h+mi('ID','Copy server ID',`navigator.clipboard.writeText('${id}')`));return false}
 async function delServer(id){const s=servers.find(x=>x.id===id);if(!s)return;if(!confirm('Delete server "'+s.name+'" and everything in it? This cannot be undone.'))return;
@@ -700,7 +701,7 @@ async function saveRole(){
 async function removeRole(rid){if(!confirm('Delete this role? Anyone using it loses it.'))return;const {error}=await sb.rpc('delete_role',{rid});if(error)return alert(error.message);await openServer(srvId);openRoles()}
 async function assignRole(rid){const n=prompt('Give this role to which username? (blank cancels)');if(!n)return;const u=Object.values(profiles).find(p=>p.username===n.trim().toLowerCase().replace(/^@/,''));if(!u)return alert('No user with that username.');
   const {error}=await sb.rpc('give_role',{sid:srvId,uid:u.id,rid});if(error)return alert(error.message);await openServer(srvId);openRoles()}
-const PERMS=[['manage_channels','Manage Channels','Create, edit, reorder and delete channels'],['manage_messages','Manage Messages','Pin messages and delete other members\' messages'],['kick_members','Kick Members','Remove members ranked below this role'],['ban_members','Ban Members','Ban members ranked below this role'],['timeout_members','Timeout Members','Mute members ranked below this role'],['view_audit_log','View Audit Log','See the server\'s history of bans, kicks and role changes'],['manage_server','Manage Server','Rename the server and change its icon'],['attach_files','Attach Files','Send images and files in chat']];
+const PERMS=[['manage_channels','Manage Channels','Create, edit, reorder and delete channels'],['manage_messages','Manage Messages','Pin messages and delete other members\' messages'],['kick_members','Kick Members','Remove members ranked below this role'],['ban_members','Ban Members','Ban members ranked below this role'],['timeout_members','Timeout Members','Mute members ranked below this role'],['view_audit_log','View Audit Log','See the server\'s history of bans, kicks and role changes'],['attach_files','Attach Files','Send images and files in chat']];
 function renderPermChecks(saved){
   saved=saved||{};
   $('rf_perms').innerHTML=PERMS.map(([k,label,desc])=>`<label class="flex items-start gap-2 text-xs text-[#dbdee1] py-1"><input type="checkbox" data-perm="${k}" ${saved[k]?'checked':''} class="mt-0.5"><span><span class="block font-semibold">${esc(label)}</span><span class="block text-[#949ba4]">${esc(desc)}</span></span></label>`).join('');
