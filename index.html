@@ -90,8 +90,8 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
   <input id="u" placeholder="Username" autocomplete="off" class="w-full bg-[#1e1f22] rounded-lg p-2.5 text-white text-sm outline-none">
   <input id="p" type="password" placeholder="Password (6+ characters)" autocomplete="new-password" class="w-full bg-[#1e1f22] rounded-lg p-2.5 text-white text-sm outline-none">
   <div id="err" class="text-red-400 text-xs min-h-4"></div>
-  <button onclick="auth('in')" class="w-full bg-[#5865f2] hover:bg-[#4752c4] text-white font-bold py-2.5 rounded-lg">Log In</button>
-  <button onclick="auth('up')" class="w-full bg-[#23a55a] hover:bg-[#1a8a49] text-white font-bold py-2.5 rounded-lg">Create Account</button>
+  <button onclick="doAuth('in')" class="w-full bg-[#5865f2] hover:bg-[#4752c4] text-white font-bold py-2.5 rounded-lg">Log In</button>
+  <button onclick="doAuth('up')" class="w-full bg-[#23a55a] hover:bg-[#1a8a49] text-white font-bold py-2.5 rounded-lg">Create Account</button>
  </div>
 </div>
 
@@ -198,7 +198,7 @@ const canMute=t=>rank(myRole())>=3&&rank(myRole())>rank(t);
 const canManage=t=>{const m=rank(myRole());return m>=4&&m>rank(t)};
 let me,profiles={},servers=[],channels=[],cur={},unread={},rt=null,srvId=null;
 
-async function auth(mode){
+async function doAuth(mode){
   const u=clean($('u').value.trim()),p=$('p').value;
   if(u.length<2||p.length<6){$('err').textContent='Username 2+ letters/numbers, password 6+ characters';return}
   $('err').textContent='';
@@ -737,4 +737,8 @@ function readPermChecks(){
   return o;
 }
 function myPerm(key){const c=cr[me.id];return !!(c&&c.perms&&(c.perms[key]||c.perms.administrator))}
-function banHtml(){if(!isStaff()||!bans.length)return '';return '<div class="text-[11px] font-bold text-[#949ba4] u
+function banHtml(){if(!isStaff()||!bans.length)return '';return '<div class="text-[11px] font-bold text-[#949ba4] uppercase mt-4 mb-2">Banned — '+bans.length+'</div>'+bans.map(b=>`<div class="flex justify-between text-xs py-1"><span>${esc((profiles[b.user_id]||{username:'?'}).username)}</span><button onclick="unbanFromList('${b.user_id}')" class="text-[#949ba4] hover:text-white">Unban</button></div>`).join('')}
+async function unbanFromList(uid){const {error}=await sb.rpc('punish',{uid,kind:'ban',mins:0});if(error)return alert(error.message);await openServer(srvId)}
+async function setBuiltinRole(uid,newrole){const {error}=await sb.rpc('set_builtin_role',{sid:srvId,uid,newrole});if(error)return alert(error.message);await openServer(srvId)}
+start();
+</script></body></html>
