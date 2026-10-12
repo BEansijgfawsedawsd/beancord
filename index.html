@@ -98,7 +98,7 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
 <div id="app" class="hidden h-full flex relative">
  <div id="leftcol" class="flex flex-shrink-0">
  <div class="w-[72px] bg-[#1e1f22] flex flex-col items-center py-3 space-y-2 flex-shrink-0">
-  <button onclick="showDMs()" title="Direct Messages" class="w-12 h-12 bg-[#5865f2] rounded-2xl hover:rounded-xl text-white text-xl relative">🍪<span id="tot" class="hidden absolute -top-1 -right-1 bg-[#f23f43] text-[10px] font-black px-1.5 rounded-full"></span></button>
+  <button onclick="showDMs()" title="Direct Messages" class="w-12 h-12 bg-[#5865f2] rounded-2xl hover:rounded-xl text-white text-xl relative">📋<span id="tot" class="hidden absolute -top-1 -right-1 bg-[#f23f43] text-[10px] font-black px-1.5 rounded-full"></span></button>
   <div class="w-8 h-[2px] bg-[#35363c]"></div>
   <div id="srv" class="flex-1 w-full flex flex-col items-center space-y-2 overflow-y-auto"></div>
   <button id="newsrvbtn" onclick="newServer()" title="Create a server" class="hidden w-12 h-12 bg-[#313338] hover:bg-[#23a55a] rounded-3xl hover:rounded-xl text-[#23a55a] hover:text-white text-2xl">+</button>
@@ -201,10 +201,18 @@ let me,profiles={},servers=[],channels=[],cur={},unread={},rt=null,srvId=null;
 async function auth(mode){
   const u=clean($('u').value.trim()),p=$('p').value;
   if(u.length<2||p.length<6){$('err').textContent='Username 2+ letters/numbers, password 6+ characters';return}
-  const e=u+'@beancord.app';
-  const r=mode==='up'?await sb.auth.signUp({email:e,password:p,options:{data:{username:u}}}):await sb.auth.signInWithPassword({email:e,password:p});
-  if(r.error){$('err').textContent=r.error.message;return}
-  $('err').textContent='';start();
+  $('err').textContent='';
+  try{
+    const res=await fetch('https://ilmzklhvkacnljfgnxvq.supabase.co/functions/v1/auth-gate',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:mode==='up'?'signup':'login',username:u,password:p})
+    });
+    const j=await res.json();
+    if(!res.ok){$('err').textContent=j.error||'Something went wrong.';return}
+    const {error}=await sb.auth.setSession({access_token:j.access_token,refresh_token:j.refresh_token});
+    if(error){$('err').textContent=error.message;return}
+  }catch(e){$('err').textContent='Could not reach the server. Try again.';return}
+  start();
 }
 async function logout(){await sb.auth.signOut();if(rt)sb.removeChannel(rt);location.reload()}
 async function loadProfiles(){const {data}=await sb.from('profiles').select('*');profiles={};(data||[]).forEach(p=>profiles[p.id]=p);if(me&&profiles[me.id]){me=profiles[me.id];const b=until(me,'banned_until');if(b)kickOut(b)}}
@@ -294,6 +302,7 @@ async function showDMs(){
 function drawPeople(){
   const others=Object.values(profiles).filter(p=>p.id!==me.id),F=p=>fr(p.id);
   const inc=others.filter(p=>F(p)&&F(p).status==='pending'&&F(p).addressee===me.id);
+  incRequestCount=inc.length;
   const fri=others.filter(p=>F(p)&&F(p).status==='accepted').sort((a,b)=>(unread[b.id]||0)-(unread[a.id]||0));
   const rest=others.filter(p=>!F(p)||(F(p).status==='pending'&&F(p).requester===me.id));
   const head=t=>`<div class="text-[11px] font-bold text-[#949ba4] uppercase px-2 pt-3 pb-1">${t}</div>`;
@@ -306,7 +315,7 @@ function drawPeople(){
   h+=head('Add a friend')+'<div class="px-2"><div class="flex gap-1"><input id="fadd" onkeydown="if(event.key===\'Enter\')addByName()" placeholder="Type their username" autocomplete="off" class="flex-1 min-w-0 bg-[#1e1f22] rounded px-2 py-1.5 text-xs text-white outline-none"><button onclick="addByName()" class="bg-[#5865f2] text-white text-xs px-2 rounded">Send</button></div><div id="fmsg" class="text-[10px] text-[#949ba4] mt-1"></div></div>';
   const keep=($('fadd')||{}).value||'';
   $('sc').innerHTML=h;if($('fadd'))$('fadd').value=keep;
-  const t=Object.values(unread).reduce((a,b)=>a+b,0);$('tot').textContent=t;$('tot').classList.toggle('hidden',!t);
+  const t=Object.values(unread).reduce((a,b)=>a+b,0)+incRequestCount;$('tot').textContent=t;$('tot').classList.toggle('hidden',!t);
 }
 async function openDM(id){
   cur={type:'dm',id};unread[id]=0;$('i').disabled=false;$('i').placeholder='Message...';drawPeople();
@@ -326,6 +335,12 @@ function draw(list){$('msgs').innerHTML=list.map(m=>{try{return row(m)}catch(e){
 function add(m){if($('m_'+m.id))return;const k=$('msgs'),near=k.scrollHeight-k.scrollTop-k.clientHeight<200||m.sender_id===me.id;let h='';try{h=row(m)}catch(e){console.error(e)}k.insertAdjacentHTML('beforeend',h);while(k.children.length>300)k.removeChild(k.firstChild);if(near)k.scrollTop=1e9;drawRx(m.id)}
 function listen(){
   rt=sb.channel('live')
+   .on('postgres_changes',{event:'UPDATE',schema:'public',table:'profiles',filter:'id=eq.'+me.id},p=>{
+     const wasB=until(me,'banned_until'),wasM=until(me,'muted_until');
+     me=p.new;profiles[me.id]=me;
+     const nowB=until(me,'banned_until'),nowM=until(me,'muted_until');
+     if((nowB&&!wasB)||(nowM&&!wasM))location.reload();
+   })
    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},async p=>{
      if(!profiles[p.new.sender_id])await loadProfiles();
      if(cur.type==='ch'&&cur.id===p.new.channel_id)add(p.new);else if(p.new.sender_id!==me.id){const cid=p.new.channel_id,sv=chanSrv[cid];unreadCh[cid]=1;if(sv)unreadSrv[sv]=(unreadSrv[sv]||0)+1;
@@ -374,7 +389,7 @@ async function addByName(){const n=$('fadd').value.trim().toLowerCase().replace(
   if(error)return say(error.message);await loadFriends();drawPeople();$('fmsg').textContent='Request sent to '+u.username}
 async function runCmd(line){
   const [c,name,arg]=line.slice(1).trim().split(/\s+/);const cmd=(c||'').toLowerCase();
-  if(cmd==='help')return sys('Commands: /ban user hours · /unban user · /mute user minutes · /unmute user · /kick user · /nick user newname · /newrole name #color member|verified|mod|admin · /giverole user rolename|none · /delrole name · /deleteuser user · /gift user amount · /switch user · /banword word · /unbanword word · /banwords · /auditlog. Built-in roles are managed only from the gear icon. Deleting a server is only in its right-click menu.');
+  if(cmd==='help')return sys('Commands: /ban user hours · /unban user · /mute user minutes · /unmute user · /kick user · /nick user newname · /newrole name #color member|verified|mod|admin · /giverole user rolename|none · /delrole name · /deleteuser user · /gift user amount · /switch user · /banword word · /unbanword word · /banwords · /auditlog. Built-in roles are managed only from the gear icon. Deleting a server is only in its right-click menu. /banip user bans the network address on their account, and is not foolproof since addresses change.');
   const P=line.slice(1).trim().split(/\s+/);
   const rpc=async(f,a,ok)=>{const {error}=await sb.rpc(f,a);if(error)return sys(error.message);if(srvId)await openServer(srvId);sys(ok)};
   if(cmd==='newrole'){if(!srvId)return sys('Open a server first.');const n=P[1],c=P[2],b=(P[3]||'').toLowerCase();if(!n||!/^#[0-9a-fA-F]{6}$/.test(c||'')||!['member','verified','mod','admin','manager','coowner'].includes(b))return sys('Usage: /newrole name #hexcolor member|verified|mod|admin|manager|coowner');return rpc('create_role',{sid:srvId,rname:n,rcolor:c,rbase:b},'Role "'+n+'" created. Give it with /giverole username '+n)}
@@ -395,6 +410,8 @@ async function runCmd(line){
   if(cmd==='nick'){const nk=P.slice(2).join(' ').trim();return rpc('force_nick',{uid:u.id,nick:nk||null},nk?u.username+' is now called '+nk:'Nickname of '+u.username+' was reset')}
   if(cmd==='giverole'){if(!srvId)return sys('Open a server first.');const rn=(P[2]||'').toLowerCase(),r=croles.find(x=>x.name.toLowerCase()===rn);if(!r&&rn!=='none')return sys('No custom role "'+(P[2]||'')+'". Make one with /newrole, or use /giverole user none');return rpc('give_role',{sid:srvId,uid:u.id,rid:r?r.id:null},'Updated '+u.username)}
   if(cmd==='deleteuser'){if(!confirm('Permanently delete the account '+u.username+'?'))return;return rpc('admin_delete_account',{uid:u.id},u.username+' was deleted')}
+  if(cmd==='banip'){const {data,error}=await sb.rpc('ban_ip',{target_uid:u.id});if(error)return sys(error.message);return sys('Banned the address on record for '+u.username+' ('+data+'). This does not remove their account access on its own — pair it with /ban if needed.')}
+  if(cmd==='unbanip'){const {error}=await sb.rpc('unban_ip',{target_uid:u.id});if(error)return sys(error.message);return sys('Removed the IP ban tied to '+u.username)}
   if(cmd==='gift'){const amt=parseInt(arg,10);if(!amt)return sys('Usage: /gift username amount');const {error}=await sb.rpc('admin_gift_beans',{uid:u.id,amt});if(error)return sys(error.message);await loadProfiles();return sys('Gave '+amt+' beans to '+u.username)}
   if(cmd==='switch')return switchTo(u.id);
   if(cmd==='unblock'){const {error}=await sb.from('blocks').delete().eq('blocked',u.id).eq('blocker',me.id);if(error)return sys(error.message);blocked.delete(u.id);return sys('Unblocked '+u.username)}
@@ -407,7 +424,7 @@ async function runCmd(line){
   sys('Unknown command. Type /help');
 }
 let ment={},sugList=[],sugIdx=0,sugStart=0,sugAt=false;
-const CMDS=['ban','unban','mute','unmute','kick','nick','giverole','newrole','delrole','deleteuser','gift','switch','banword','unbanword','banwords','auditlog','unblock','reports','help'],ROLES=['manager','admin','goodgirl','mod','verified','member'];
+const CMDS=['ban','unban','mute','unmute','kick','nick','giverole','newrole','delrole','deleteuser','gift','switch','banip','unbanip','banword','unbanword','banwords','auditlog','unblock','reports','help'],ROLES=['manager','admin','goodgirl','mod','verified','member'];
 function roleSel(m,u,self){if(self||!canManage(m.role))return '';const o=ROLES.filter(r=>rank(r)<rank(myRole())).map(r=>`<option ${r===m.role?'selected':''}>${r}</option>`).join('');return `<select onchange="setRole('${u}',this.value)" class="mt-1 bg-[#1e1f22] text-[10px] text-[#949ba4] rounded px-1">${o}</select>`}
 function mention(t){return t.replace(/@(everyone|here|[a-z0-9_]+)/gi,(x,n)=>{const l=n.toLowerCase();return(l==='everyone'||l==='here'||Object.values(profiles).some(p=>p.username===l)||Object.keys(RANK).includes(l))?`<span class="bg-[#5865f2]/30 text-[#c9cdfb] rounded px-0.5">@${l}</span>`:x})}
 function mentionsMe(m){if(m.sender_id===me.id)return false;
@@ -419,7 +436,7 @@ function names(){return Object.values(profiles).map(p=>p.username).sort()}
 function suggest(){
   const el=$('i'),v=el.value.slice(0,el.selectionStart);let m,list=[],start=0;sugAt=false;
   if(m=v.match(/^\/(\w*)$/)){start=1;list=CMDS.filter(c=>c.startsWith(m[1].toLowerCase()))}
-  else if(m=v.match(/^\/(ban|unban|mute|unmute|kick|unblock|nick|giverole|deleteuser|gift|switch)\s+@?(\w*)$/i)){start=v.length-m[2].length;list=names().filter(n=>n.startsWith(m[2].toLowerCase()))}
+  else if(m=v.match(/^\/(ban|unban|mute|unmute|kick|unblock|nick|giverole|deleteuser|gift|switch|banip|unbanip)\s+@?(\w*)$/i)){start=v.length-m[2].length;list=names().filter(n=>n.startsWith(m[2].toLowerCase()))}
   else if(m=v.match(/^\/role\s+\S+\s+(\w*)$/i)){start=v.length-m[1].length;list=ROLES.filter(r=>r.startsWith(m[1].toLowerCase()))}
   else if(m=v.match(/(?:^|\s)@(\w*)$/)){sugAt=true;start=v.length-m[1].length;
     const roleNames=cur.type==='ch'?[...new Set(Object.values(roles))]:[];
@@ -551,7 +568,7 @@ const buy=id=>shopDo('buy_tag',{tid:id}),equip=id=>shopDo('equip_tag',{tid:id}),
 async function gift(id){const n=prompt('Gift this tag to which friend? (their username)');if(!n)return;const u=Object.values(profiles).find(p=>p.username===n.trim().toLowerCase().replace(/^@/,''));if(!u)return alert('No user with that username');await shopDo('gift_tag',{tid:id,uid:u.id})}
 function drawBlocked(){$('pblk').innerHTML=[...blocked].map(id=>`<div class="flex justify-between text-xs"><span>${esc(dn(profiles[id]))}</span><button onclick="unblock('${id}')" class="text-[#5865f2]">Unblock</button></div>`).join('')||'<p class="text-xs text-[#949ba4]">Nobody blocked.</p>'}
 async function unblock(id){const {error}=await sb.from('blocks').delete().eq('blocked',id).eq('blocker',me.id);if(error)return alert(error.message);blocked.delete(id);drawBlocked()}
-let online=new Set(),cr={},croles=[],unreadCh={},unreadSrv={},mentSrv={},chanSrv={},srvImgFor=null;
+let online=new Set(),cr={},croles=[],unreadCh={},unreadSrv={},mentSrv={},chanSrv={},srvImgFor=null,incRequestCount=0;
 const RN={member:1,verified:2,mod:3,admin:4,manager:5,owner:6},rn=r=>Object.keys(RN).find(k=>RN[k]===r)||'member';
 const ask=(q,c)=>{const v=prompt(q+' (member, verified, mod, admin, manager, owner)',rn(c));return v===null?null:(RN[v.trim().toLowerCase()]||c)};
 const dot=id=>`<span class="w-2.5 h-2.5 rounded-full flex-shrink-0 ${id===me.id||online.has(id)?'bg-[#23a55a]':'bg-[#80848e]'}" title="${id===me.id||online.has(id)?'Online':'Offline'}"></span>`;
@@ -561,7 +578,7 @@ function drawServerNav(){$('srv').innerHTML=servers.map(s=>{const u=unreadSrv[s.
   return `<div class="relative"><button onclick="openServer('${s.id}')" oncontextmenu="return srvMenu(event,'${s.id}')" title="${esc(s.name)}" class="w-12 h-12 overflow-hidden ${act?'bg-[#5865f2] rounded-xl':'bg-[#35373c] rounded-3xl'} hover:rounded-xl hover:bg-[#5865f2] text-white font-bold ${u&&!act?'ring-2 ring-white':''}">${s.image&&s.image.startsWith('data:image/')?`<img src="${esc(s.image)}" class="w-full h-full object-cover">`:esc(s.name[0].toUpperCase())}</button>${m?`<span class="absolute -bottom-1 -right-1 min-w-5 h-5 px-1 flex items-center justify-center rounded-full bg-[#f23f43] text-white text-[11px] font-black border-2 border-[#1e1f22]">${m>99?'99+':m}</span>`:''}</div>`}).join('')}
 function srvMenu(e,id){e.preventDefault();e.stopPropagation();const s=servers.find(x=>x.id===id);let h='';
   if(defRole==='owner')h+=mi('🖼','Change server image',`srvImg('${id}')`)+mi('✎','Rename server',`renameSrv('${id}')`)+sep;
-  if(!s.is_default&&(s.owner_id===me.id||defRole==='owner'))h+=mi('🗑','Delete server',`delServer('${id}')`,1)+sep;
+  if(!s.is_default&&defRole==='owner')h+=mi('🗑','Delete server',`delServer('${id}')`,1)+sep;
   showCtx(e.clientX,e.clientY,h+mi('ID','Copy server ID',`navigator.clipboard.writeText('${id}')`));return false}
 async function delServer(id){const s=servers.find(x=>x.id===id);if(!s)return;if(!confirm('Delete server "'+s.name+'" and everything in it? This cannot be undone.'))return;
   const {error}=await sb.rpc('delete_server',{sid:id});if(error)return alert(error.message);if(srvId===id){srvId=null;showDMs()}await loadServers()}
