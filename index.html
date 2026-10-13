@@ -117,8 +117,17 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
   <div id="ch" class="h-12 border-b border-black/30 px-3 flex items-center gap-2 font-bold text-white">
    <button onclick="toggleLeft()" class="block md:hidden text-lg px-1">☰</button>
    <div id="chtitle" class="flex items-center min-w-0 flex-1 truncate"></div>
+   <button id="callbtn" onclick="startCall()" title="Call" class="hidden text-sm text-[#23a55a] hover:text-white px-1">📞</button>
    <button id="pinbtn" onclick="togglePins()" title="Pinned messages" class="hidden text-sm text-[#949ba4] hover:text-white px-1">📌</button>
    <button id="searchbtn" onclick="toggleSearch()" title="Search messages" class="hidden text-sm text-[#949ba4] hover:text-white px-1">🔍</button>
+  </div>
+  <div id="ringbanner" class="hidden mx-4 mt-2 bg-[#23a55a] rounded-lg px-4 py-3 flex items-center justify-between text-white">
+   <span id="ringtext" class="font-bold text-sm"></span>
+   <span class="flex gap-2"><button onclick="acceptCall()" class="bg-white text-[#23a55a] font-bold text-xs px-3 py-1.5 rounded-lg">Accept</button><button onclick="declineCall()" class="bg-black/20 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Decline</button></span>
+  </div>
+  <div id="callbar" class="hidden mx-4 mt-2 bg-[#2b2d31] border border-[#3f4147] rounded-lg px-4 py-2.5 flex items-center justify-between">
+   <span id="calltext" class="text-sm text-white">Calling...</span>
+   <span class="flex gap-2"><button id="mutebtn" onclick="toggleMute()" class="bg-[#4e5058] text-white text-xs px-3 py-1.5 rounded-lg">Mute</button><button onclick="hangupCall()" class="bg-[#f23f43] text-white font-bold text-xs px-3 py-1.5 rounded-lg">Hang up</button></span>
   </div>
   <div id="searchbar" class="hidden mx-4 mt-2"><input id="sq" placeholder="Search messages in this channel..." class="w-full bg-[#1e1f22] rounded px-3 py-2 text-sm text-white outline-none"><div id="sqres" class="mt-2 max-h-56 overflow-y-auto space-y-2 text-sm"></div></div>
   <div id="typing" class="px-4 h-4 text-xs text-[#949ba4] italic truncate"></div>
@@ -214,7 +223,7 @@ async function doAuth(mode){
   }catch(e){$('err').textContent='Could not reach the server. Try again.';return}
   start();
 }
-async function logout(){await sb.auth.signOut();if(rt)sb.removeChannel(rt);location.reload()}
+async function logout(){if(callState!=='idle')hangupCall();if(ringCh)sb.removeChannel(ringCh);await sb.auth.signOut();if(rt)sb.removeChannel(rt);location.reload()}
 async function loadProfiles(){const {data}=await sb.from('profiles').select('*');profiles={};(data||[]).forEach(p=>profiles[p.id]=p);if(me&&profiles[me.id]){me=profiles[me.id];const b=until(me,'banned_until');if(b)kickOut(b)}}
 async function kickOut(b){await sb.auth.signOut();$('app').classList.add('hidden');$('auth').classList.remove('hidden');$('err').textContent='This account is banned until '+b.toLocaleString()}
 function until(p,k){const v=p&&p[k];return v&&new Date(v)>new Date()?new Date(v):null}
@@ -290,7 +299,7 @@ async function newChannel(){
 async function openChannel(id){
   cur={type:'ch',id};delete ment[id];delete unreadCh[id];drawChannels();
   const c=channels.find(x=>x.id===id);{const can=rank(myRole())>=c.min_post_rank;$('i').disabled=!can;$('i').placeholder=can?'Message...':'You do not have permission to type here'}$('chtitle').innerHTML='# '+esc(c.name)+(c.topic?`<span class="ml-3 text-xs font-normal text-[#949ba4] truncate">${esc(c.topic)}</span>`:'');
-  $('pinbtn').classList.remove('hidden');$('searchbtn').classList.remove('hidden');$('searchbar').classList.add('hidden');$('msgs').classList.remove('hidden');closeLeftMobile();subscribeTyping();
+  $('pinbtn').classList.remove('hidden');$('searchbtn').classList.remove('hidden');$('searchbar').classList.add('hidden');$('msgs').classList.remove('hidden');$('callbtn').classList.add('hidden');closeLeftMobile();subscribeTyping();
   const {data:dd}=await sb.from('messages').select('*').eq('channel_id',id).order('created_at',{ascending:false}).limit(100);const data=(dd||[]).reverse();
   rx={};const ids=(data||[]).map(x=>x.id);if(ids.length){const {data:r}=await sb.from('reactions').select('*').in('message_id',ids);(r||[]).forEach(x=>(rx[x.message_id]=rx[x.message_id]||[]).push(x))}
   draw(data||[]);
@@ -319,7 +328,7 @@ function drawPeople(){
 }
 async function openDM(id){
   cur={type:'dm',id};unread[id]=0;$('i').disabled=false;$('i').placeholder='Message...';drawPeople();
-  $('chtitle').textContent='@ '+dn(profiles[id]);$('pinbtn').classList.add('hidden');$('searchbtn').classList.add('hidden');$('searchbar').classList.add('hidden');closeLeftMobile();subscribeTyping();
+  $('chtitle').textContent='@ '+dn(profiles[id]);$('pinbtn').classList.add('hidden');$('searchbtn').classList.add('hidden');$('searchbar').classList.add('hidden');$('callbtn').classList.toggle('hidden',!!activeCallWith);closeLeftMobile();subscribeTyping();
   const {data:dd}=await sb.from('dm_messages').select('*').or(`sender_id.eq.${id},recipient_id.eq.${id}`).order('created_at',{ascending:false}).limit(100);const data=(dd||[]).reverse();
   draw(data||[]);
 }
@@ -574,7 +583,119 @@ let online=new Set(),cr={},croles=[],unreadCh={},unreadSrv={},mentSrv={},chanSrv
 const RN={member:1,verified:2,mod:3,admin:4,manager:5,owner:6},rn=r=>Object.keys(RN).find(k=>RN[k]===r)||'member';
 const ask=(q,c)=>{const v=prompt(q+' (member, verified, mod, admin, manager, owner)',rn(c));return v===null?null:(RN[v.trim().toLowerCase()]||c)};
 const dot=id=>`<span class="w-2.5 h-2.5 rounded-full flex-shrink-0 ${id===me.id||online.has(id)?'bg-[#23a55a]':'bg-[#80848e]'}" title="${id===me.id||online.has(id)?'Online':'Offline'}"></span>`;
-function track(){touchSeen();const ch=sb.channel('online',{config:{presence:{key:me.id}}});ch.on('presence',{event:'sync'},()=>{online=new Set(Object.keys(ch.presenceState()));if(srvId)drawMembers();else drawPeople()}).subscribe(async st=>{if(st==='SUBSCRIBED')await ch.track({t:Date.now()})})}
+// ===== DM voice calls (phase 1: one-to-one only) =====
+const RTC_CONFIG={iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']}]};
+let ringCh=null,callCh=null,pc=null,localStream=null,activeCallWith=null,callState='idle',incomingFrom=null,muted=false;
+
+function ringChannel(){return sb.channel('ring-'+me.id).on('broadcast',{event:'signal'},p=>handleRingSignal(p.payload)).subscribe()}
+function pairKey(a,b){return 'call-'+[a,b].sort().join('-')}
+
+function handleRingSignal(msg){
+  if(msg.type==='incoming-call'&&callState!=='idle'){
+    sb.channel('ring-'+msg.from).send({type:'broadcast',event:'signal',payload:{type:'busy',from:me.id}});
+  }else if(msg.type==='incoming-call'&&callState==='idle'){
+    incomingFrom=msg.from;callState='ringing-in';
+    $('ringtext').textContent=(profiles[msg.from]||{username:'Someone'}).username+' is calling...';
+    $('ringbanner').classList.remove('hidden');
+  }else if(msg.type==='declined'&&callState==='calling'){
+    endCall('Call declined.');
+  }else if(msg.type==='busy'&&callState==='calling'){
+    endCall((profiles[msg.from]||{username:'They'}).username+' is already on a call.');
+  }
+}
+
+async function startCall(){
+  if(cur.type!=='dm'||callState!=='idle')return;
+  const target=cur.id;
+  try{localStream=await navigator.mediaDevices.getUserMedia({audio:true})}
+  catch(e){return alert('Could not access your microphone. Check your browser\'s permission settings for this site.')}
+  activeCallWith=target;callState='calling';
+  $('callbtn').classList.add('hidden');
+  $('calltext').textContent='Calling '+dn(profiles[target])+'...';$('callbar').classList.remove('hidden');
+  setupPeerConnection(target);
+  callCh=sb.channel(pairKey(me.id,target),{config:{presence:{key:me.id}}});
+  callCh.on('broadcast',{event:'signal'},p=>handleCallSignal(p.payload));
+  callCh.on('presence',{event:'sync'},async()=>{
+    const others=Object.keys(callCh.presenceState()).filter(k=>k!==me.id);
+    if(others.length&&callState==='calling'){
+      callState='connecting';$('calltext').textContent='Connecting...';
+      const offer=await pc.createOffer();await pc.setLocalDescription(offer);
+      callCh.send({type:'broadcast',event:'signal',payload:{type:'offer',sdp:offer,from:me.id}});
+    }
+  });
+  await callCh.subscribe(async st=>{
+    if(st==='SUBSCRIBED'){
+      await callCh.track({t:Date.now()});
+      sb.channel('ring-'+target).send({type:'broadcast',event:'signal',payload:{type:'incoming-call',from:me.id}});
+    }
+  });
+}
+
+async function acceptCall(){
+  if(callState!=='ringing-in')return;
+  const target=incomingFrom;$('ringbanner').classList.add('hidden');
+  try{localStream=await navigator.mediaDevices.getUserMedia({audio:true})}
+  catch(e){alert('Could not access your microphone.');declineCall();return}
+  activeCallWith=target;callState='connecting';
+  $('calltext').textContent='Connecting to '+dn(profiles[target])+'...';$('callbar').classList.remove('hidden');
+  setupPeerConnection(target);
+  callCh=sb.channel(pairKey(me.id,target),{config:{presence:{key:me.id}}});
+  callCh.on('broadcast',{event:'signal'},p=>handleCallSignal(p.payload));
+  await callCh.subscribe(async st=>{if(st==='SUBSCRIBED')await callCh.track({t:Date.now()})});
+}
+
+function declineCall(){
+  if(incomingFrom)sb.channel('ring-'+incomingFrom).send({type:'broadcast',event:'signal',payload:{type:'declined',from:me.id}});
+  $('ringbanner').classList.add('hidden');incomingFrom=null;callState='idle';
+}
+
+function setupPeerConnection(peerId){
+  pc=new RTCPeerConnection(RTC_CONFIG);
+  localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+  pc.onicecandidate=e=>{if(e.candidate&&callCh)callCh.send({type:'broadcast',event:'signal',payload:{type:'ice',candidate:e.candidate,from:me.id}})};
+  pc.ontrack=e=>{let a=$('remoteAudio');if(!a){a=document.createElement('audio');a.id='remoteAudio';a.autoplay=true;document.body.appendChild(a)}a.srcObject=e.streams[0]};
+  pc.onconnectionstatechange=()=>{
+    if(pc.connectionState==='connected'){callState='connected';$('calltext').textContent='In call with '+dn(profiles[peerId]);}
+    else if(['failed','disconnected','closed'].includes(pc.connectionState)&&callState!=='idle'){endCall('Call ended.')}
+  };
+}
+
+async function handleCallSignal(msg){
+  if(!pc)return;
+  if(msg.type==='offer'){
+    await pc.setRemoteDescription(msg.sdp);
+    const answer=await pc.createAnswer();await pc.setLocalDescription(answer);
+    callCh.send({type:'broadcast',event:'signal',payload:{type:'answer',sdp:answer,from:me.id}});
+  }else if(msg.type==='answer'){
+    await pc.setRemoteDescription(msg.sdp);
+  }else if(msg.type==='ice'){
+    try{await pc.addIceCandidate(msg.candidate)}catch(e){console.error('ICE add failed:',e)}
+  }else if(msg.type==='hangup'){
+    endCall((profiles[msg.from]||{username:'They'}).username+' left the call.');
+  }
+}
+
+function toggleMute(){
+  if(!localStream)return;
+  muted=!muted;localStream.getAudioTracks().forEach(t=>t.enabled=!muted);
+  $('mutebtn').textContent=muted?'Unmute':'Mute';$('mutebtn').classList.toggle('bg-[#f23f43]',muted);
+}
+
+function hangupCall(){if(callCh)callCh.send({type:'broadcast',event:'signal',payload:{type:'hangup',from:me.id}});endCall('Call ended.')}
+
+function endCall(reason){
+  if(pc){pc.close();pc=null}
+  if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null}
+  if(callCh){sb.removeChannel(callCh);callCh=null}
+  const a=$('remoteAudio');if(a)a.srcObject=null;
+  activeCallWith=null;callState='idle';incomingFrom=null;muted=false;
+  $('callbar').classList.add('hidden');$('ringbanner').classList.add('hidden');
+  $('mutebtn').textContent='Mute';$('mutebtn').classList.remove('bg-[#f23f43]');
+  if(cur.type==='dm')$('callbtn').classList.remove('hidden');
+  if(reason)toast(reason);
+}
+
+function track(){touchSeen();ringCh=ringChannel();const ch=sb.channel('online',{config:{presence:{key:me.id}}});ch.on('presence',{event:'sync'},()=>{online=new Set(Object.keys(ch.presenceState()));if(srvId)drawMembers();else drawPeople()}).subscribe(async st=>{if(st==='SUBSCRIBED')await ch.track({t:Date.now()})})}
 async function loadChanMap(){const {data}=await sb.from('channels').select('id,server_id');(data||[]).forEach(x=>chanSrv[x.id]=x.server_id)}
 function drawServerNav(){$('srv').innerHTML=servers.map(s=>{const u=unreadSrv[s.id],m=mentSrv[s.id],act=srvId===s.id;
   return `<div class="relative"><button onclick="openServer('${s.id}')" oncontextmenu="return srvMenu(event,'${s.id}')" title="${esc(s.name)}" class="w-12 h-12 overflow-hidden ${act?'bg-[#5865f2] rounded-xl':'bg-[#35373c] rounded-3xl'} hover:rounded-xl hover:bg-[#5865f2] text-white font-bold ${u&&!act?'ring-2 ring-white':''}">${s.image&&s.image.startsWith('data:image/')?`<img src="${esc(s.image)}" class="w-full h-full object-cover">`:esc(s.name[0].toUpperCase())}</button>${m?`<span class="absolute -bottom-1 -right-1 min-w-5 h-5 px-1 flex items-center justify-center rounded-full bg-[#f23f43] text-white text-[11px] font-black border-2 border-[#1e1f22]">${m>99?'99+':m}</span>`:''}</div>`}).join('')}
