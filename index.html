@@ -391,7 +391,13 @@ async function addFriend(id){const {error}=await sb.from('friendships').insert({
 async function answer(id,ok){const f=fr(id);const r=ok?await sb.from('friendships').update({status:'accepted'}).eq('id',f.id):await sb.from('friendships').delete().eq('id',f.id);if(r.error)alert(r.error.message);await loadFriends();drawPeople()}
 async function rejoin(){const {error}=await sb.rpc('rejoin_default');if(error)alert(error.message);await loadServers();const d=servers.find(x=>x.is_default);if(d)openServer(d.id)}
 function sys(t){$('msgs').insertAdjacentHTML('beforeend',`<div class="text-xs italic text-[#949ba4]">${esc(t)}</div>`);$('msgs').scrollTop=1e9}
-async function addByName(){const n=$('fadd').value.trim().toLowerCase().replace(/^@/,'');const u=Object.values(profiles).find(p=>p.username===n);const say=t=>{$('fmsg').textContent=t};
+async function addByName(){const n=$('fadd').value.trim().toLowerCase().replace(/^@/,'');const say=t=>{$('fmsg').textContent=t};
+  let u=Object.values(profiles).find(p=>p.username===n);
+  if(!u){
+    const byNick=Object.values(profiles).filter(p=>p.nickname&&p.nickname.toLowerCase()===n);
+    if(byNick.length===1)u=byNick[0];
+    else if(byNick.length>1)return say('More than one person has that nickname — type their username instead.');
+  }
   if(!u||u.id===me.id)return say('No user with that username.');
   if(fr(u.id))return say(fr(u.id).status==='accepted'?'Already friends.':'Request already pending.');
   const {error}=await sb.from('friendships').insert({requester:me.id,addressee:u.id,status:'pending'});
@@ -450,8 +456,12 @@ function suggest(){
   else if(m=v.match(/^\/(ban|unban|mute|unmute|kick|unblock|nick|giverole|deleteuser|gift|switch|banip|unbanip|ips)\s+@?(\w*)$/i)){start=v.length-m[2].length;list=names().filter(n=>n.startsWith(m[2].toLowerCase()))}
   else if(m=v.match(/^\/role\s+\S+\s+(\w*)$/i)){start=v.length-m[1].length;list=ROLES.filter(r=>r.startsWith(m[1].toLowerCase()))}
   else if(m=v.match(/(?:^|\s)@(\w*)$/)){sugAt=true;start=v.length-m[1].length;
-    const roleNames=cur.type==='ch'?[...new Set(Object.values(roles))]:[];
-    list=[...(myRole()==='owner'&&cur.type==='ch'?['everyone','here']:[]),...roleNames,...names()].filter(n=>n.startsWith(m[1].toLowerCase()))}
+    const q=m[1].toLowerCase();
+    const roleNames=(cur.type==='ch'?[...new Set(Object.values(roles))]:[]).filter(r=>r.startsWith(q));
+    const special=(myRole()==='owner'&&cur.type==='ch'?['everyone','here']:[]).filter(x=>x.startsWith(q));
+    const peeps=Object.values(profiles).filter(p=>p.username.startsWith(q)||(p.nickname&&p.nickname.toLowerCase().startsWith(q))).map(p=>p.username);
+    list=[...special,...roleNames,...new Set(peeps)];
+  }
   sugList=list.slice(0,40);sugStart=start;if(sugIdx>=sugList.length)sugIdx=0;drawSug();
 }
 function drawSug(){const e=$('sug');if(!sugList.length){e.classList.add('hidden');return}
