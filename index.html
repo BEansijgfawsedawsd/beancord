@@ -1,8 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BEANCORD</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -12,8 +9,7 @@
   #leftcol.open{transform:translateX(0)}
   #backdrop.open{display:block}
 }
-body{font-family:system-ui,sans-serif}::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:#1a1b1e;border-radius:4px}
-html[data-theme="maroon"] [class~="bg-[#313338]"]{background-color:#140b0e !important}
+body{font-family:system-ui,sans-serif}::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:#1a1b1e;border-radius:4px}html[data-theme="maroon"] [class~="bg-[#313338]"]{background-color:#140b0e !important}
 html[data-theme="maroon"] [class~="hover:bg-[#313338]"]:hover{background-color:#140b0e !important}
 html[data-theme="maroon"] [class~="bg-[#2b2d31]"]{background-color:#1a0f12 !important}
 html[data-theme="maroon"] [class~="hover:bg-[#2b2d31]"]:hover{background-color:#1a0f12 !important}
@@ -85,8 +81,7 @@ html[data-theme="plum"] [class~="bg-[#111214]"]{background-color:#0c0612 !import
 html[data-theme="plum"] [class~="hover:bg-[#111214]"]:hover{background-color:#0c0612 !important}
 html[data-theme="plum"] [class~="bg-[#4e5058]"]{background-color:#4a3068 !important}
 html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a3068 !important}
-</style>
-</head>
+</style></head>
 <body class="bg-[#313338] text-[#dbdee1] h-screen overflow-hidden">
 
 <div id="auth" class="fixed inset-0 bg-[#1e1f22] flex items-center justify-center p-4 z-50">
@@ -102,20 +97,20 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
 
 <div id="app" class="hidden h-full flex relative">
  <div id="leftcol" class="flex flex-shrink-0">
-  <div class="w-[72px] bg-[#1e1f22] flex flex-col items-center py-3 space-y-2 flex-shrink-0">
-   <button onclick="showDMs()" title="Direct Messages" class="w-12 h-12 bg-[#5865f2] rounded-2xl hover:rounded-xl text-white text-xl relative">📋<span id="tot" class="hidden absolute -top-1 -right-1 bg-[#f23f43] text-[10px] font-black px-1.5 rounded-full"></span></button>
-   <div class="w-8 h-[2px] bg-[#35363c]"></div>
-   <div id="srv" class="flex-1 w-full flex flex-col items-center space-y-2 overflow-y-auto"></div>
-   <button id="newsrvbtn" onclick="newServer()" title="Create a server" class="hidden w-12 h-12 bg-[#313338] hover:bg-[#23a55a] rounded-3xl hover:rounded-xl text-[#23a55a] hover:text-white text-2xl">+</button>
+ <div class="w-[72px] bg-[#1e1f22] flex flex-col items-center py-3 space-y-2 flex-shrink-0">
+  <button onclick="showDMs()" title="Direct Messages" class="w-12 h-12 bg-[#5865f2] rounded-2xl hover:rounded-xl text-white text-xl relative">📋<span id="tot" class="hidden absolute -top-1 -right-1 bg-[#f23f43] text-[10px] font-black px-1.5 rounded-full"></span></button>
+  <div class="w-8 h-[2px] bg-[#35363c]"></div>
+  <div id="srv" class="flex-1 w-full flex flex-col items-center space-y-2 overflow-y-auto"></div>
+  <button id="newsrvbtn" onclick="newServer()" title="Create a server" class="hidden w-12 h-12 bg-[#313338] hover:bg-[#23a55a] rounded-3xl hover:rounded-xl text-[#23a55a] hover:text-white text-2xl">+</button>
+ </div>
+ <div class="w-60 bg-[#2b2d31] flex flex-col flex-shrink-0">
+  <div id="sh" class="h-12 border-b border-black/30 px-4 flex items-center justify-between font-bold text-white"></div>
+  <div id="sc" class="flex-1 overflow-y-auto p-2 space-y-0.5"></div>
+  <div class="h-14 bg-[#232428] px-3 flex items-center justify-between">
+   <span id="me" class="font-bold text-white text-sm truncate"></span>
+   <span class="flex gap-3"><button onclick="openShop()" class="text-xs text-[#949ba4] hover:text-white">Shop</button><button onclick="openProfile()" class="text-xs text-[#949ba4] hover:text-white">Profile</button><button onclick="logout()" class="text-xs text-[#949ba4] hover:text-[#f23f43]">Log out</button></span>
   </div>
-  <div class="w-60 bg-[#2b2d31] flex flex-col flex-shrink-0">
-   <div id="sh" class="h-12 border-b border-black/30 px-4 flex items-center justify-between font-bold text-white"></div>
-   <div id="sc" class="flex-1 overflow-y-auto p-2 space-y-0.5"></div>
-   <div class="h-14 bg-[#232428] px-3 flex items-center justify-between">
-    <span id="me" class="font-bold text-white text-sm truncate"></span>
-    <span class="flex gap-3"><button onclick="openShop()" class="text-xs text-[#949ba4] hover:text-white">Shop</button><button onclick="openProfile()" class="text-xs text-[#949ba4] hover:text-white">Profile</button><button onclick="logout()" class="text-xs text-[#949ba4] hover:text-[#f23f43]">Log out</button></span>
-   </div>
-  </div>
+ </div>
  </div>
  <div id="backdrop" onclick="toggleLeft()" class="hidden fixed inset-0 bg-black/50 z-20"></div>
  <div class="flex-1 flex flex-col min-w-0">
@@ -269,7 +264,7 @@ function drawMembers(){
     if(!groupsMap[key])groupsMap[key]={label:custom?custom.name:m.role.charAt(0).toUpperCase()+m.role.slice(1),color:custom?custom.color:null,rankVal:rank(custom?custom.base:m.role),pos:custom?(custom.position||0):0,items:[]};
     groupsMap[key].items.push(m);
   });
-  const groups=Object.values(groupsMap).sort((ga,gb)=>gb.rankVal-ga.rankVal||gb.pos-ga.pos||ga.label.localeCompare(gb.label));
+  const groups=Object.values(groupsMap).sort((ga,gb)=>gb.rankVal-gb.rankVal||gb.pos-gb.pos||ga.label.localeCompare(gb.label));
   $('mem').innerHTML=groups.map(g=>{
     const rows=g.items.sort((a,b2)=>nm(a).localeCompare(nm(b2))).map(m=>{
       const p=profiles[m.user_id]||{},self=m.user_id===me.id,u=m.user_id,acts=[];
@@ -474,9 +469,7 @@ function drawSug(){const e=$('sug');if(!sugList.length){e.classList.add('hidden'
   const a=e.children[sugIdx];if(a)a.scrollIntoView({block:'nearest'})}
 function pickSug(i){const el=$('i'),b=el.value.slice(0,sugStart),a=el.value.slice(el.selectionStart).trimStart(),w=sugList[i];
   el.value=b+w+' '+a;el.focus();const pos=(b+w+' ').length;el.setSelectionRange(pos,pos);sugIdx=0;suggest()}
-$('i').addEventListener('input',()=>{sugIdx=0;suggest()});
-$('i').addEventListener('blur',()=>setTimeout(()=>$('sug').classList.add('hidden'),150));
-$('i').addEventListener('keydown',e=>{
+$('i').addEventListener('input',()=>{sugIdx=0;suggest()});$('i').addEventListener('blur',()=>setTimeout(()=>$('sug').classList.add('hidden'),150));$('i').addEventListener('keydown',e=>{
   if(!sugList.length||$('sug').classList.contains('hidden'))return;
   if(e.key==='Tab'){e.preventDefault();if(e.shiftKey){sugIdx=(sugIdx-1+sugList.length)%sugList.length;drawSug()}else pickSug(sugIdx)}
   else if(e.key==='ArrowDown'){e.preventDefault();sugIdx=(sugIdx+1)%sugList.length;drawSug()}
@@ -596,8 +589,7 @@ let online=new Set(),cr={},croles=[],unreadCh={},unreadSrv={},mentSrv={},chanSrv
 const RN={member:1,verified:2,mod:3,admin:4,manager:5,owner:6},rn=r=>Object.keys(RN).find(k=>RN[k]===r)||'member';
 const ask=(q,c)=>{const v=prompt(q+' (member, verified, mod, admin, manager, owner)',rn(c));return v===null?null:(RN[v.trim().toLowerCase()]||c)};
 const dot=id=>`<span class="w-2.5 h-2.5 rounded-full flex-shrink-0 ${id===me.id||online.has(id)?'bg-[#23a55a]':'bg-[#80848e]'}" title="${id===me.id||online.has(id)?'Online':'Offline'}"></span>`;
-
-// ===== DM voice calls =====
+// ===== DM voice calls (phase 1: one-to-one only) =====
 const RTC_CONFIG={iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']}]};
 let ringCh=null,callCh=null,pc=null,localStream=null,activeCallWith=null,callState='idle',incomingFrom=null,muted=false;
 
@@ -607,177 +599,194 @@ function pairKey(a,b){return 'call-'+[a,b].sort().join('-')}
 function handleRingSignal(msg){
   if(msg.type==='incoming-call'&&callState!=='idle'){
     sb.channel('ring-'+msg.from).send({type:'broadcast',event:'signal',payload:{type:'busy',from:me.id}});
-  }else if(msg.type==='incoming-call'&&callState==='idle'){
-    incomingFrom=msg.from;callState='ringing-in';
-    $('ringtext').textContent=(profiles[msg.from]\vert{}\vert{}{username:'Someone'}).username+' is calling...';$('ringbanner').classList.remove('hidden');
-  }else if(msg.type==='declined'&&callState==='calling'){
-    endCall('Call declined.');
-  }else if(msg.type==='busy'&&callState==='calling'){
-    endCall((profiles[msg.from]||{username:'They'}).username+' is already on a call.');
+    return;
+  }
+  if(msg.type==='incoming-call'&&callState==='idle'){
+    incomingFrom=msg.from;
+    callState='ringing';
+    $('ringtext').textContent=(profiles[msg.from]?.username\vert{}\vert{}'Someone')+' is calling...';$('ringbanner').classList.remove('hidden');
+  } else if(msg.type==='busy'&&incomingFrom===msg.from){
+    declineCall();
+    alert('User is busy.');
+  } else if(msg.type==='declined'&&activeCallWith===msg.from){
+    hangupCall();
   }
 }
-
-async function startCall(){
-  if(cur.type!=='dm'||callState!=='idle')return;
-  const target=cur.id;
-  try{
-    localStream=await navigator.mediaDevices.getUserMedia({
-      audio:{
-        echoCancellation:true,
-        noiseSuppression:true,
-        autoGainControl:true
-      }
-    });
-  }
-  catch(e){return alert('Could not access your microphone. Check your browser\'s permission settings for this site.')}
-  activeCallWith=target;callState='calling';
-  $('callbtn').classList.add('hidden');
-  $('calltext').textContent='Calling '+dn(profiles[target])+'...';$('callbar').classList.remove('hidden');
-  setupPeerConnection(target);
-  callCh=sb.channel(pairKey(me.id,target),{config:{presence:{key:me.id}}});
-  callCh.on('broadcast',{event:'signal'},p=>handleCallSignal(p.payload));
-  callCh.on('presence',{event:'sync'},async()=>{
-    const others=Object.keys(callCh.presenceState()).filter(k=>k!==me.id);
-    if(others.length&&callState==='calling'){
-      callState='connecting';$('calltext').textContent='Connecting...';
-      const offer=await pc.createOffer();await pc.setLocalDescription(offer);
-      callCh.send({type:'broadcast',event:'signal',payload:{type:'offer',sdp:offer,from:me.id}});
-    }
-  });
-  await callCh.subscribe(async st=>{
-    if(st==='SUBSCRIBED'){
-      await callCh.track({t:Date.now()});
-      sb.channel('ring-'+target).send({type:'broadcast',event:'signal',payload:{type:'incoming-call',from:me.id}});
-    }
-  });
-}
-
-async function acceptCall(){
-  if(callState!=='ringing-in')return;
-  const target=incomingFrom;$('ringbanner').classList.add('hidden');
-  try{
-    localStream=await navigator.mediaDevices.getUserMedia({
-      audio:{
-        echoCancellation:true,
-        noiseSuppression:true,
-        autoGainControl:true
-      }
-    });
-  }
-  catch(e){alert('Could not access your microphone.');declineCall();return}
-  activeCallWith=target;callState='connecting';
-  $('calltext').textContent='Connecting to '+dn(profiles[target])+'...';$('callbar').classList.remove('hidden');
-  setupPeerConnection(target);
-  callCh=sb.channel(pairKey(me.id,target),{config:{presence:{key:me.id}}});
-  callCh.on('broadcast',{event:'signal'},p=>handleCallSignal(p.payload));
-  await callCh.subscribe(async st=>{if(st==='SUBSCRIBED')await callCh.track({t:Date.now()})});
-}
-
 function declineCall(){
-  if(incomingFrom)sb.channel('ring-'+incomingFrom).send({type:'broadcast',event:'signal',payload:{type:'declined',from:me.id}});
-  $('ringbanner').classList.add('hidden');incomingFrom=null;callState='idle';
+  if(incomingFrom){
+    sb.channel('ring-'+incomingFrom).send({type:'broadcast',event:'signal',payload:{type:'declined',from:me.id}});
+  }
+  incomingFrom=null;
+  callState='idle';
+  $('ringbanner').classList.add('hidden');
 }
+function acceptCall(){
+  if(!incomingFrom)return;
+  const peer=incomingFrom;
+  incomingFrom=null;
+  $('ringbanner').classList.add('hidden');
+  startCallWith(peer,false);
+}
+function startCall(){
+  if(cur.type!=='dm')return;
+  startCallWith(cur.id,true);
+}
+async function startCallWith(peerId,isCaller){
+  activeCallWith=peerId;
+  callState='connecting';
+  $('callbtn').classList.add('hidden');
+  $('callbar').classList.remove('hidden');$('calltext').textContent=isCaller?'Calling...':'Connected';
 
-function setupPeerConnection(peerId){
+  try {
+    localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+  } catch(e){
+    alert('Could not access microphone.');
+    hangupCall();
+    return;
+  }
+
   pc=new RTCPeerConnection(RTC_CONFIG);
   localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
-  pc.onicecandidate=e=>{if(e.candidate&&callCh)callCh.send({type:'broadcast',event:'signal',payload:{type:'ice',candidate:e.candidate,from:me.id}})};
-  
+
   pc.ontrack=e=>{
-    let a=$('remoteAudio');
-    if(!a){
-      a=document.createElement('audio');
-      a.id='remoteAudio';
-      a.autoplay=true;
-      document.body.appendChild(a);
+    const audio=new Audio();
+    audio.srcObject=e.streams[0];
+    audio.autoplay=true;
+    audio.play().catch(err=>console.error(err));
+  };
+
+  const cKey=pairKey(me.id,peerId);
+  callCh=sb.channel(cKey,{config:{broadcast:{self:false}}});
+
+  callCh.on('broadcast',{event:'signal'},async data=>{
+    const sig=data.payload;
+    if(sig.from===me.id)return;
+    if(sig.sdp){
+      await pc.setRemoteDescription(new RTCSessionDescription(sig.sdp));
+      if(sig.sdp.type==='offer'){
+        const ans=await pc.createAnswer();
+        await pc.setLocalDescription(ans);
+        callCh.send({type:'broadcast',event:'signal',payload:{sdp:pc.localDescription,from:me.id}});
+        $('calltext').textContent='Connected';
+      }
+    } else if(sig.candidate){
+      try{await pc.addIceCandidate(new RTCIceCandidate(sig.candidate))}catch(e){console.error(e)}
+    } else if(sig.type==='hangup'){
+      hangupCall();
     }
-    if(a.srcObject!==e.streams[0]){
-      a.srcObject=e.streams[0];
+  });
+
+  await new Promise(res=>callCh.subscribe(st=>{if(st==='SUBSCRIBED')res()}));
+
+  pc.onicecandidate=e=>{
+    if(e.candidate){
+      callCh.send({type:'broadcast',event:'signal',payload:{candidate:e.candidate,from:me.id}});
     }
   };
 
-  pc.onconnectionstatechange=()=>{
-    if(pc.connectionState==='connected'){callState='connected';$('calltext').textContent='In call with '+dn(profiles[peerId]);}
-    else if(['failed','disconnected','closed'].includes(pc.connectionState)&&callState!=='idle'){endCall('Call ended.')}
-  };
-}
-
-async function handleCallSignal(msg){
-  if(!pc)return;
-  if(msg.type==='offer'){
-    await pc.setRemoteDescription(msg.sdp);
-    const answer=await pc.createAnswer();await pc.setLocalDescription(answer);
-    callCh.send({type:'broadcast',event:'signal',payload:{type:'answer',sdp:answer,from:me.id}});
-  }else if(msg.type==='answer'){
-    await pc.setRemoteDescription(msg.sdp);
-  }else if(msg.type==='ice'){
-    try{await pc.addIceCandidate(msg.candidate)}catch(e){console.error('ICE add failed:',e)}
-  }else if(msg.type==='hangup'){
-    endCall((profiles[msg.from]||{username:'They'}).username+' left the call.');
+  if(isCaller){
+    sb.channel('ring-'+peerId).send({type:'broadcast',event:'signal',payload:{type:'incoming-call',from:me.id}});
+    const offer=await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    callCh.send({type:'broadcast',event:'signal',payload:{sdp:pc.localDescription,from:me.id}});
   }
 }
-
 function toggleMute(){
   if(!localStream)return;
-  muted=!muted;localStream.getAudioTracks().forEach(t=>t.enabled=!muted);
-  $('mutebtn').textContent=muted?'Unmute':'Mute';$('mutebtn').classList.toggle('bg-[#f23f43]',muted);
+  muted=!muted;
+  localStream.getAudioTracks().forEach(t=>t.enabled=!muted);
+  $('mutebtn').textContent=muted?'Unmute':'Mute';$('mutebtn').className=muted?'bg-[#f23f43] text-white text-xs px-3 py-1.5 rounded-lg':'bg-[#4e5058] text-white text-xs px-3 py-1.5 rounded-lg';
 }
-
-function hangupCall(){if(callCh)callCh.send({type:'broadcast',event:'signal',payload:{type:'hangup',from:me.id}});endCall('Call ended.')}
-
-function endCall(reason){
-  if(pc){pc.close();pc=null}
-  if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null}
-  if(callCh){sb.removeChannel(callCh);callCh=null}
-  const a=$('remoteAudio');if(a)a.srcObject=null;
-  activeCallWith=null;callState='idle';incomingFrom=null;muted=false;
+function hangupCall(){
+  if(activeCallWith&&callCh){
+    callCh.send({type:'broadcast',event:'signal',payload:{type:'hangup',from:me.id}});
+  }
+  if(localStream){
+    localStream.getTracks().forEach(t=>t.stop());
+    localStream=null;
+  }
+  if(pc){
+    pc.close();
+    pc=null;
+  }
+  if(callCh){
+    sb.removeChannel(callCh);
+    callCh=null;
+  }
+  activeCallWith=null;
+  callState='idle';
+  muted=false;
   $('callbar').classList.add('hidden');$('ringbanner').classList.add('hidden');
-  $('mutebtn').textContent='Mute';$('mutebtn').classList.remove('bg-[#f23f43]');
   if(cur.type==='dm')$('callbtn').classList.remove('hidden');
-  if(reason)toast(reason);
 }
-
-function track(){touchSeen();ringCh=ringChannel();const ch=sb.channel('online',{config:{presence:{key:me.id}}});ch.on('presence',{event:'sync'},()=>{online=new Set(Object.keys(ch.presenceState()));if(srvId)drawMembers();else drawPeople()}).subscribe(async st=>{if(st==='SUBSCRIBED')await ch.track({t:Date.now()})})}
-async function loadChanMap(){const {data}=await sb.from('channels').select('id,server_id');(data||[]).forEach(x=>chanSrv[x.id]=x.server_id)}
-function drawServerNav(){$('srv').innerHTML=servers.map(s=>{const u=unreadSrv[s.id],m=mentSrv[s.id],act=srvId===s.id;
-  return `<div class="relative"><button onclick="openServer('${s.id}')" oncontextmenu="return srvMenu(event,'${s.id}')" title="${esc(s.name)}" class="w-12 h-12 overflow-hidden ${act?'bg-[#5865f2] rounded-xl':'bg-[#35373c] rounded-3xl'} hover:rounded-xl hover:bg-[#5865f2] text-white font-bold ${u&&!act?'ring-2 ring-white':''}">${s.image&&s.image.startsWith('data:image/')?`<img src="${esc(s.image)}" class="w-full h-full object-cover">`:esc(s.name[0].toUpperCase())}</button>${m?`<span class="absolute -bottom-1 -right-1 min-w-5 h-5 px-1 flex items-center justify-center rounded-full bg-[#f23f43] text-white text-[11px] font-black border-2 border-[#1e1f22]">${m>99?'99+':m}</span>`:''}</div>`}).join('')}
-function srvMenu(e,id){e.preventDefault();e.stopPropagation();const s=servers.find(x=>x.id===id);let h='';
-  if(defRole==='owner')h+=mi('🖼','Change server image',`srvImg('${id}')`)+mi('✎','Rename server',`renameSrv('${id}')`)+sep;
-  if(!s.is_default&&defRole==='owner')h+=mi('🗑','Delete server',`delServer('${id}')`,1)+sep;
-  showCtx(e.clientX,e.clientY,h+mi('ID','Copy server ID',`navigator.clipboard.writeText('${id}')`));return false}
-async function delServer(id){const s=servers.find(x=>x.id===id);if(!s)return;if(!confirm('Delete server "'+s.name+'" and everything in it? This cannot be undone.'))return;
-  const {error}=await sb.rpc('delete_server',{sid:id});if(error)return alert(error.message);if(srvId===id){srvId=null;showDMs()}await loadServers()}
-function srvImg(id){srvImgFor=id;$('sif').click()}$('sif').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f||!srvImgFor)return;const d=await pickAvatar(f);const {error}=await sb.from('servers').update({image:d}).eq('id',srvImgFor);if(error)alert(error.message);await loadServers()};
-async function renameSrv(id){const s=servers.find(x=>x.id===id),n=prompt('Server name',s.name);if(!n||!n.trim())return;const {error}=await sb.from('servers').update({name:n.trim()}).eq('id',id);if(error)alert(error.message);await loadServers();if(srvId===id)openServer(id)}
-async function editMsg(id){const m=msgCache[id],t=prompt('Edit message',m.content);if(t===null||!t.trim()||t.trim()===m.content)return;const {error}=await sb.from('messages').update({content:t.trim(),edited_at:new Date().toISOString()}).eq('id',id);if(error)alert(error.message.includes('auto-mod')?'That edit was blocked by auto-mod.':error.message)}
-async function deleteMe(){const n=prompt('This permanently deletes your account. Type your username ('+me.username+') to confirm:');if(n!==me.username)return;const {error}=await sb.rpc('delete_my_account');if(error)return alert(error.message);await sb.auth.signOut();location.reload()}
-$('mem').addEventListener('contextmenu',e=>{const d=e.target.closest('[data-uid]');if(!d)return;e.preventDefault();const u=d.dataset.uid;let h=mi('◉','View profile',`showProfile('${u}')`);if(u!==me.id)h+=mi('@','Mention',`mentionUser('${u}')`);
-  if(rank(myRole())>=4&&u!==me.id&&rank(roles[u])<rank(myRole()))h+=mi('✎','Change nickname',`promptNick('${u}')`);
-  if(defRole==='owner'&&u!==me.id)h+=sep+mi('⇄','Switch to this account',`switchTo('${u}')`,1);
-  if(myRole()==='owner'&&u!==me.id)h+=mi('🗑','Delete account',`delAcct('${u}')`,1);
-  showCtx(e.clientX,e.clientY,h)});
-async function promptNick(uid){const cur=(profiles[uid]||{}).nickname||'';const n=prompt('New nickname for '+(profiles[uid]||{}).username+' (blank to reset)',cur);if(n===null)return;
-  const {error}=await sb.rpc('force_nick',{uid,nick:n.trim()||null});if(error)return alert(error.message);await loadProfiles();if(srvId)drawMembers()}
-async function switchTo(uid){if(defRole!=='owner')return;const target=profiles[uid];if(!target)return;
-  if(!confirm('Switch to '+target.username+'\'s account now? You will be logged out of your current account.'))return;
-  try{
-    const {data:{session},error:sErr}=await sb.auth.getSession();
-    if(sErr||!session)return alert('Not signed in properly: '+(sErr?sErr.message:'no session found'));
-    const res=await fetch('https://ilmzklhvkacnljfgnxvq.supabase.co/functions/v1/rapid-task',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({uid})});
-    let j;try{j=await res.json()}catch(e2){return alert('Function returned a non-JSON response (status '+res.status+'). Check the function logs in Supabase.')}
-    if(!res.ok)return alert('Switch failed: '+(j.error||('HTTP '+res.status)));
-    const {error}=await sb.auth.verifyOtp({type:'magiclink',token_hash:j.hashed_token});
-    if(error)return alert('Sign-in step failed: '+error.message);
-    location.reload();
-  }catch(e){console.error('switchTo error:',e);alert('Switch failed before reaching the server: '+(e&&e.message?e.message:String(e)))}
+// ===== Role Management Modals =====
+async function openRoles(){
+  if(defRole!=='owner')return;
+  $('rm').classList.remove('hidden');
+  drawRolesList();
 }
-async function delAcct(u){const n=(profiles[u]||{}).username;if(!confirm('Permanently delete the account '+n+'? This cannot be undone.'))return;const {error}=await sb.rpc('admin_delete_account',{uid:u});if(error)return alert(error.message);await loadProfiles();openServer(srvId)}
+function closeRoles(){
+  $('rm').classList.add('hidden');$('rmform').classList.add('hidden');
+}
+function drawRolesList(){
+  const list=$('rmlist');
+  if(!croles.length){
+    list.innerHTML='<p class="text-xs text-[#949ba4]">No custom roles created yet.</p>';
+    return;
+  }
+  list.innerHTML=croles.map(r=>`<div class="flex items-center justify-between bg-[#1e1f22] p-2.5 rounded-lg"><div><span class="text-xs font-bold text-white px-2 py-0.5 rounded" style="background:${r.color}">${esc(r.name)}</span><span class="text-[10px] text-[#949ba4] ml-2">Base: ${r.base}</span></div><div class="flex gap-2"><button onclick="roleForm('${r.id}')" class="text-xs text-[#949ba4] hover:text-white">Edit</button><button onclick="deleteRole('${r.id}')" class="text-xs text-[#f23f43]">Delete</button></div></div>`).join('');
+}
+function roleForm(id){
+  const r=id?croles.find(x=>x.id===id):null;
+  $('rf_name').value=r?r.name:'';
+  $('rf_color').value=r?r.color:'#5865f2';
+  $('rf_base').value=r?r.base:'member';
+  $('rf_admin').checked=false;
+  $('rmform').classList.remove('hidden');
+  const prev=$('rf_preview');
+  prev.textContent=$('rf_name').value||'Preview';
+  prev.style.background=$('rf_color').value;
+  $('rf_name').oninput=()=>{prev.textContent=$('rf_name').value||'Preview'};
+  $('rf_color').oninput=()=>{prev.style.background=$('rf_color').value};
+  window.editingRoleId=id;
+}
+async function saveRole(){
+  const name=$('rf_name').value.trim();
+  const color=$('rf_color').value;
+  const base=$('rf_base').value;
+  if(!name)return alert('Role name is required.');
+  const id=window.editingRoleId;
+  let error;
+  if(id){
+    ({error}=await sb.from('custom_roles').update({name,color,base}).eq('id',id));
+  } else {
+    ({error}=await sb.from('custom_roles').insert({server_id:srvId,name,color,base,position:croles.length+1}));
+  }
+  if(error)return alert(error.message);
+  const {data}=await sb.from('custom_roles').select('*').eq('server_id',srvId);
+  croles=data||[];
+  closeRoles();
+  openServer(srvId);
+}
+async function deleteRole(id){
+  if(!confirm('Delete this custom role?'))return;
+  const {error}=await sb.from('custom_roles').delete().eq('id',id);
+  if(error)return alert(error.message);
+  const {data}=await sb.from('custom_roles').select('*').eq('server_id',srvId);
+  croles=data||[];
+  drawRolesList();
+  openServer(srvId);
+}
+function toggleAdminPerm(){
+  // stub for perm toggles if needed
+}
+// Final Initialization tracking
 let everUp=false;
-async function syncCurrent(full){try{
-  if(cur.type==='ch'){if(full)return openChannel(cur.id);const {data}=await sb.from('messages').select('*').eq('channel_id',cur.id).order('created_at',{ascending:false}).limit(30);(data||[]).reverse().forEach(add)}
-  else if(cur.type==='dm'){if(full)return openDM(cur.id);const {data}=await sb.from('dm_messages').select('*').or(`sender_id.eq.${cur.id},recipient_id.eq.${cur.id}`).order('created_at',{ascending:false}).limit(30);(data||[]).reverse().forEach(add)}
-}catch(e){console.error(e)}}
-setInterval(()=>{if(!document.hidden&&me)syncCurrent(false)},15000);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&me)syncCurrent(true)});
-sb.auth.onAuthStateChange(ev=>{if(ev==='SIGNED_OUT'){$('app').classList.add('hidden');$('auth').classList.remove('hidden')}});
-window.addEventListener('unhandledrejection',e=>console.
+async function syncCurrent(initial){
+  if(cur.type==='ch')openChannel(cur.id);
+  else if(cur.type==='dm')openDM(cur.id);
+}
+track();
+</script>
+</body>
+</html>
