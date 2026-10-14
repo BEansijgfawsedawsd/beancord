@@ -617,7 +617,17 @@ function handleRingSignal(msg){
 async function startCall(){
   if(cur.type!=='dm'||callState!=='idle')return;
   const target=cur.id;
-  try{localStream=await navigator.mediaDevices.getUserMedia({audio:true})}
+  try{
+    localStream=await navigator.mediaDevices.getUserMedia({
+      audio:{
+        echoCancellation:true,
+        noiseSuppression:true,
+        autoGainControl:true,
+        highPassFilter:true,
+        sampleRate:48000
+      }
+    });
+  }
   catch(e){return alert('Could not access your microphone. Check your browser\'s permission settings for this site.')}
   activeCallWith=target;callState='calling';
   $('callbtn').classList.add('hidden');
@@ -644,7 +654,17 @@ async function startCall(){
 async function acceptCall(){
   if(callState!=='ringing-in')return;
   const target=incomingFrom;$('ringbanner').classList.add('hidden');
-  try{localStream=await navigator.mediaDevices.getUserMedia({audio:true})}
+  try{
+    localStream=await navigator.mediaDevices.getUserMedia({
+      audio:{
+        echoCancellation:true,
+        noiseSuppression:true,
+        autoGainControl:true,
+        highPassFilter:true,
+        sampleRate:48000
+      }
+    });
+  }
   catch(e){alert('Could not access your microphone.');declineCall();return}
   activeCallWith=target;callState='connecting';
   $('calltext').textContent='Connecting to '+dn(profiles[target])+'...';$('callbar').classList.remove('hidden');
@@ -663,7 +683,20 @@ function setupPeerConnection(peerId){
   pc=new RTCPeerConnection(RTC_CONFIG);
   localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
   pc.onicecandidate=e=>{if(e.candidate&&callCh)callCh.send({type:'broadcast',event:'signal',payload:{type:'ice',candidate:e.candidate,from:me.id}})};
-  pc.ontrack=e=>{let a=$('remoteAudio');if(!a){a=document.createElement('audio');a.id='remoteAudio';a.autoplay=true;document.body.appendChild(a)}a.srcObject=e.streams[0]};
+  
+  pc.ontrack=e=>{
+    let a=$('remoteAudio');
+    if(!a){
+      a=document.createElement('audio');
+      a.id='remoteAudio';
+      a.autoplay=true;
+      document.body.appendChild(a);
+    }
+    if(a.srcObject!==e.streams[0]){
+      a.srcObject=e.streams[0];
+    }
+  };
+
   pc.onconnectionstatechange=()=>{
     if(pc.connectionState==='connected'){callState='connected';$('calltext').textContent='In call with '+dn(profiles[peerId]);}
     else if(['failed','disconnected','closed'].includes(pc.connectionState)&&callState!=='idle'){endCall('Call ended.')}
@@ -715,8 +748,7 @@ function srvMenu(e,id){e.preventDefault();e.stopPropagation();const s=servers.fi
   showCtx(e.clientX,e.clientY,h+mi('ID','Copy server ID',`navigator.clipboard.writeText('${id}')`));return false}
 async function delServer(id){const s=servers.find(x=>x.id===id);if(!s)return;if(!confirm('Delete server "'+s.name+'" and everything in it? This cannot be undone.'))return;
   const {error}=await sb.rpc('delete_server',{sid:id});if(error)return alert(error.message);if(srvId===id){srvId=null;showDMs()}await loadServers()}
-function srvImg(id){srvImgFor=id;$('sif').click()}
-$('sif').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f||!srvImgFor)return;const d=await pickAvatar(f);const {error}=await sb.from('servers').update({image:d}).eq('id',srvImgFor);if(error)alert(error.message);await loadServers()};
+function srvImg(id){srvImgFor=id;$('sif').click()}$('sif').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f||!srvImgFor)return;const d=await pickAvatar(f);const {error}=await sb.from('servers').update({image:d}).eq('id',srvImgFor);if(error)alert(error.message);await loadServers()};
 async function renameSrv(id){const s=servers.find(x=>x.id===id),n=prompt('Server name',s.name);if(!n||!n.trim())return;const {error}=await sb.from('servers').update({name:n.trim()}).eq('id',id);if(error)alert(error.message);await loadServers();if(srvId===id)openServer(id)}
 async function editMsg(id){const m=msgCache[id],t=prompt('Edit message',m.content);if(t===null||!t.trim()||t.trim()===m.content)return;const {error}=await sb.from('messages').update({content:t.trim(),edited_at:new Date().toISOString()}).eq('id',id);if(error)alert(error.message.includes('auto-mod')?'That edit was blocked by auto-mod.':error.message)}
 async function deleteMe(){const n=prompt('This permanently deletes your account. Type your username ('+me.username+') to confirm:');if(n!==me.username)return;const {error}=await sb.rpc('delete_my_account');if(error)return alert(error.message);await sb.auth.signOut();location.reload()}
@@ -839,7 +871,7 @@ function roleForm(rid){
   renderPermChecks(r?r.perms:null);
   updateSwatch();$('rmform').classList.remove('hidden');$('rf_name').focus();
 }
-function updateSwatch(){const e=$('rf_preview');e.textContent=$('rf_name').value.trim()||'PREVIEW';e.style.background=$('rf_color').value}
+function updateSwatch(){const e=$('rf_preview');e.textContent=$('rf_name').value.trim()\vert{}\vert{}'PREVIEW';e.style.background=$('rf_color').value}
 $('rf_name').addEventListener('input',updateSwatch);$('rf_color').addEventListener('input',updateSwatch);
 async function saveRole(){
   const name=$('rf_name').value.trim(),color=$('rf_color').value,base=$('rf_base').value,perms=readPermChecks();
