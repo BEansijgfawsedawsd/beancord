@@ -44,7 +44,6 @@ html[data-theme="midnight"] [class~="hover:bg-[#35373c]"]:hover{background-color
 html[data-theme="midnight"] [class~="bg-[#111214]"]{background-color:#070b14 !important}
 html[data-theme="midnight"] [class~="hover:bg-[#111214]"]:hover{background-color:#070b14 !important}
 html[data-theme="midnight"] [class~="bg-[#4e5058]"]{background-color:#2d3c5e !important}
-html[data-theme="midnight"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#2d3c5e !important}
 html[data-theme="forest"] [class~="bg-[#313338]"]{background-color:#0f1a14 !important}
 html[data-theme="forest"] [class~="hover:bg-[#313338]"]:hover{background-color:#0f1a14 !important}
 html[data-theme="forest"] [class~="bg-[#2b2d31]"]{background-color:#13221a !important}
@@ -62,7 +61,6 @@ html[data-theme="forest"] [class~="hover:bg-[#35373c]"]:hover{background-color:#
 html[data-theme="forest"] [class~="bg-[#111214]"]{background-color:#070d09 !important}
 html[data-theme="forest"] [class~="hover:bg-[#111214]"]:hover{background-color:#070d09 !important}
 html[data-theme="forest"] [class~="bg-[#4e5058]"]{background-color:#2f4a3a !important}
-html[data-theme="forest"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#2f4a3a !important}
 html[data-theme="plum"] [class~="bg-[#313338]"]{background-color:#1a1024 !important}
 html[data-theme="plum"] [class~="hover:bg-[#313338]"]:hover{background-color:#1a1024 !important}
 html[data-theme="plum"] [class~="bg-[#2b2d31]"]{background-color:#21142e !important}
@@ -80,7 +78,6 @@ html[data-theme="plum"] [class~="hover:bg-[#35373c]"]:hover{background-color:#33
 html[data-theme="plum"] [class~="bg-[#111214]"]{background-color:#0c0612 !important}
 html[data-theme="plum"] [class~="hover:bg-[#111214]"]:hover{background-color:#0c0612 !important}
 html[data-theme="plum"] [class~="bg-[#4e5058]"]{background-color:#4a3068 !important}
-html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a3068 !important}
 </style></head>
 <body class="bg-[#313338] text-[#dbdee1] h-screen overflow-hidden">
 
@@ -338,7 +335,7 @@ function openGroupDM(id){
   const g = localGroups[id];
   if(!g) return;
   cur={type:'group',id}; $('i').disabled=false; $('i').placeholder='Message group...';
-  $('sh').innerHTML='<span class="truncate">Direct Messages</span>';
+  $('sh').innerHTML=`<span class="truncate">Direct Messages</span><button onclick="promptCreateGroup()" title="Create Group Chat" class="text-sm text-[#949ba4] hover:text-white px-1">➕</button>`;
   $('chtitle').innerHTML='👥 '+esc(g.name)+' ('+g.members.length+')';
   $('pinbtn').classList.add('hidden'); $('searchbtn').classList.add('hidden'); $('searchbar').classList.add('hidden');
   $('callbtn').classList.remove('hidden'); closeLeftMobile(); subscribeTyping();
@@ -368,7 +365,6 @@ function drawPeople(){
   const nmx=p=>`<span class="flex items-center gap-2">${av(p,8)}${dot(p.id)}<span style="color:${col(p)}">${esc(dn(p))}</span></span>`;
   let h=servers.some(x=>x.is_default)?'':'<button onclick="rejoin()" class="w-full bg-[#5865f2] text-white text-sm font-bold rounded-md py-1.5 mb-1">Join BEANCORD</button>';
   
-  // Render Group Chats list if any exist
   const groupArr = Object.values(localGroups);
   if(groupArr.length){
     h+=head('Group Chats')+groupArr.map(g=>`<button onclick="openGroupDM('${g.id}')" class="w-full flex justify-between items-center px-2 py-2 rounded-md text-sm ${cur.id===g.id?'bg-[#404249] text-white':'text-[#949ba4] hover:bg-[#35373c]'}"><span class="truncate">👥 ${esc(g.name)}</span></button>`).join('');
@@ -433,7 +429,6 @@ $('f').onsubmit=async e=>{
     const g=localGroups[cur.id];if(!g)return;
     const m={id:'msg_'+crypto.randomUUID(),sender_id:me.id,content:t,created_at:new Date().toISOString()};
     g.messages.push(m); saveLocalGroups(); add(m); $('i').value='';
-    // Broadcast group message to peers via realtime channel
     sb.channel('group-msg-'+g.id).send({type:'broadcast',event:'msg',payload:m});
     return;
   }
@@ -907,7 +902,6 @@ function track(){
   const ch=sb.channel('online',{config:{presence:{key:me.id}}});
   ch.on('presence',{event:'sync'},()=>{online=new Set(Object.keys(ch.presenceState()));if(srvId)drawMembers();else drawPeople()}).subscribe(async st=>{if(st==='SUBSCRIBED')await ch.track({t:Date.now()})});
   
-  // Listen for realtime group chat messages & group call broadcasts
   sb.channel('group-sync').on('broadcast',{event:'msg'},p=>{
     const m=p.payload;
     Object.values(localGroups).forEach(g=>{
