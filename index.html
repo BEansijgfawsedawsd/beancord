@@ -44,6 +44,7 @@ html[data-theme="midnight"] [class~="hover:bg-[#35373c]"]:hover{background-color
 html[data-theme="midnight"] [class~="bg-[#111214]"]{background-color:#070b14 !important}
 html[data-theme="midnight"] [class~="hover:bg-[#111214]"]:hover{background-color:#070b14 !important}
 html[data-theme="midnight"] [class~="bg-[#4e5058]"]{background-color:#2d3c5e !important}
+html[data-theme="midnight"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#2d3c5e !important}
 html[data-theme="forest"] [class~="bg-[#313338]"]{background-color:#0f1a14 !important}
 html[data-theme="forest"] [class~="hover:bg-[#313338]"]:hover{background-color:#0f1a14 !important}
 html[data-theme="forest"] [class~="bg-[#2b2d31]"]{background-color:#13221a !important}
@@ -61,6 +62,7 @@ html[data-theme="forest"] [class~="hover:bg-[#35373c]"]:hover{background-color:#
 html[data-theme="forest"] [class~="bg-[#111214]"]{background-color:#070d09 !important}
 html[data-theme="forest"] [class~="hover:bg-[#111214]"]:hover{background-color:#070d09 !important}
 html[data-theme="forest"] [class~="bg-[#4e5058]"]{background-color:#2f4a3a !important}
+html[data-theme="forest"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#2f4a3a !important}
 html[data-theme="plum"] [class~="bg-[#313338]"]{background-color:#1a1024 !important}
 html[data-theme="plum"] [class~="hover:bg-[#313338]"]:hover{background-color:#1a1024 !important}
 html[data-theme="plum"] [class~="bg-[#2b2d31]"]{background-color:#21142e !important}
@@ -78,6 +80,7 @@ html[data-theme="plum"] [class~="hover:bg-[#35373c]"]:hover{background-color:#33
 html[data-theme="plum"] [class~="bg-[#111214]"]{background-color:#0c0612 !important}
 html[data-theme="plum"] [class~="hover:bg-[#111214]"]:hover{background-color:#0c0612 !important}
 html[data-theme="plum"] [class~="bg-[#4e5058]"]{background-color:#4a3068 !important}
+html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a3068 !important}
 </style></head>
 <body class="bg-[#313338] text-[#dbdee1] h-screen overflow-hidden">
 
@@ -114,7 +117,7 @@ html[data-theme="plum"] [class~="bg-[#4e5058]"]{background-color:#4a3068 !import
   <div id="ch" class="h-12 border-b border-black/30 px-3 flex items-center gap-2 font-bold text-white">
    <button onclick="toggleLeft()" class="block md:hidden text-lg px-1">☰</button>
    <div id="chtitle" class="flex items-center min-w-0 flex-1 truncate"></div>
-   <button id="callbtn" onclick="handleCallButton()" title="Call" class="hidden text-sm text-[#23a55a] hover:text-white px-1">📞</button>
+   <button id="callbtn" onclick="startCall()" title="Call" class="hidden text-sm text-[#23a55a] hover:text-white px-1">📞</button>
    <button id="pinbtn" onclick="togglePins()" title="Pinned messages" class="hidden text-sm text-[#949ba4] hover:text-white px-1">📌</button>
    <button id="searchbtn" onclick="toggleSearch()" title="Search messages" class="hidden text-sm text-[#949ba4] hover:text-white px-1">🔍</button>
   </div>
@@ -228,7 +231,7 @@ async function start(){
   const {data:{user}}=await sb.auth.getUser();
   if(!user){$('auth').classList.remove('hidden');$('app').classList.add('hidden');return}
   $('auth').classList.add('hidden');$('app').classList.remove('hidden');
-  await loadProfiles();me=profiles[user.id];{const b=until(me,'banned_until');if(b)return kickOut(b)}await loadFriends();await loadBlocks();await loadShopTags();await loadChanMap();loadLocalGroups();$('me').textContent=me?dn(me):'';
+  await loadProfiles();me=profiles[user.id];{const b=until(me,'banned_until');if(b)return kickOut(b)}await loadFriends();await loadBlocks();await loadShopTags();await loadChanMap();$('me').textContent=me?dn(me):'';
   await loadServers();const d=servers.find(x=>x.is_default);if(d)openServer(d.id);else showDMs();listen();track();
 }
 async function loadServers(){const {data}=await sb.from('servers').select('*').order('created_at');servers=data||[];drawServerNav()}
@@ -261,7 +264,7 @@ function drawMembers(){
     if(!groupsMap[key])groupsMap[key]={label:custom?custom.name:m.role.charAt(0).toUpperCase()+m.role.slice(1),color:custom?custom.color:null,rankVal:rank(custom?custom.base:m.role),pos:custom?(custom.position||0):0,items:[]};
     groupsMap[key].items.push(m);
   });
-  const groups=Object.values(groupsMap).sort((ga,gb)=>gb.rankVal-ga.rankVal||gb.pos-gb.pos||ga.label.localeCompare(gb.label));
+  const groups=Object.values(groupsMap).sort((ga,gb)=>gb.rankVal-ga.rankVal||gb.pos-ga.pos||ga.label.localeCompare(gb.label));
   $('mem').innerHTML=groups.map(g=>{
     const rows=g.items.sort((a,b2)=>nm(a).localeCompare(nm(b2))).map(m=>{
       const p=profiles[m.user_id]||{},self=m.user_id===me.id,u=m.user_id,acts=[];
@@ -301,74 +304,19 @@ async function openChannel(id){
   rx={};const ids=(data||[]).map(x=>x.id);if(ids.length){const {data:r}=await sb.from('reactions').select('*').in('message_id',ids);(r||[]).forEach(x=>(rx[x.message_id]=rx[x.message_id]||[]).push(x))}
   draw(data||[]);
 }
-
-let localGroups = {};
-function loadLocalGroups() {
-  try {
-    const saved = localStorage.getItem('beancord_groups_' + me.id);
-    if (saved) localGroups = JSON.parse(saved);
-  } catch(e) { localGroups = {}; }
-}
-function saveLocalGroups() {
-  try { localStorage.setItem('beancord_groups_' + me.id, JSON.stringify(localGroups)); } catch(e){}
-}
-function promptCreateGroup() {
-  const name = prompt('Group Chat Name:');
-  if(!name || !name.trim()) return;
-  const others = Object.values(profiles).filter(p => p.id !== me.id);
-  if(!others.length) return alert('No other users available to add.');
-  const listStr = others.map((p, i) => `${i + 1}: ${dn(p)}`).join('\n');
-  const sel = prompt(`Select members by entering their numbers separated by commas:\n${listStr}`);
-  if(!sel) return;
-  const indices = sel.split(',').map(n => parseInt(n.trim()) - 1);
-  const members = [me.id];
-  indices.forEach(idx => { if(others[idx]) members.push(others[idx].id); });
-  if(members.length < 2) return alert('A group chat needs at least one other member.');
-  const gid = 'group_' + crypto.randomUUID();
-  localGroups[gid] = { id: gid, name: name.trim(), members, messages: [] };
-  saveLocalGroups();
-  openGroupDM(gid);
-  drawPeople();
-}
-function openGroupDM(id){
-  const g = localGroups[id];
-  if(!g) return;
-  cur={type:'group',id}; $('i').disabled=false; $('i').placeholder='Message group...';
-  $('sh').innerHTML=`<span class="truncate">Direct Messages</span><button onclick="promptCreateGroup()" title="Create Group Chat" class="text-sm text-[#949ba4] hover:text-white px-1">➕</button>`;
-  $('chtitle').innerHTML='👥 '+esc(g.name)+' ('+g.members.length+')';
-  $('pinbtn').classList.add('hidden'); $('searchbtn').classList.add('hidden'); $('searchbar').classList.add('hidden');
-  $('callbtn').classList.remove('hidden'); closeLeftMobile(); subscribeTyping();
-  draw(g.messages || []);
-}
-
 async function showDMs(){
-  srvId=null;members=[];roles={};$('mem').classList.add('hidden');await loadProfiles();await loadFriends();await loadServers();cur={};$('sh').innerHTML=`<span class="truncate">Direct Messages</span><button onclick="promptCreateGroup()" title="Create Group Chat" class="text-sm text-[#949ba4] hover:text-white px-1">➕</button>`;$('chtitle').textContent='Pick someone to message';$('msgs').innerHTML='';$('pinbtn').classList.add('hidden');$('searchbtn').classList.add('hidden');$('searchbar').classList.add('hidden');subscribeTyping();
+  srvId=null;members=[];roles={};$('mem').classList.add('hidden');await loadProfiles();await loadFriends();await loadServers();cur={};$('sh').textContent='Direct Messages';$('chtitle').textContent='Pick someone to message';$('msgs').innerHTML='';$('pinbtn').classList.add('hidden');$('searchbtn').classList.add('hidden');$('searchbar').classList.add('hidden');subscribeTyping();
   drawPeople();
 }
 function drawPeople(){
   const others=Object.values(profiles).filter(p=>p.id!==me.id),F=p=>fr(p.id);
-  const onlineUserIds = new Set(Object.keys(online || {}));
-  
   const inc=others.filter(p=>F(p)&&F(p).status==='pending'&&F(p).addressee===me.id);
   incRequestCount=inc.length;
-  
-  const fri=others.filter(p=>F(p)&&F(p).status==='accepted').sort((a,b)=>{
-    const aOn = onlineUserIds.has(a.id)?1:0;
-    const bOn = onlineUserIds.has(b.id)?1:0;
-    if(aOn !== bOn) return bOn - aOn;
-    return (unread[b.id]||0)-(unread[a.id]||0);
-  });
-  
+  const fri=others.filter(p=>F(p)&&F(p).status==='accepted').sort((a,b)=>(unread[b.id]||0)-(unread[a.id]||0));
   const rest=others.filter(p=>!F(p)||(F(p).status==='pending'&&F(p).requester===me.id));
   const head=t=>`<div class="text-[11px] font-bold text-[#949ba4] uppercase px-2 pt-3 pb-1">${t}</div>`;
   const nmx=p=>`<span class="flex items-center gap-2">${av(p,8)}${dot(p.id)}<span style="color:${col(p)}">${esc(dn(p))}</span></span>`;
   let h=servers.some(x=>x.is_default)?'':'<button onclick="rejoin()" class="w-full bg-[#5865f2] text-white text-sm font-bold rounded-md py-1.5 mb-1">Join BEANCORD</button>';
-  
-  const groupArr = Object.values(localGroups);
-  if(groupArr.length){
-    h+=head('Group Chats')+groupArr.map(g=>`<button onclick="openGroupDM('${g.id}')" class="w-full flex justify-between items-center px-2 py-2 rounded-md text-sm ${cur.id===g.id?'bg-[#404249] text-white':'text-[#949ba4] hover:bg-[#35373c]'}"><span class="truncate">👥 ${esc(g.name)}</span></button>`).join('');
-  }
-
   if(inc.length)h+=head('Friend requests')+inc.map(p=>`<div class="flex items-center justify-between px-2 py-1 text-sm">${nmx(p)}<span class="text-xs"><button onclick="answer('${p.id}',true)" class="text-[#23a55a]">Accept</button><button onclick="answer('${p.id}',false)" class="text-[#f23f43] ml-2">Decline</button></span></div>`).join('');
   h+=head('Friends')+(fri.length?fri.map(p=>`<button onclick="openDM('${p.id}')" class="w-full flex justify-between items-center px-2 py-2 rounded-md text-sm ${cur.id===p.id?'bg-[#404249] text-white':'text-[#949ba4] hover:bg-[#35373c]'}">${nmx(p)}${unread[p.id]?`<span class="bg-[#f23f43] text-white text-[10px] font-black px-2 rounded-full">${unread[p.id]}</span>`:''}</button>`).join(''):'<p class="text-xs text-[#949ba4] px-2">No friends yet. Add someone below.</p>');
   const sent=others.filter(p=>F(p)&&F(p).status==='pending'&&F(p).requester===me.id);
@@ -380,7 +328,6 @@ function drawPeople(){
 }
 async function openDM(id){
   cur={type:'dm',id};unread[id]=0;$('i').disabled=false;$('i').placeholder='Message...';drawPeople();
-  $('sh').innerHTML=`<span class="truncate">Direct Messages</span><button onclick="promptCreateGroup()" title="Create Group Chat" class="text-sm text-[#949ba4] hover:text-white px-1">➕</button>`;
   $('chtitle').textContent='@ '+dn(profiles[id]);$('pinbtn').classList.add('hidden');$('searchbtn').classList.add('hidden');$('searchbar').classList.add('hidden');$('callbtn').classList.toggle('hidden',!!activeCallWith);closeLeftMobile();subscribeTyping();
   const {data:dd}=await sb.from('dm_messages').select('*').or(`sender_id.eq.${id},recipient_id.eq.${id}`).order('created_at',{ascending:false}).limit(100);const data=(dd||[]).reverse();
   draw(data||[]);
@@ -423,15 +370,7 @@ function listen(){
    .subscribe(st=>{if(st==='SUBSCRIBED'){if(everUp)syncCurrent(true);everUp=true}else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){setTimeout(()=>{if(rt){sb.removeChannel(rt);listen()}},3000)}});
 }
 $('f').onsubmit=async e=>{
-  e.preventDefault();const t=$('i').value.trim();if(t.startsWith('/')){$('i').value='';return runCmd(t)}if(!t||!cur.type)return;
-  if(cur.type==='group'){
-    const g=localGroups[cur.id];if(!g)return;
-    const m={id:'msg_'+crypto.randomUUID(),sender_id:me.id,content:t,created_at:new Date().toISOString()};
-    g.messages.push(m); saveLocalGroups(); add(m); $('i').value='';
-    sb.channel('group-msg-'+g.id).send({type:'broadcast',event:'msg',payload:m});
-    return;
-  }
-  if(cur.type==='ch'&&/@(everyone|here)\b/i.test(t)&&myRole()!=='owner')return alert('Only the owner can use @everyone and @here.');{const mu=until(me,'muted_until');if(mu)return alert('You are muted until '+mu.toLocaleString())}$('i').value='';
+  e.preventDefault();const t=$('i').value.trim();if(t.startsWith('/')){$('i').value='';return runCmd(t)}if(!t||!cur.type)return;if(cur.type==='ch'&&/@(everyone|here)\b/i.test(t)&&myRole()!=='owner')return alert('Only the owner can use @everyone and @here.');{const mu=until(me,'muted_until');if(mu)return alert('You are muted until '+mu.toLocaleString())}$('i').value='';
   const r=cur.type==='ch'?await sb.from('messages').insert({channel_id:cur.id,content:t,reply_to:replyTo}):await sb.from('dm_messages').insert({recipient_id:cur.id,content:t});
   if(!r.error){replyTo=null;$('rb').classList.add('hidden')}if(r.error)$('i').value=t;if(r.error)alert(cur.type==='dm'?'Could not send. You can only message accepted friends, and you must not be muted.':'Could not send: '+r.error.message);
 };
@@ -465,7 +404,7 @@ async function addByName(){const n=$('fadd').value.trim().toLowerCase().replace(
   if(error)return say(error.message);await loadFriends();drawPeople();$('fmsg').textContent='Request sent to '+u.username}
 async function runCmd(line){
   const [c,name,arg]=line.slice(1).trim().split(/\s+/);const cmd=(c||'').toLowerCase();
-  if(cmd==='help')return sys('Commands: /ban user hours · /unban user · /mute user minutes · /unmute user · /kick user · /nick user newname · /newrole name #color member|verified|mod|admin · /giverole user rolename|none · /delrole name · /deleteuser user · /gift user amount · /switch user · /banword word · /unbanword word · /banwords · /auditlog.');
+  if(cmd==='help')return sys('Commands: /ban user hours · /unban user · /mute user minutes · /unmute user · /kick user · /nick user newname · /newrole name #color member|verified|mod|admin · /giverole user rolename|none · /delrole name · /deleteuser user · /gift user amount · /switch user · /banword word · /unbanword word · /banwords · /auditlog. Built-in roles are managed only from the gear icon. Deleting a server is only in its right-click menu. /banip user bans the network address on their account, and is not foolproof since addresses change · /ips user · /iplog');
   const P=line.slice(1).trim().split(/\s+/);
   const rpc=async(f,a,ok)=>{const {error}=await sb.rpc(f,a);if(error)return sys(error.message);if(srvId)await openServer(srvId);sys(ok)};
   if(cmd==='newrole'){if(!srvId)return sys('Open a server first.');const n=P[1],c=P[2],b=(P[3]||'').toLowerCase();if(!n||!/^#[0-9a-fA-F]{6}$/.test(c||'')||!['member','verified','mod','admin','manager','coowner'].includes(b))return sys('Usage: /newrole name #hexcolor member|verified|mod|admin|manager|coowner');return rpc('create_role',{sid:srvId,rname:n,rcolor:c,rbase:b},'Role "'+n+'" created. Give it with /giverole username '+n)}
@@ -654,11 +593,9 @@ let online=new Set(),cr={},croles=[],unreadCh={},unreadSrv={},mentSrv={},chanSrv
 const RN={member:1,verified:2,mod:3,admin:4,manager:5,owner:6},rn=r=>Object.keys(RN).find(k=>RN[k]===r)||'member';
 const ask=(q,c)=>{const v=prompt(q+' (member, verified, mod, admin, manager, owner)',rn(c));return v===null?null:(RN[v.trim().toLowerCase()]||c)};
 const dot=id=>`<span class="w-2.5 h-2.5 rounded-full flex-shrink-0 ${id===me.id||online.has(id)?'bg-[#23a55a]':'bg-[#80848e]'}" title="${id===me.id||online.has(id)?'Online':'Offline'}"></span>`;
-
+// ===== DM voice calls (phase 1: one-to-one only) =====
 const RTC_CONFIG={iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']}]};
-const AUDIO_CONSTRAINTS={audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,highpassFilter:true}};
 let ringCh=null,callCh=null,pc=null,localStream=null,activeCallWith=null,callState='idle',incomingFrom=null,muted=false;
-let peerConnections={},pendingIce={},currentGroupCallId=null;
 
 function ringChannel(){return sb.channel('ring-'+me.id).on('broadcast',{event:'signal'},p=>handleRingSignal(p.payload)).subscribe()}
 function pairKey(a,b){return 'call-'+[a,b].sort().join('-')}
@@ -677,15 +614,10 @@ function handleRingSignal(msg){
   }
 }
 
-function handleCallButton(){
-  if(cur.type==='group') startGroupCall();
-  else if(cur.type==='dm') startCall();
-}
-
 async function startCall(){
   if(cur.type!=='dm'||callState!=='idle')return;
   const target=cur.id;
-  try{localStream=await navigator.mediaDevices.getUserMedia(AUDIO_CONSTRAINTS)}
+  try{localStream=await navigator.mediaDevices.getUserMedia({audio:true})}
   catch(e){return alert('Could not access your microphone. Check your browser\'s permission settings for this site.')}
   activeCallWith=target;callState='calling';
   $('callbtn').classList.add('hidden');
@@ -709,124 +641,10 @@ async function startCall(){
   });
 }
 
-async function startGroupCall() {
-  if (cur.type !== 'group' || callState !== 'idle') return;
-  const g = localGroups[cur.id];
-  if(!g) return;
-
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia(AUDIO_CONSTRAINTS);
-  } catch (e) {
-    return alert('Could not access microphone.');
-  }
-
-  currentGroupCallId = g.id;
-  callState = 'in-group-call';
-  $('callbtn').classList.add('hidden');
-  $('calltext').textContent = 'In Group Call: ' + g.name;
-  $('callbar').classList.remove('hidden');
-
-  callCh = sb.channel('group-call-' + g.id, { config: { presence: { key: me.id } } });
-  
-  callCh.on('broadcast', { event: 'signal' }, p => handleGroupSignal(p.payload));
-  callCh.on('presence', { event: 'user-joined' }, ({ key }) => {
-    if (key !== me.id) createOfferForPeer(key);
-  });
-  callCh.on('presence', { event: 'user-left' }, ({ key }) => {
-    closePeer(key);
-  });
-
-  await callCh.subscribe(async status => {
-    if (status === 'SUBSCRIBED') {
-      await callCh.track({ online: true });
-    }
-  });
-}
-
-function createOfferForPeer(peerId) {
-  const pc = getOrCreatePC(peerId);
-  pc.createOffer().then(offer => {
-    pc.setLocalDescription(offer);
-    callCh.send({ type: 'broadcast', event: 'signal', payload: { type: 'offer', sdp: offer, from: me.id, target: peerId } });
-  });
-}
-
-function getOrCreatePC(peerId) {
-  if (peerConnections[peerId]) return peerConnections[peerId];
-
-  const pc = new RTCPeerConnection(RTC_CONFIG);
-  peerConnections[peerId] = pc;
-  pendingIce[peerId] = [];
-
-  if (localStream) {
-    localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-  }
-
-  pc.onicecandidate = e => {
-    if (e.candidate && callCh) {
-      callCh.send({ type: 'broadcast', event: 'signal', payload: { type: 'ice', candidate: e.candidate, from: me.id, target: peerId } });
-    }
-  };
-
-  pc.ontrack = e => {
-    let audio = document.getElementById('remoteAudio-' + peerId);
-    if (!audio) {
-      audio = document.createElement('audio');
-      audio.id = 'remoteAudio-' + peerId;
-      audio.autoplay = true;
-      document.body.appendChild(audio);
-    }
-    if (audio.srcObject !== e.streams[0]) {
-      audio.srcObject = e.streams[0];
-    }
-  };
-
-  return pc;
-}
-
-async function handleGroupSignal(msg) {
-  if (msg.target && msg.target !== me.id) return;
-  const pc = getOrCreatePC(msg.from);
-
-  if (msg.type === 'offer') {
-    await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-    flushPendingIce(msg.from, pc);
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-    callCh.send({ type: 'broadcast', event: 'signal', payload: { type: 'answer', sdp: answer, from: me.id, target: msg.from } });
-  } else if (msg.type === 'answer') {
-    await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-    flushPendingIce(msg.from, pc);
-  } else if (msg.type === 'ice') {
-    const candidate = new RTCIceCandidate(msg.candidate);
-    if (pc.remoteDescription && pc.remoteDescription.type) {
-      await pc.addIceCandidate(candidate).catch(() => {});
-    } else {
-      pendingIce[msg.from].push(candidate);
-    }
-  }
-}
-
-function flushPendingIce(peerId, pc) {
-  while (pendingIce[peerId] && pendingIce[peerId].length) {
-    const cand = pendingIce[peerId].shift();
-    pc.addIceCandidate(cand).catch(() => {});
-  }
-}
-
-function closePeer(peerId) {
-  if (peerConnections[peerId]) {
-    peerConnections[peerId].close();
-    delete peerConnections[peerId];
-  }
-  const audio = document.getElementById('remoteAudio-' + peerId);
-  if (audio) audio.remove();
-}
-
 async function acceptCall(){
   if(callState!=='ringing-in')return;
   const target=incomingFrom;$('ringbanner').classList.add('hidden');
-  try{localStream=await navigator.mediaDevices.getUserMedia(AUDIO_CONSTRAINTS)}
+  try{localStream=await navigator.mediaDevices.getUserMedia({audio:true})}
   catch(e){alert('Could not access your microphone.');declineCall();return}
   activeCallWith=target;callState='connecting';
   $('calltext').textContent='Connecting to '+dn(profiles[target])+'...';$('callbar').classList.remove('hidden');
@@ -873,44 +691,21 @@ function toggleMute(){
   $('mutebtn').textContent=muted?'Unmute':'Mute';$('mutebtn').classList.toggle('bg-[#f23f43]',muted);
 }
 
-function hangupCall(){
-  if(callState==='in-group-call') {
-    Object.keys(peerConnections).forEach(id => closePeer(id));
-  }
-  if(callCh)callCh.send({type:'broadcast',event:'signal',payload:{type:'hangup',from:me.id}});
-  endCall('Call ended.');
-}
+function hangupCall(){if(callCh)callCh.send({type:'broadcast',event:'signal',payload:{type:'hangup',from:me.id}});endCall('Call ended.')}
 
 function endCall(reason){
   if(pc){pc.close();pc=null}
-  Object.keys(peerConnections).forEach(id => closePeer(id));
-  peerConnections={};
   if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null}
   if(callCh){sb.removeChannel(callCh);callCh=null}
   const a=$('remoteAudio');if(a)a.srcObject=null;
-  activeCallWith=null;callState='idle';incomingFrom=null;muted=false;currentGroupCallId=null;
+  activeCallWith=null;callState='idle';incomingFrom=null;muted=false;
   $('callbar').classList.add('hidden');$('ringbanner').classList.add('hidden');
   $('mutebtn').textContent='Mute';$('mutebtn').classList.remove('bg-[#f23f43]');
-  if(cur.type==='dm'||cur.type==='group')$('callbtn').classList.remove('hidden');
+  if(cur.type==='dm')$('callbtn').classList.remove('hidden');
   if(reason)toast(reason);
 }
 
-function track(){
-  touchSeen();ringCh=ringChannel();
-  const ch=sb.channel('online',{config:{presence:{key:me.id}}});
-  ch.on('presence',{event:'sync'},()=>{online=new Set(Object.keys(ch.presenceState()));if(srvId)drawMembers();else drawPeople()}).subscribe(async st=>{if(st==='SUBSCRIBED')await ch.track({t:Date.now()})});
-  
-  sb.channel('group-sync').on('broadcast',{event:'msg'},p=>{
-    const m=p.payload;
-    Object.values(localGroups).forEach(g=>{
-      if(g.members.includes(me.id) && !g.messages.some(x=>x.id===m.id)){
-        g.messages.push(m); saveLocalGroups();
-        if(cur.type==='group'&&cur.id===g.id) add(m);
-      }
-    });
-  }).subscribe();
-}
-
+function track(){touchSeen();ringCh=ringChannel();const ch=sb.channel('online',{config:{presence:{key:me.id}}});ch.on('presence',{event:'sync'},()=>{online=new Set(Object.keys(ch.presenceState()));if(srvId)drawMembers();else drawPeople()}).subscribe(async st=>{if(st==='SUBSCRIBED')await ch.track({t:Date.now()})})}
 async function loadChanMap(){const {data}=await sb.from('channels').select('id,server_id');(data||[]).forEach(x=>chanSrv[x.id]=x.server_id)}
 function drawServerNav(){$('srv').innerHTML=servers.map(s=>{const u=unreadSrv[s.id],m=mentSrv[s.id],act=srvId===s.id;
   return `<div class="relative"><button onclick="openServer('${s.id}')" oncontextmenu="return srvMenu(event,'${s.id}')" title="${esc(s.name)}" class="w-12 h-12 overflow-hidden ${act?'bg-[#5865f2] rounded-xl':'bg-[#35373c] rounded-3xl'} hover:rounded-xl hover:bg-[#5865f2] text-white font-bold ${u&&!act?'ring-2 ring-white':''}">${s.image&&s.image.startsWith('data:image/')?`<img src="${esc(s.image)}" class="w-full h-full object-cover">`:esc(s.name[0].toUpperCase())}</button>${m?`<span class="absolute -bottom-1 -right-1 min-w-5 h-5 px-1 flex items-center justify-center rounded-full bg-[#f23f43] text-white text-[11px] font-black border-2 border-[#1e1f22]">${m>99?'99+':m}</span>`:''}</div>`}).join('')}
@@ -920,7 +715,8 @@ function srvMenu(e,id){e.preventDefault();e.stopPropagation();const s=servers.fi
   showCtx(e.clientX,e.clientY,h+mi('ID','Copy server ID',`navigator.clipboard.writeText('${id}')`));return false}
 async function delServer(id){const s=servers.find(x=>x.id===id);if(!s)return;if(!confirm('Delete server "'+s.name+'" and everything in it? This cannot be undone.'))return;
   const {error}=await sb.rpc('delete_server',{sid:id});if(error)return alert(error.message);if(srvId===id){srvId=null;showDMs()}await loadServers()}
-function srvImg(id){srvImgFor=id;$('sif').click()}$('sif').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f||!srvImgFor)return;const d=await pickAvatar(f);const {error}=await sb.from('servers').update({image:d}).eq('id',srvImgFor);if(error)alert(error.message);await loadServers()};
+function srvImg(id){srvImgFor=id;$('sif').click()}
+$('sif').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f||!srvImgFor)return;const d=await pickAvatar(f);const {error}=await sb.from('servers').update({image:d}).eq('id',srvImgFor);if(error)alert(error.message);await loadServers()};
 async function renameSrv(id){const s=servers.find(x=>x.id===id),n=prompt('Server name',s.name);if(!n||!n.trim())return;const {error}=await sb.from('servers').update({name:n.trim()}).eq('id',id);if(error)alert(error.message);await loadServers();if(srvId===id)openServer(id)}
 async function editMsg(id){const m=msgCache[id],t=prompt('Edit message',m.content);if(t===null||!t.trim()||t.trim()===m.content)return;const {error}=await sb.from('messages').update({content:t.trim(),edited_at:new Date().toISOString()}).eq('id',id);if(error)alert(error.message.includes('auto-mod')?'That edit was blocked by auto-mod.':error.message)}
 async function deleteMe(){const n=prompt('This permanently deletes your account. Type your username ('+me.username+') to confirm:');if(n!==me.username)return;const {error}=await sb.rpc('delete_my_account');if(error)return alert(error.message);await sb.auth.signOut();location.reload()}
@@ -970,8 +766,9 @@ async function editTag(id){const t=shopTags[id];const f=tagForm(t);if(!f)return;
 async function delTag(id){if(!confirm('Delete this tag? Anyone who owns or has equipped it will lose it.'))return;
   const {error}=await sb.rpc('delete_shop_tag',{tid:id});if(error)return alert(error.message);await loadShopTags();drawShop()}
 
+// ===== typing indicator =====
 let typingCh=null,typingTimers={},typingUsers=new Set(),lastTypeSent=0;
-function typingKey(){if(cur.type==='ch')return 'typing-ch-'+cur.id;if(cur.type==='dm')return 'typing-dm-'+[me.id,cur.id].sort().join('-');if(cur.type==='group')return 'typing-group-'+cur.id;return null}
+function typingKey(){if(cur.type==='ch')return 'typing-ch-'+cur.id;if(cur.type==='dm')return 'typing-dm-'+[me.id,cur.id].sort().join('-');return null}
 function subscribeTyping(){
   if(typingCh){sb.removeChannel(typingCh);typingCh=null}
   typingUsers=new Set();drawTyping();
@@ -986,6 +783,7 @@ function subscribeTyping(){
 function drawTyping(){const e=$('typing');if(!e)return;const a=[...typingUsers];e.textContent=a.length?(a.length===1?a[0]+' is typing...':a.join(', ')+' are typing...'):''}
 $('i').addEventListener('input',()=>{if(!cur.type||!typingCh)return;const now=Date.now();if(now-lastTypeSent>2000){lastTypeSent=now;typingCh.send({type:'broadcast',event:'typing',payload:{u:me.id,n:dn(me)}})}});
 
+// ===== pinned messages =====
 async function togglePins(){
   if(cur.type!=='ch')return;
   const {data,error}=await sb.from('messages').select('*').eq('channel_id',cur.id).eq('pinned',true).order('created_at');
@@ -996,6 +794,7 @@ async function togglePins(){
 }
 async function setPinned(id,val){const {error}=await sb.rpc('set_pinned',{mid:id,val});if(error)return alert(error.message);toast(val?'Message pinned':'Message unpinned');const m=msgCache[id];if(m)m.pinned=val;if(cur.type==='ch')openChannel(cur.id)}
 
+// ===== channel search =====
 function toggleSearch(){
   if(cur.type!=='ch')return;
   const b=$('searchbar'),show=b.classList.contains('hidden');
@@ -1011,13 +810,17 @@ async function doSearch(){
   $('sqres').innerHTML=data.length?data.map(m=>{const p=profiles[m.sender_id]||{username:'?'};return `<div class="p-2 rounded bg-[#2b2d31]"><b style="color:${col(p)}">${esc(dn(p))}</b> <span class="text-[10px] text-[#949ba4]">${new Date(m.created_at).toLocaleString()}</span><p>${esc(m.content)}</p></div>`}).join(''):'<p class="text-xs text-[#949ba4]">No matches.</p>';
 }
 
+// ===== emoji picker for composing =====
 function pickEmoji(e){showCtx(e.clientX,e.clientY,`<div class="grid grid-cols-4 gap-1 p-1">${EMOJIS.map(em=>`<span onclick="insertEmoji('${em}')" class="w-9 h-9 flex items-center justify-center text-xl rounded-full hover:bg-[#35373c] cursor-pointer">${em}</span>`).join('')}</div>`)}
 function insertEmoji(em){hideCtx();const el=$('i');el.value+=em;el.focus()}
 
+// ===== last seen =====
 function ago(ts){const sec=Math.floor((Date.now()-new Date(ts))/1000);if(sec<60)return 'just now';if(sec<3600)return Math.floor(sec/60)+'m ago';if(sec<86400)return Math.floor(sec/3600)+'h ago';return Math.floor(sec/86400)+'d ago'}
 async function touchSeen(){try{await sb.rpc('touch_last_seen')}catch(e){}}
 setInterval(()=>{if(!document.hidden&&me)touchSeen()},60000);
 
+
+// ===== custom role manager (owner only) =====
 let rfEditing=null;
 function openRoles(){if(!srvId)return;drawRoles();$('rmform').classList.add('hidden');$('rm').classList.remove('hidden')}
 function closeRoles(){$('rm').classList.add('hidden')}
@@ -1036,7 +839,7 @@ function roleForm(rid){
   renderPermChecks(r?r.perms:null);
   updateSwatch();$('rmform').classList.remove('hidden');$('rf_name').focus();
 }
-function updateSwatch(){const e=$('rf_preview');e.textContent=$('rf_name').value.trim()\vert{}\vert{}'PREVIEW';e.style.background=$('rf_color').value}
+function updateSwatch(){const e=$('rf_preview');e.textContent=$('rf_name').value.trim()||'PREVIEW';e.style.background=$('rf_color').value}
 $('rf_name').addEventListener('input',updateSwatch);$('rf_color').addEventListener('input',updateSwatch);
 async function saveRole(){
   const name=$('rf_name').value.trim(),color=$('rf_color').value,base=$('rf_base').value,perms=readPermChecks();
