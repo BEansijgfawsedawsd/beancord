@@ -7,17 +7,21 @@ const RTC_CONFIG = {
 
 let pendingIce = [], callTimer = null;
 
+// Production-grade audio constraints for clear voice without robotic artifacts or gating
+const AUDIO_CONSTRAINTS = {
+  audio: {
+    echoCancellation: true,
+    noiseSuppression: true,
+    autoGainControl: true,
+    highpassFilter: true
+  }
+};
+
 async function startCall(){
   if(cur.type!=='dm'||callState!=='idle')return;
   const target=cur.id;
   try{
-    localStream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: false,
-        noiseSuppression: false,
-        autoGainControl: false
-      }
-    });
+    localStream = await navigator.mediaDevices.getUserMedia(AUDIO_CONSTRAINTS);
   } catch(e) {
     return alert('Could not access your microphone. Check your browser\'s permission settings for this site.');
   }
@@ -56,13 +60,7 @@ async function acceptCall(){
   if(callState!=='ringing-in')return;
   const target=incomingFrom; $('ringbanner').classList.add('hidden');
   try{
-    localStream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: false,
-        noiseSuppression: false,
-        autoGainControl: false
-      }
-    });
+    localStream = await navigator.mediaDevices.getUserMedia(AUDIO_CONSTRAINTS);
   } catch(e) {
     alert('Could not access your microphone.'); declineCall(); return;
   }
