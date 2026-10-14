@@ -14,8 +14,8 @@ async function startCall(){
     localStream = await navigator.mediaDevices.getUserMedia({
       audio: {
         echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
+        noiseSuppression: false, // Disabled to prevent robotic/muffled distortion
+        autoGainControl: false,  // Disabled to prevent audio clipping/boosting
         sampleRate: 48000
       }
     });
@@ -60,8 +60,8 @@ async function acceptCall(){
     localStream = await navigator.mediaDevices.getUserMedia({
       audio: {
         echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
+        noiseSuppression: false, // Disabled to prevent robotic/muffled distortion
+        autoGainControl: false,  // Disabled to prevent audio clipping/boosting
         sampleRate: 48000
       }
     });
