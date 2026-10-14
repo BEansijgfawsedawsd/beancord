@@ -13,10 +13,9 @@ async function startCall(){
   try{
     localStream = await navigator.mediaDevices.getUserMedia({
       audio: {
-        echoCancellation: true,
-        noiseSuppression: false, // Disabled to prevent robotic/muffled distortion
-        autoGainControl: false,  // Disabled to prevent audio clipping/boosting
-        sampleRate: 48000
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false
       }
     });
   } catch(e) {
@@ -59,10 +58,9 @@ async function acceptCall(){
   try{
     localStream = await navigator.mediaDevices.getUserMedia({
       audio: {
-        echoCancellation: true,
-        noiseSuppression: false, // Disabled to prevent robotic/muffled distortion
-        autoGainControl: false,  // Disabled to prevent audio clipping/boosting
-        sampleRate: 48000
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false
       }
     });
   } catch(e) {
