@@ -747,77 +747,44 @@ async function startGroupCall() {
 
 function createOfferForPeer(peerId) {
   const pc = getOrCreatePC(peerId);
-  pc.createOffer().then(offer => {
-    pc.setLocalDescription(offer);
-    callCh.send({ type: 'broadcast', event: 'signal', payload: { type: 'offer', sdp: offer, from: me.id, target: peerId } });
-  });
-}
-
-function getOrCreatePC(peerId) {
-  if (peerConnections[peerId]) return peerConnections[peerId];
-
-  const pc = new RTCPeerConnection(RTC_CONFIG);
-  peerConnections[peerId] = pc;
-  pendingIce[peerId] = [];
-
-  if (localStream) {
-    localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+async function runCmd(line){
+  const [c,name,arg]=line.slice(1).trim().split(/\s+/);const cmd=(c||'').toLowerCase();
+  if(cmd==='help')return sys('Commands: /ban user hours · /unban user · /mute user minutes · /unmute user · /kick user · /nick user newname · /newrole name #color member|verified|mod|admin · /giverole user rolename|none · /delrole name · /deleteuser user · /gift user amount · /switch user · /banword word · /unbanword word · /banwords · /auditlog.');
+  const P=line.slice(1).trim().split(/\s+/);
+  const rpc=async(f,a,ok)=>{const {error}=await sb.rpc(f,a);if(error)return sys(error.message);if(srvId)await openServer(srvId);sys(ok)};
+  if(cmd==='newrole'){if(!srvId)return sys('Open a server first.');const n=P[1],c=P[2],b=(P[3]||'').toLowerCase();if(!n||!/^#[0-9a-fA-F]{6}$/.test(c||'')||!['member','verified','mod','admin','manager','coowner'].includes(b))return sys('Usage: /newrole name #hexcolor member|verified|mod|admin|manager|coowner');return rpc('create_role',{sid:srvId,rname:n,rcolor:c,rbase:b},'Role "'+n+'" created. Give it with /giverole username '+n)}
+  if(cmd==='delrole'){const r=croles.find(x=>x.name.toLowerCase()===(P[1]||'').toLowerCase());if(!r)return sys('No custom role with that name.');return rpc('delete_role',{rid:r.id},'Role deleted')}
+  if(cmd==='banword'||cmd==='unbanword')return rpc(cmd==='banword'?'ban_word':'unban_word',{w:(P[1]||'').toLowerCase()},cmd+': '+P[1]);
+  if(cmd==='banwords'){const {data,error}=await sb.rpc('list_banned_words');return sys(error?error.message:'Banned words: '+(data||[]).join(', '))}
+  if(cmd==='delserver')return sys('/delserver has been retired. Right-click a server icon and choose Delete server instead.');
+  if(cmd==='auditlog'){if(!srvId)return sys('Open a server first.');const {data,error}=await sb.from('audit_log').select('*').eq('server_id',srvId).order('created_at',{ascending:false}).limit(20);if(error)return sys(error.message);if(!data.length)return sys('No audit log entries yet.');data.forEach(e=>{const a=profiles[e.actor],t=profiles[e.target];sys((a?a.username:'someone')+' '+e.action+(t?' '+t.username:'')+(e.detail?' ('+e.detail+')':'')+' — '+new Date(e.created_at).toLocaleString())});return;}
+  if(cmd==='iplog'){const {data,error}=await sb.rpc('get_ip_log_all',{lim:30});if(error)return sys(error.message);if(!data.length)return sys('No log entries yet.');data.forEach(r=>sys((r.success?'✓':'✗')+' '+r.action+' "'+r.username_tried+'" from '+r.ip+' — '+new Date(r.created_at).toLocaleString()));return;}
+  if(cmd==='reports')return showReports();const u=Object.values(profiles).find(p=>p.username===(name||'').toLowerCase().replace(/^@/,''));
+  if(!u)return sys('No user named "'+(name||'')+'". Usage: /'+cmd+' username');
+  if(['ban','unban','mute','unmute'].includes(cmd)){
+    const kind=cmd.replace('un',''),undo=cmd.startsWith('un');let mins=0;
+    if(!undo){const n=parseFloat(arg);if(!(n>0))return sys('Usage: /'+cmd+' username '+(kind==='ban'?'hours':'minutes'));mins=Math.round(n*(kind==='ban'?60:1))}
+    const {error}=await sb.rpc('punish',{uid:u.id,kind,mins});if(error)return sys(error.message);
+    await loadProfiles();if(srvId)drawMembers();
+    return sys(undo?cmd+' '+u.username+': done':u.username+(kind==='ban'?' banned for '+arg+' hours':' muted for '+arg+' minutes'));
   }
-
-  pc.onicecandidate = e => {
-    if (e.candidate && callCh) {
-      callCh.send({ type: 'broadcast', event: 'signal', payload: { type: 'ice', candidate: e.candidate, from: me.id, target: peerId } });
-    }
-  };
-
-  pc.ontrack = e => {
-    let audio = document.getElementById('remoteAudio-' + peerId);
-    if (!audio) {
-      audio = document.createElement('audio');
-      audio.id = 'remoteAudio-' + peerId;
-      audio.autoplay = true;
-      document.body.appendChild(audio);
-    }
-    if (audio.srcObject !== e.streams[0]) {
-      audio.srcObject = e.streams[0];
-    }
-  };
-
-  return pc;
-}
-
-async function handleGroupSignal(msg) {
-  if (msg.target && msg.target !== me.id) return;
-  const pc = getOrCreatePC(msg.from);
-
-  if (msg.type === 'offer') {
-    await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-    flushPendingIce(msg.from, pc);
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-    callCh.send({ type: 'broadcast', event: 'signal', payload: { type: 'answer', sdp: answer, from: me.id, target: msg.from } });
-  } else if (msg.type === 'answer') {
-    await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-    flushPendingIce(msg.from, pc);
-  } else if (msg.type === 'ice') {
-    const candidate = new RTCIceCandidate(msg.candidate);
-    if (pc.remoteDescription && pc.remoteDescription.type) {
-      await pc.addIceCandidate(candidate).catch(() => {});
-    } else {
-      pendingIce[msg.from].push(candidate);
-    }
+  if(cmd==='nick'){const nk=P.slice(2).join(' ').trim();return rpc('force_nick',{uid:u.id,nick:nk||null},nk?u.username+' is now called '+nk:'Nickname of '+u.username+' was reset')}
+  if(cmd==='giverole'){if(!srvId)return sys('Open a server first.');const rn=(P[2]||'').toLowerCase(),r=croles.find(x=>x.name.toLowerCase()===rn);if(!r&&rn!=='none')return sys('No custom role "'+(P[2]||'')+'". Make one with /newrole, or use /giverole user none');return rpc('give_role',{sid:srvId,uid:u.id,rid:r?r.id:null},'Updated '+u.username)}
+  if(cmd==='deleteuser'){if(!confirm('Permanently delete the account '+u.username+'?'))return;return rpc('admin_delete_account',{uid:u.id},u.username+' was deleted')}
+  if(cmd==='banip'){const {data,error}=await sb.rpc('ban_ip',{target_uid:u.id});if(error)return sys(error.message);return sys('Banned the address on record for '+u.username+' ('+data+'). This does not remove their account access on its own — pair it with /ban if needed.')}
+  if(cmd==='unbanip'){const {error}=await sb.rpc('unban_ip',{target_uid:u.id});if(error)return sys(error.message);return sys('Removed the IP ban tied to '+u.username)}
+  if(cmd==='ips'){const {data,error}=await sb.rpc('get_ip_log',{target_uid:u.id,lim:20});if(error)return sys(error.message);if(!data.length)return sys('No log entries for '+u.username+' yet.');data.forEach(r=>sys((r.success?'✓':'✗')+' '+r.action+' from '+r.ip+' — '+new Date(r.created_at).toLocaleString()));return;}
+  if(cmd==='gift'){const amt=parseInt(arg,10);if(!amt)return sys('Usage: /gift username amount');const {error}=await sb.rpc('admin_gift_beans',{uid:u.id,amt});if(error)return sys(error.message);await loadProfiles();return sys('Gave '+amt+' beans to '+u.username)}
+  if(cmd==='switch')return switchTo(u.id);
+  if(cmd==='unblock'){const {error}=await sb.from('blocks').delete().eq('blocked',u.id).eq('blocker',me.id);if(error)return sys(error.message);blocked.delete(u.id);return sys('Unblocked '+u.username)}
+  if(cmd==='kick'){
+    if(!srvId)return sys('Open a server channel first.');
+    const {error,count}=await sb.from('server_members').delete({count:'exact'}).eq('server_id',srvId).eq('user_id',u.id);
+    if(error)return sys(error.message);if(!count)return sys('Not allowed, or they are not in this server.');await openServer(srvId);return sys(u.username+' was kicked');
   }
+  if(cmd==='role')return sys('/role has been retired. Manage roles from the gear icon next to the server name.');
+  sys('Unknown command. Type /help');
 }
-
-function flushPendingIce(peerId, pc) {
-  while (pendingIce[peerId] && pendingIce[peerId].length) {
-    const cand = pendingIce[peerId].shift();
-    pc.addIceCandidate(cand).catch(() => {});
-  }
-}
-
-function closePeer(peerId) {
-  if (peerConnections[peerId]) {
     peerConnections[peerId].close();
     delete peerConnections[peerId];
   }
