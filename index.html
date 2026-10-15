@@ -305,7 +305,7 @@ async function openChannel(id){
   draw(data||[]);
 }
 async function showDMs(){
-  srvId=null;members=[];roles={};$('mem').classList.add('hidden');await loadProfiles();await loadFriends();await loadServers();cur={};$('sh').textContent='Direct Messages';$('chtitle').textContent='Pick someone to message';$('msgs').innerHTML='';$('pinbtn').classList.add('hidden');$('searchbtn').classList.add('hidden');$('searchbar').classList.add('hidden');subscribeTyping();
+  srvId=null;members=[];roles={};$('mem').classList.add('hidden');await loadProfiles();await loadFriends();await loadServers();await loadGroups();cur={};$('sh').textContent='Direct Messages';$('chtitle').textContent='Pick someone to message';$('msgs').innerHTML='';$('pinbtn').classList.add('hidden');$('searchbtn').classList.add('hidden');$('searchbar').classList.add('hidden');subscribeTyping();
   drawPeople();
 }
 function drawPeople(){
@@ -321,13 +321,14 @@ function drawPeople(){
   h+=head('Friends')+(fri.length?fri.map(p=>`<button onclick="openDM('${p.id}')" class="w-full flex justify-between items-center px-2 py-2 rounded-md text-sm ${cur.id===p.id?'bg-[#404249] text-white':'text-[#949ba4] hover:bg-[#35373c]'}">${nmx(p)}${unread[p.id]?`<span class="bg-[#f23f43] text-white text-[10px] font-black px-2 rounded-full">${unread[p.id]}</span>`:''}</button>`).join(''):'<p class="text-xs text-[#949ba4] px-2">No friends yet. Add someone below.</p>');
   const sent=others.filter(p=>F(p)&&F(p).status==='pending'&&F(p).requester===me.id);
   if(sent.length)h+=head('Sent requests')+sent.map(p=>`<div class="flex items-center justify-between px-2 py-1 text-sm">${nmx(p)}<span class="text-xs text-[#949ba4]">Pending</span></div>`).join('');
-  h+=head('Add a friend')+'<div class="px-2"><div class="flex gap-1"><input id="fadd" onkeydown="if(event.key===\'Enter\')addByName()" placeholder="Type their username" autocomplete="off" class="flex-1 min-w-0 bg-[#1e1f22] rounded px-2 py-1.5 text-xs text-white outline-none"><button onclick="addByName()" class="bg-[#5865f2] text-white text-xs px-2 rounded">Send</button></div><div id="fmsg" class="text-[10px] text-[#949ba4] mt-1"></div></div>';
+  h+=head('Group chats')+(verifiedPlus()?'<button onclick="newGroup()" class="w-full bg-[#2b2d31] hover:bg-[#35373c] text-[#949ba4] hover:text-white text-xs font-bold rounded-md py-1.5 mb-1">+ New group</button>':'<p class="text-[10px] text-[#949ba4] px-2 mb-1">Group chats are for verified members and above.</p>')+(groups.length?groups.map(g=>`<button onclick="openGroup('${g.id}')" class="w-full flex justify-between items-center px-2 py-2 rounded-md text-sm ${cur.type==='group'&&cur.id===g.id?'bg-[#404249] text-white':'text-[#949ba4] hover:bg-[#35373c]'}"><span class="truncate">👥 ${esc(g.name)}</span>${groupUnread[g.id]?`<span class="bg-[#f23f43] text-white text-[10px] font-black px-2 rounded-full flex-shrink-0">${groupUnread[g.id]}</span>`:''}</button>`).join(''):'<p class="text-xs text-[#949ba4] px-2">No group chats yet.</p>');
+h+=head('Add a friend')+'<div class="px-2"><div class="flex gap-1"><input id="fadd" onkeydown="if(event.key===\'Enter\')addByName()" placeholder="Type their username" autocomplete="off" class="flex-1 min-w-0 bg-[#1e1f22] rounded px-2 py-1.5 text-xs text-white outline-none"><button onclick="addByName()" class="bg-[#5865f2] text-white text-xs px-2 rounded">Send</button></div><div id="fmsg" class="text-[10px] text-[#949ba4] mt-1"></div></div>';
   const keep=($('fadd')||{}).value||'';
   $('sc').innerHTML=h;if($('fadd'))$('fadd').value=keep;
-  const t=Object.values(unread).reduce((a,b)=>a+b,0)+incRequestCount;$('tot').textContent=t;$('tot').classList.toggle('hidden',!t);
+  const t=Object.values(unread).reduce((a,b)=>a+b,0)+Object.values(groupUnread).reduce((a,b)=>a+b,0)+incRequestCount;$('tot').textContent=t;$('tot').classList.toggle('hidden',!t);
 }
 async function openDM(id){
-  cur={type:'dm',id};unread[id]=0;$('i').disabled=false;$('i').placeholder='Message...';drawPeople();
+  $('mem').classList.add('hidden');await loadGroups();cur={type:'dm',id};unread[id]=0;$('i').disabled=false;$('i').placeholder='Message...';drawPeople();
   $('chtitle').textContent='@ '+dn(profiles[id]);$('pinbtn').classList.add('hidden');$('searchbtn').classList.add('hidden');$('searchbar').classList.add('hidden');$('callbtn').classList.toggle('hidden',!!activeCallWith);closeLeftMobile();subscribeTyping();
   const {data:dd}=await sb.from('dm_messages').select('*').or(`sender_id.eq.${id},recipient_id.eq.${id}`).order('created_at',{ascending:false}).limit(100);const data=(dd||[]).reverse();
   draw(data||[]);
@@ -367,11 +368,19 @@ function listen(){
      if(!profiles[peer])await loadProfiles();
      if(cur.type==='dm'&&cur.id===peer)add(m);
      else if(m.sender_id!==me.id){unread[peer]=(unread[peer]||0)+1;if(!srvId)drawPeople()}})
-   .subscribe(st=>{if(st==='SUBSCRIBED'){if(everUp)syncCurrent(true);everUp=true}else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){setTimeout(()=>{if(rt){sb.removeChannel(rt);listen()}},3000)}});
+   .on('postgres_changes',{event:'INSERT',schema:'public',table:'group_messages'},async p=>{
+     const m=p.new;
+     if(!profiles[m.sender_id])await loadProfiles();
+     if(cur.type==='group'&&cur.id===m.group_id)add(m);
+     else if(m.sender_id!==me.id){groupUnread[m.group_id]=(groupUnread[m.group_id]||0)+1;if(!srvId)drawPeople()}
+   })
+   .on('postgres_changes',{event:'*',schema:'public',table:'group_chats'},async()=>{await loadGroups();if(!srvId)drawPeople();if(cur.type==='group'){const g=groups.find(x=>x.id===cur.id);if(!g){cur={};showDMs()}else $('chtitle').textContent='👥 '+g.name}})
+   .on('postgres_changes',{event:'*',schema:'public',table:'group_chat_members'},async()=>{await loadGroups();if(!srvId)drawPeople();if(cur.type==='group'){const {data:mm}=await sb.from('group_chat_members').select('user_id').eq('group_id',cur.id).eq('user_id',me.id);if(!mm||!mm.length){cur={};showDMs()}else drawGroupMembers(cur.id)}})
+   .subscribe(st=>{if(st==='SUBSCRIBED'){if(everUp)syncCurrent(true);everUp=trueelse if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){setTimeout(()=>{if(rt){sb.removeChannel(rt);listen()}},3000)}});
 }
 $('f').onsubmit=async e=>{
   e.preventDefault();const t=$('i').value.trim();if(t.startsWith('/')){$('i').value='';return runCmd(t)}if(!t||!cur.type)return;if(cur.type==='ch'&&/@(everyone|here)\b/i.test(t)&&myRole()!=='owner')return alert('Only the owner can use @everyone and @here.');{const mu=until(me,'muted_until');if(mu)return alert('You are muted until '+mu.toLocaleString())}$('i').value='';
-  const r=cur.type==='ch'?await sb.from('messages').insert({channel_id:cur.id,content:t,reply_to:replyTo}):await sb.from('dm_messages').insert({recipient_id:cur.id,content:t});
+  const r=cur.type==='ch'?await sb.from('messages').insert({channel_id:cur.id,content:t,reply_to:replyTo}):cur.type==='group'?await sb.from('group_messages').insert({group_id:cur.id,content:t}):await sb.from('dm_messages').insert({recipient_id:cur.id,content:t});
   if(!r.error){replyTo=null;$('rb').classList.add('hidden')}if(r.error)$('i').value=t;if(r.error)alert(cur.type==='dm'?'Could not send. You can only message accepted friends, and you must not be muted.':'Could not send: '+r.error.message);
 };
 const col=p=>/^#[0-9a-fA-F]{6}$/.test((p||{}).color||'')?p.color:'#ffffff';
@@ -534,7 +543,7 @@ function tag(p,role){const c=p&&cr[p.id];if(c)return `<span class="text-[9px] fo
 let defRole=null;
 const IMGBASE='https://ilmzklhvkacnljfgnxvq.supabase.co/storage/v1/object/public/chat-images/';
 const FILEBASE='https://ilmzklhvkacnljfgnxvq.supabase.co/storage/v1/object/public/chat-files/';
-const canImg=()=>cur.type==='ch'?rank(myRole())>=2:(defRole?rank(defRole)>=2:true);
+const canImg=()=>cur.type==='ch'?rank(myRole())>=2:cur.type==='group'?verifiedPlus():(defRole?rank(defRole)>=2:true);
 function shrink(f){return new Promise(res=>{if(f.type==='image/gif'||f.size<400000)return res(f);const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const k=Math.min(1,1600/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);c.toBlob(b=>res(b),'image/jpeg',0.85)};i.src=r.result};r.readAsDataURL(f)})}
 async function sendImage(f){
   if(!f||!cur.type)return;
@@ -556,7 +565,7 @@ async function sendImage(f){
     base={file_url:sb.storage.from('chat-files').getPublicUrl(path).data.publicUrl,file_name:f.name};
   }
   const cap=$('i').value.trim();$('i').value='';base.content=cap||'\u200b';
-  const r=cur.type==='ch'?await sb.from('messages').insert({...base,channel_id:cur.id,reply_to:replyTo}):await sb.from('dm_messages').insert({...base,recipient_id:cur.id});
+  const r=cur.type==='ch'?await sb.from('messages').insert({...base,channel_id:cur.id,reply_to:replyTo}):cur.type==='group'?await sb.from('group_messages').insert({...base,group_id:cur.id}):await sb.from('dm_messages').insert({...base,recipient_id:cur.id});
   if(r.error)alert('Could not send: '+r.error.message);else{replyTo=null;$('rb').classList.add('hidden')}
 }
 $('imgf').onchange=e=>{sendImage(e.target.files[0]);e.target.value=''};
@@ -590,6 +599,17 @@ async function gift(id){const n=prompt('Gift this tag to which friend? (their us
 function drawBlocked(){$('pblk').innerHTML=[...blocked].map(id=>`<div class="flex justify-between text-xs"><span>${esc(dn(profiles[id]))}</span><button onclick="unblock('${id}')" class="text-[#5865f2]">Unblock</button></div>`).join('')||'<p class="text-xs text-[#949ba4]">Nobody blocked.</p>'}
 async function unblock(id){const {error}=await sb.from('blocks').delete().eq('blocked',id).eq('blocker',me.id);if(error)return alert(error.message);blocked.delete(id);drawBlocked()}
 let online=new Set(),cr={},croles=[],unreadCh={},unreadSrv={},mentSrv={},chanSrv={},srvImgFor=null,incRequestCount=0;
+let groups=[],groupUnread={};
+const verifiedPlus=()=>rank(defRole||'member')>=2;
+async function loadGroups(){const {data:m}=await sb.from('group_chat_members').select('group_id').eq('user_id',me.id);const ids=(m||[]).map(x=>x.group_id);if(!ids.length){groups=[];return}const {data:g}=await sb.from('group_chats').select('*').in('id',ids).order('created_at');groups=g||[]}
+async function newGroup(){if(!verifiedPlus())return alert('Only verified members and above can create group chats.');const n=prompt('Group name?');if(!n||!n.trim())return;const {data:g,error}=await sb.from('group_chats').insert({name:n.trim().slice(0,40),created_by:me.id}).select().single();if(error)return alert(error.message);const {error:e2}=await sb.from('group_chat_members').insert({group_id:g.id,user_id:me.id});if(e2)return alert(e2.message);await loadGroups();drawPeople();openGroup(g.id)}
+async function openGroup(id){cur={type:'group',id};groupUnread[id]=0;$('i').disabled=false;$('i').placeholder='Message...';drawPeople();const g=groups.find(x=>x.id===id)||{};$('chtitle').textContent='👥 '+g.name;$('pinbtn').classList.add('hidden');$('searchbtn').classList.add('hidden');$('searchbar').classList.add('hidden');$('callbtn').classList.add('hidden');closeLeftMobile();$('mem').classList.remove('hidden');drawGroupMembers(id);const {data:dd}=await sb.from('group_messages').select('*').eq('group_id',id).order('created_at',{ascending:false}).limit(100);draw((dd||[]).reverse())}
+async function drawGroupMembers(id){const {data:ms}=await sb.from('group_chat_members').select('user_id').eq('group_id',id);const ids=(ms||[]).map(x=>x.user_id);if(ids.some(u=>!profiles[u]))await loadProfiles();const g=groups.find(x=>x.id===id)||{},isOwner=g.created_by===me.id;const rows=ids.map(u=>{const p=profiles[u]||{username:'?'};return `<div class="flex items-center gap-2.5 py-1.5 px-1.5 -mx-1.5 rounded-md hover:bg-[#35373c]"><span class="relative flex-shrink-0 cursor-pointer" onclick="showProfile('${u}')">${av(p,9)}<span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#2b2d31] ${u===me.id||online.has(u)?'bg-[#23a55a]':'bg-[#80848e]'}"></span></span><span class="text-sm font-semibold truncate cursor-pointer" style="color:${col(p)}" onclick="showProfile('${u}')">${esc(dn(p))}</span>${u===g.created_by?'<span class="text-[9px] font-black uppercase px-1.5 rounded bg-[#5865f2] text-white ml-auto flex-shrink-0">Owner</span>':''}</div>`}).join('');$('mem').innerHTML=`<div class="text-[11px] font-bold text-[#949ba4] uppercase px-1.5 mb-2">Members — ${ids.length}</div><div class="space-y-0.5">${rows}</div><div class="mt-3 space-y-1.5"><div class="flex gap-1"><input id="gadd" onkeydown="if(event.key==='Enter')addToGroup('${id}')" placeholder="Add by username" autocomplete="off" class="flex-1 min-w-0 bg-[#1e1f22] rounded px-2 py-1.5 text-xs text-white outline-none"><button onclick="addToGroup('${id}')" class="bg-[#5865f2] text-white text-xs px-2 rounded">Add</button></div>${isOwner?`<button onclick="renameGroup('${id}')" class="w-full text-left text-xs text-[#949ba4] hover:text-white">✎ Rename group</button><button onclick="deleteGroup('${id}')" class="w-full text-left text-xs text-[#f23f43]">🗑 Delete group</button>`:`<button onclick="leaveGroup('${id}')" class="w-full text-left text-xs text-[#f23f43]">Leave group</button>`}</div>`}
+async function defRankOf(uid){const d=servers.find(x=>x.is_default);if(!d)return 1;const {data}=await sb.from('server_members').select('role').eq('server_id',d.id).eq('user_id',uid).maybeSingle();return rank((data||{}).role||'member')}
+async function addToGroup(id){const el=$('gadd');const n=(el&&el.value||'').trim();if(!n)return;const u=Object.values(profiles).find(p=>p.username===n.toLowerCase().replace(/^@/,''));if(!u)return alert('No user with that username.');if(rank(await defRankOf(u.id))<2)return alert('Only verified members and above can be in group chats.');const {error}=await sb.from('group_chat_members').insert({group_id:id,user_id:u.id});if(error)return alert(error.message);el.value='';drawGroupMembers(id)}
+async function renameGroup(id){const g=groups.find(x=>x.id===id);const n=prompt('Group name',g?g.name:'');if(!n||!n.trim())return;const {error}=await sb.from('group_chats').update({name:n.trim().slice(0,40)}).eq('id',id);if(error)return alert(error.message);await loadGroups();drawPeople();openGroup(id)}
+async function leaveGroup(id){if(!confirm('Leave this group?'))return;const {error}=await sb.from('group_chat_members').delete().eq('group_id',id).eq('user_id',me.id);if(error)return alert(error.message);await loadGroups();showDMs()}
+async function deleteGroup(id){if(!confirm('Delete this group for everyone?'))return;const {error}=await sb.from('group_chats').delete().eq('id',id);if(error)return alert(error.message);await loadGroups();showDMs()}
 const RN={member:1,verified:2,mod:3,admin:4,manager:5,owner:6},rn=r=>Object.keys(RN).find(k=>RN[k]===r)||'member';
 const ask=(q,c)=>{const v=prompt(q+' (member, verified, mod, admin, manager, owner)',rn(c));return v===null?null:(RN[v.trim().toLowerCase()]||c)};
 const dot=id=>`<span class="w-2.5 h-2.5 rounded-full flex-shrink-0 ${id===me.id||online.has(id)?'bg-[#23a55a]':'bg-[#80848e]'}" title="${id===me.id||online.has(id)?'Online':'Offline'}"></span>`;
@@ -744,6 +764,7 @@ async function delAcct(u){const n=(profiles[u]||{}).username;if(!confirm('Perman
 let everUp=false;
 async function syncCurrent(full){try{
   if(cur.type==='ch'){if(full)return openChannel(cur.id);const {data}=await sb.from('messages').select('*').eq('channel_id',cur.id).order('created_at',{ascending:false}).limit(30);(data||[]).reverse().forEach(add)}
+  else if(cur.type==='group'){if(full)return openGroup(cur.id);const {data}=await sb.from('group_messages').select('*').eq('group_id',cur.id).order('created_at',{ascending:false}).limit(30);(data||[]).reverse().forEach(add)}
   else if(cur.type==='dm'){if(full)return openDM(cur.id);const {data}=await sb.from('dm_messages').select('*').or(`sender_id.eq.${cur.id},recipient_id.eq.${cur.id}`).order('created_at',{ascending:false}).limit(30);(data||[]).reverse().forEach(add)}
 }catch(e){console.error(e)}}
 setInterval(()=>{if(!document.hidden&&me)syncCurrent(false)},15000);
@@ -768,7 +789,7 @@ async function delTag(id){if(!confirm('Delete this tag? Anyone who owns or has e
 
 // ===== typing indicator =====
 let typingCh=null,typingTimers={},typingUsers=new Set(),lastTypeSent=0;
-function typingKey(){if(cur.type==='ch')return 'typing-ch-'+cur.id;if(cur.type==='dm')return 'typing-dm-'+[me.id,cur.id].sort().join('-');return null}
+function typingKey(){if(cur.type==='ch')return 'typing-ch-'+cur.id;if(cur.type==='group')return 'typing-grp-'+cur.id;if(cur.type==='dm')return 'typing-dm-'+[me.id,cur.id].sort().join('-');return null}
 function subscribeTyping(){
   if(typingCh){sb.removeChannel(typingCh);typingCh=null}
   typingUsers=new Set();drawTyping();
