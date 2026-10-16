@@ -351,7 +351,7 @@ function drawPeople(){
   const nmx=p=>`<span class="flex items-center gap-2">${av(p,8)}${dot(p.id)}<span style="color:${col(p)}">${esc(dn(p))}</span></span>`;
   let h=servers.some(x=>x.is_default)?'':'<button onclick="rejoin()" class="w-full bg-[#5865f2] text-white text-sm font-bold rounded-md py-1.5 mb-1">Join BEANCORD</button>';
   if(inc.length)h+=head('Friend requests')+inc.map(p=>`<div class="flex items-center justify-between px-2 py-1 text-sm">${nmx(p)}<span class="text-xs"><button onclick="answer('${p.id}',true)" class="text-[#23a55a]">Accept</button><button onclick="answer('${p.id}',false)" class="text-[#f23f43] ml-2">Decline</button></span></div>`).join('');
-  h+=head('Friends')+(fri.length?fri.map(p=>`<button onclick="openDM('${p.id}')" class="w-full flex justify-between items-center px-2 py-2 rounded-md text-sm ${cur.id===p.id?'bg-[#404249] text-white':'text-[#949ba4] hover:bg-[#35373c]'}">${nmx(p)}${unread[p.id]?`<span class="bg-[#f23f43] text-white text-[10px] font-black px-2 rounded-full">${unread[p.id]}</span>`:''}</button>`).join(''):'<p class="text-xs text-[#949ba4] px-2">No friends yet. Add someone below.</p>');
+  h+=head('Friends')+(fri.length?fri.map(p=>`<button data-friend-uid="${p.id}" onclick="openDM('${p.id}')" class="w-full flex justify-between items-center px-2 py-2 rounded-md text-sm ${cur.id===p.id?'bg-[#404249] text-white':'text-[#949ba4] hover:bg-[#35373c]'}">${nmx(p)}${unread[p.id]?`<span class="bg-[#f23f43] text-white text-[10px] font-black px-2 rounded-full">${unread[p.id]}</span>`:''}</button>`).join(''):'<p class="text-xs text-[#949ba4] px-2">No friends yet. Add someone below.</p>');
   const sent=others.filter(p=>F(p)&&F(p).status==='pending'&&F(p).requester===me.id);
   if(sent.length)h+=head('Sent requests')+sent.map(p=>`<div class="flex items-center justify-between px-2 py-1 text-sm">${nmx(p)}<span class="text-xs text-[#949ba4]">Pending</span></div>`).join('');
   h+=head('Group Chats')+groups.map(g=>{
@@ -442,7 +442,17 @@ function prev(){$('pprev').innerHTML=av({...me,avatar:newAvatar||me.avatar},9)+`
 function openProfile(){newAvatar=null;$('pc').value=col(me);$('pn').value=me.nickname||'';$('pb').value=me.bio||'';$('pbn').value=/^#[0-9a-fA-F]{6}$/.test(me.banner||'')?me.banner:'#5865f2';$('pt').value=theme;drawBlocked();$('pf').value='';prev();$('pm').classList.remove('hidden')}
 $('pf').onchange=async e=>{if(e.target.files[0]){newAvatar=await pickAvatar(e.target.files[0]);prev()}};
 $('pc').oninput=prev;$('pn').oninput=prev;
-async function saveProfile(){const u={color:$('pc').value,nickname:$('pn').value.trim()||null,bio:$('pb').value.trim()||null,banner:$('pbn').value};if(newAvatar)u.avatar=newAvatar;const {error}=await sb.from('profiles').update(u).eq('id',me.id);if(error)return alert(error.message);await loadProfiles();me=profiles[me.id];$('pm').classList.add('hidden');if(srvId)openServer(srvId);else showDMs()}
+async function saveProfile(){
+  const u={color:$('pc').value,nickname:$('pn').value.trim()||null,bio:$('pb').value.trim()||null,banner:$('pbn').value};
+  if(newAvatar)u.avatar=newAvatar;
+  const {error}=await sb.from('profiles').update(u).eq('id',me.id);
+  if(error)return alert('Could not save: '+error.message);
+  await loadProfiles();me=profiles[me.id];
+  if(newAvatar&&me.avatar!==newAvatar){
+    alert('Your new picture was sent, but it did not stick in the database. This confirms the bug — please screenshot this message and send it over.');
+  }
+  $('pm').classList.add('hidden');if(srvId)openServer(srvId);else showDMs();
+}
 async function punish(uid,kind,mins){const {error}=await sb.rpc('punish',{uid,kind,mins});if(error)alert(error.message);await loadProfiles();drawMembers()}
 function askBan(uid){const h=prompt('Ban this account for how many hours? (0 = remove ban)');if(h===null)return;punish(uid,'ban',Math.round(parseFloat(h)*60)||0)}
 function askMute(uid){const m=prompt('Mute for how many minutes? (0 = unmute)');if(m===null)return;punish(uid,'mute',Math.round(parseFloat(m))||0)}
@@ -858,8 +868,10 @@ async function deleteMe(){const n=prompt('This permanently deletes your account.
 $('mem').addEventListener('contextmenu',e=>{const d=e.target.closest('[data-uid]');if(!d)return;e.preventDefault();const u=d.dataset.uid;let h=mi('◉','View profile',`showProfile('${u}')`);if(u!==me.id)h+=mi('@','Mention',`mentionUser('${u}')`);
   if(rank(myRole())>=4&&u!==me.id&&rank(roles[u])<rank(myRole()))h+=mi('✎','Change nickname',`promptNick('${u}')`);
   if(defRole==='owner'&&u!==me.id)h+=sep+mi('⇄','Switch to this account',`switchTo('${u}')`,1);
+  if(u!==me.id&&fr(u)&&fr(u).status==='accepted')h+=mi('👥','Add to group chat',`groupAddMenu('${u}',${e.clientX},${e.clientY})`);
   if(myRole()==='owner'&&u!==me.id)h+=mi('🗑','Delete account',`delAcct('${u}')`,1);
   showCtx(e.clientX,e.clientY,h)});
+$('sc').addEventListener('contextmenu',e=>{const d=e.target.closest('[data-friend-uid]');if(!d)return;e.preventDefault();groupAddMenu(d.dataset.friendUid,e.clientX,e.clientY)});
 async function promptNick(uid){const cur=(profiles[uid]||{}).nickname||'';const n=prompt('New nickname for '+(profiles[uid]||{}).username+' (blank to reset)',cur);if(n===null)return;
   const {error}=await sb.rpc('force_nick',{uid,nick:n.trim()||null});if(error)return alert(error.message);await loadProfiles();if(srvId)drawMembers()}
 async function switchTo(uid){if(defRole!=='owner')return;const target=profiles[uid];if(!target)return;
@@ -1007,5 +1019,20 @@ function myPerm(key){const c=cr[me.id];return !!(c&&c.perms&&(c.perms[key]||c.pe
 function banHtml(){if(!isStaff()||!bans.length)return '';return '<div class="text-[11px] font-bold text-[#949ba4] uppercase mt-4 mb-2">Banned — '+bans.length+'</div>'+bans.map(b=>`<div class="flex justify-between text-xs py-1"><span>${esc((profiles[b.user_id]||{username:'?'}).username)}</span><button onclick="unbanFromList('${b.user_id}')" class="text-[#949ba4] hover:text-white">Unban</button></div>`).join('')}
 async function unbanFromList(uid){const {error}=await sb.rpc('punish',{uid,kind:'ban',mins:0});if(error)return alert(error.message);await openServer(srvId)}
 async function setBuiltinRole(uid,newrole){const {error}=await sb.rpc('set_builtin_role',{sid:srvId,uid,newrole});if(error)return alert(error.message);await openServer(srvId)}
+
+function groupAddMenu(uid,x,y){
+  const p=profiles[uid]||{username:'?'};
+  let h='';
+  const mine=groups.filter(g=>g.members.includes(me.id)&&!g.members.includes(uid));
+  if(mine.length){h+=mine.map(g=>mi('👥',esc(g.name),`addUserToGroup('${g.id}','${uid}')`)).join('')+sep}
+  h+=mi('➕','New group with '+esc(dn(p)),`newGroupWith('${uid}')`);
+  showCtx(x,y,h);
+}
+async function addUserToGroup(gid,uid){
+  const {error}=await sb.from('group_dm_members').insert({group_id:gid,user_id:uid});
+  if(error)return alert(error.message);
+  await loadGroups();if(cur.type==='group'&&cur.id===gid)openGroup(gid);toast('Added to the group');
+}
+async function newGroupWith(uid){const gname=prompt('Group name (optional)','')||'';const {data,error}=await sb.rpc('create_group_dm',{gname,member_ids:[uid]});if(error)return alert(error.message);await loadGroups();openGroup(data)}
 start();
 </script></body></html>
