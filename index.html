@@ -522,7 +522,7 @@ function row(m){
   const r=cur.type==='ch'?roles[m.sender_id]:null;
   const t=new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   const del=cur.type==='ch'&&(m.sender_id===me.id||rank(myRole())>=3);
-  return `<div id="m_${m.id}" class="group flex gap-3 ${mentionsMe(m)?'bg-yellow-500/10 border-l-2 border-yellow-500 pl-2':''}"><span onclick="showProfile('${m.sender_id}')" class="cursor-pointer flex-shrink-0">${av(p,9)}</span><div class="min-w-0"><span onclick="showProfile('${m.sender_id}')" class="font-bold text-sm cursor-pointer hover:underline" style="color:${col(p)}">${esc(dn(p))}</span>${utag(p)}${r&&r!=='member'?` ${tag(p,r)}`:''} <span class="text-[10px] text-[#949ba4]">${t}</span>${m.pinned?' 📌':''}${del?` <button onclick="delMsg('${m.id}')" class="hidden group-hover:inline text-[10px] text-[#949ba4] hover:text-[#f23f43]">delete</button>`:''}${replyLine(m)}${m.file_url&&m.file_url.startsWith(FILEBASE)?`<a href="${esc(m.file_url)}" target="_blank" class="mt-1 flex items-center gap-2 bg-[#2b2d31] border border-[#3f4147] rounded-lg px-3 py-2 w-fit text-xs text-[#5865f2] hover:underline">📄 ${esc(m.file_name||'file')}</a>`:''}${m.image_url&&m.image_url.startsWith(IMGBASE)?`<img src="${esc(m.image_url)}" loading="lazy" onclick="window.open(this.src)" class="mt-1 max-h-64 max-w-xs rounded-lg cursor-pointer">`:''}<p class="text-sm" data-t>${fmt(m)}${m.edited_at?' <span class="text-[10px] text-[#949ba4]">(edited)</span>':''}</p>${m.channel_id?`<div id="rx_${m.id}" class="flex flex-wrap gap-1 mt-1"></div>`:''}</div></div>`;
+  return `<div id="m_${m.id}" class="group flex gap-3 ${mentionsMe(m)?'bg-yellow-500/10 border-l-2 border-yellow-500 pl-2':''}"><span onclick="showProfile('${m.sender_id}')" class="cursor-pointer flex-shrink-0">${av(p,9)}</span><div class="min-w-0"><span onclick="showProfile('${m.sender_id}')" class="font-bold text-sm cursor-pointer hover:underline" style="color:${col(p)}">${esc(dn(p))}</span>${isBot(p)?' '+BOTBADGE:''}${utag(p)}${r&&r!=='member'?` ${tag(p,r)}`:''} <span class="text-[10px] text-[#949ba4]">${t}</span>${m.pinned?' 📌':''}${del?` <button onclick="delMsg('${m.id}')" class="hidden group-hover:inline text-[10px] text-[#949ba4] hover:text-[#f23f43]">delete</button>`:''}${replyLine(m)}${m.file_url&&m.file_url.startsWith(FILEBASE)?`<a href="${esc(m.file_url)}" target="_blank" class="mt-1 flex items-center gap-2 bg-[#2b2d31] border border-[#3f4147] rounded-lg px-3 py-2 w-fit text-xs text-[#5865f2] hover:underline">📄 ${esc(m.file_name||'file')}</a>`:''}${m.image_url&&m.image_url.startsWith(IMGBASE)?`<img src="${esc(m.image_url)}" loading="lazy" onclick="window.open(this.src)" class="mt-1 max-h-64 max-w-xs rounded-lg cursor-pointer">`:''}<p class="text-sm" data-t>${fmt(m)}${m.edited_at?' <span class="text-[10px] text-[#949ba4]">(edited)</span>':''}</p>${m.channel_id?`<div id="rx_${m.id}" class="flex flex-wrap gap-1 mt-1"></div>`:''}</div></div>`;
 }
 function draw(list){$('msgs').innerHTML=list.map(m=>{try{return row(m)}catch(e){console.error(e);return ''}}).join('');$('msgs').scrollTop=1e9;list.forEach(m=>drawRx(m.id))}
 function add(m){if($('m_'+m.id))return;const k=$('msgs'),near=k.scrollHeight-k.scrollTop-k.clientHeight<200||m.sender_id===me.id;let h='';try{h=row(m)}catch(e){console.error(e)}k.insertAdjacentHTML('beforeend',h);while(k.children.length>300)k.removeChild(k.firstChild);if(near)k.scrollTop=1e9;drawRx(m.id)}
@@ -631,7 +631,8 @@ async function addByName(){const n=$('fadd').value.trim().toLowerCase().replace(
   if(error)return say(error.message);await loadFriends();drawPeople();$('fmsg').textContent='Request sent to '+u.username}
 async function runCmd(line){
   const [c,name,arg]=line.slice(1).trim().split(/\s+/);const cmd=(c||'').toLowerCase();
-  if(cmd==='help')return sys('Commands: /bold text (admins and up: big bold message) · /ban user hours · /unban user · /mute user minutes · /unmute user · /kick user · /nick user newname · /newrole name #color member|verified|mod|admin · /giverole user rolename|none · /delrole name · /deleteuser user · /gift user amount · /switch user · /banword word · /unbanword word · /banwords · /auditlog. Built-in roles are managed only from the gear icon. Deleting a server is only in its right-click menu. /hwidban user bans the devices they have used (works through VPNs) · /unhwidban user · /banip user bans the network address on their account, and is not foolproof since addresses change · /ips user · /iplog');
+  if(cmd==='help')return sys('BeanBot: /usercount · /serverinfo · /userinfo user · /topbeans · /roll 2d6 · /flip · /8ball question · /choose a | b | c · /rate thing · /hug user · /beanfact · /ping · /cmds · admins: /addcmd name text · /delcmd name · /botset disable|enable command. Other commands: /bold text (admins and up: big bold message) · /ban user hours · /unban user · /mute user minutes · /unmute user · /kick user · /nick user newname · /newrole name #color member|verified|mod|admin · /giverole user rolename|none · /delrole name · /deleteuser user · /gift user amount · /switch user · /banword word · /unbanword word · /banwords · /auditlog. Built-in roles are managed only from the gear icon. Deleting a server is only in its right-click menu. /hwidban user bans the devices they have used (works through VPNs) · /unhwidban user · /banip user bans the network address on their account, and is not foolproof since addresses change · /ips user · /iplog');
+  if(!STAFF_CMDS.has(cmd))return botCall(cmd,line);
   if(cmd==='bold'){
     if(cur.type!=='ch')return sys('/bold only works in server channels.');
     if(!isStaff())return sys('Only admins and up can use /bold.');
@@ -681,13 +682,17 @@ async function runCmd(line){
   sys('Unknown command. Type /help');
 }
 let ment={},sugList=[],sugIdx=0,sugStart=0,sugAt=false;
-const CMDS=['bold','ban','unban','mute','unmute','kick','nick','giverole','newrole','delrole','deleteuser','gift','switch','banip','unbanip','hwidban','unhwidban','ips','iplog','banword','unbanword','banwords','auditlog','unblock','reports','help'],ROLES=['manager','admin','goodgirl','mod','verified','member'];
+const CMDS=['usercount','serverinfo','userinfo','topbeans','roll','flip','8ball','choose','rate','hug','beanfact','ping','cmds','addcmd','delcmd','botset','bold','ban','unban','mute','unmute','kick','nick','giverole','newrole','delrole','deleteuser','gift','switch','banip','unbanip','hwidban','unhwidban','ips','iplog','banword','unbanword','banwords','auditlog','unblock','reports','help'],ROLES=['manager','admin','goodgirl','mod','verified','member'];
 function roleSel(m,u,self){if(self||!canManage(m.role))return '';const o=ROLES.filter(r=>rank(r)<rank(myRole())).map(r=>`<option ${r===m.role?'selected':''}>${r}</option>`).join('');return `<select onchange="setRole('${u}',this.value)" class="mt-1 bg-[#1e1f22] text-[10px] text-[#949ba4] rounded px-1">${o}</select>`}
 const BOLDMARK='[[big]]';
+const isBot=p=>!!p&&p.username==='beanbot';
+const BOTBADGE='<span class="text-[9px] font-black uppercase text-white px-1.5 rounded bg-[#5865f2]">BOT</span>';
 function fmt(m){
-  const c=String(m.content||'');
-  if(c.startsWith(BOLDMARK)&&m.channel_id&&rank(roles[m.sender_id])>=4)return '<span style="display:block;font-size:1.875rem;line-height:1.15;font-weight:900">'+mention(esc(c.slice(BOLDMARK.length).trim()))+'</span>';
-  return mention(esc(c.startsWith(BOLDMARK)?c.slice(BOLDMARK.length).trim():c));
+  const c=String(m.content||'');let h;
+  if(c.startsWith(BOLDMARK)&&m.channel_id&&rank(roles[m.sender_id])>=4)h='<span style="display:block;font-size:1.875rem;line-height:1.15;font-weight:900">'+mention(esc(c.slice(BOLDMARK.length).trim()))+'</span>';
+  else h=mention(esc(c.startsWith(BOLDMARK)?c.slice(BOLDMARK.length).trim():c));
+  if(isBot(profiles[m.sender_id]))h='<span style="white-space:pre-wrap">'+h+'</span>';
+  return h;
 }
 function mention(t){return t.replace(/@(everyone|here|[a-z0-9_]+)/gi,(x,n)=>{const l=n.toLowerCase();return(l==='everyone'||l==='here'||Object.values(profiles).some(p=>p.username===l)||Object.keys(RANK).includes(l))?`<span class="bg-[#5865f2]/30 text-[#c9cdfb] rounded px-0.5">@${l}</span>`:x})}
 function mentionsMe(m){if(m.sender_id===me.id)return false;
@@ -792,7 +797,7 @@ function showProfile(uid){
   if(isMe)rows+=sep+row('🫘',(me.beans??0)+' Beans','<span class="text-[#80848e]">›</span>',"closeVp();openShop()");
   const f=isMe?null:fr(uid);
   let friendHtml='';
-  if(!isMe){
+  if(!isMe&&!isBot(p)){
     const gbtn='class="px-4 py-2 rounded-xl text-sm font-bold text-[#c9f0d4]" style="background:#25643a;border:2px solid #3a8a54;box-shadow:0 3px 0 #17432a"';
     const rbtn='class="px-4 py-2 rounded-xl text-sm font-bold text-[#eef0ff]" style="background:#3448b4;border:2px solid #4a5fd0;box-shadow:0 3px 0 #222f80"';
     const xbtn='class="px-4 py-2 rounded-xl text-sm font-bold text-[#b5bac1] border-2 border-[#4a4d55] bg-[#2a2c30]"';
@@ -810,7 +815,7 @@ function showProfile(uid){
   $('vpc').innerHTML=`<div class="h-24" style="background:${banner}"></div>
   <div class="px-5 -mt-10 relative"><div class="relative inline-block rounded-full" style="border:5px solid #1b1c1f">${av(p,20)}${dot}</div></div>
   <div class="px-5 pt-3 pb-5">
-   <div class="flex items-center flex-wrap gap-x-2 gap-y-1"><span class="font-black text-2xl" style="color:${col(p)}">${esc(dn(p))}</span>${r?tag(p,r):''}${utag(p)}</div>
+   <div class="flex items-center flex-wrap gap-x-2 gap-y-1"><span class="font-black text-2xl" style="color:${col(p)}">${esc(dn(p))}</span>${isBot(p)?BOTBADGE:''}${r?tag(p,r):''}${utag(p)}</div>
    <div class="text-sm text-[#949ba4] mt-0.5">${esc(p.username)}${p.nickname?'':''}</div>
    ${p.bio?`<p class="mt-3 text-sm text-[#dbdee1] break-words whitespace-pre-wrap">${linkify(p.bio)}</p>`:''}
    ${friendHtml?`<div class="mt-4 flex flex-wrap gap-2">${friendHtml}</div>`:''}
@@ -1408,6 +1413,29 @@ async function addUserToGroup(gid,uid){
   await loadGroups();if(cur.type==='group'&&cur.id===gid)openGroup(gid);toast('Added to the group');
 }
 async function newGroupWith(uid){const gname=prompt('Group name (optional)','')||'';const {data,error}=await sb.rpc('create_group_dm',{gname,member_ids:[uid]});if(error)return alert(error.message);await loadGroups();openGroup(data)}
+// ===== BeanBot =====
+const BOT_FN='beanbot'; // name of the Supabase edge function that runs BeanBot
+const STAFF_CMDS=new Set(['help','bold','newrole','delrole','banword','unbanword','banwords','delserver','auditlog','iplog','reports','ban','unban','mute','unmute','nick','giverole','deleteuser','banip','hwidban','unhwidban','unbanip','ips','gift','switch','unblock','kick','role']);
+async function botCall(cmd,line){
+  if(!cmd)return sys('Type /help to see the commands.');
+  if(cur.type!=='ch')return sys('BeanBot commands only work in server channels.');
+  const mu=until(me,'muted_until');if(mu)return alert('You are muted until '+mu.toLocaleString());
+  const args=line.slice(1).trim().replace(/^\S+\s*/,'').trim();
+  try{
+    const {data,error}=await sb.functions.invoke(BOT_FN,{body:{channel_id:cur.id,cmd,args}});
+    if(error){
+      let msg='BeanBot could not be reached.';const c=error.context;
+      try{
+        if(c&&c.status===404)msg='BeanBot is not deployed yet. The page is looking for a function named '+BOT_FN+'.';
+        else if(c&&c.json){const j=await c.json();msg=(j&&(j.error||j.message))||msg;if(c.status)msg+=' (status '+c.status+')'}
+      }catch(_){}
+      return sys(msg);
+    }
+    if(data&&data.private)return sys(data.private);
+    if(data&&data.error)return sys(data.error);
+  }catch(e){sys('BeanBot could not be reached.')}
+}
+
 // ===== Beanchat browser (tabs, address bar, back/forward) =====
 const WEB_FN='web-search'; // name of the Supabase edge function that holds the search code
 let btabs=[],bact=null,bseq=0;
