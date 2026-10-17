@@ -127,9 +127,15 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
    <span id="ringtext" class="font-bold text-sm"></span>
    <span class="flex gap-2"><button onclick="acceptCall()" class="bg-white text-[#23a55a] font-bold text-xs px-3 py-1.5 rounded-lg">Accept</button><button onclick="declineCall()" class="bg-black/20 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Decline</button></span>
   </div>
-  <div id="callbar" class="hidden mx-4 mt-2 bg-[#2b2d31] border border-[#3f4147] rounded-lg px-4 py-2.5 flex items-center justify-between">
-   <span id="calltext" class="text-sm text-white">Calling...</span>
-   <span class="flex gap-2"><button id="mutebtn" onclick="toggleMute()" class="bg-[#4e5058] text-white text-xs px-3 py-1.5 rounded-lg">Mute</button><button onclick="hangupCall()" class="bg-[#f23f43] text-white font-bold text-xs px-3 py-1.5 rounded-lg">Hang up</button></span>
+  <div id="callbar" class="hidden mx-4 mt-2 mb-1">
+   <div id="calltiles" class="flex flex-wrap gap-2 justify-center bg-[#1e1f22] rounded-xl p-2 mb-2"></div>
+   <div class="flex items-center justify-center gap-2 bg-[#1e1f22] rounded-full px-3 py-2 mx-auto w-fit">
+    <span id="calltext" class="text-xs text-[#949ba4] px-1 hidden sm:inline">Calling...</span>
+    <button id="mutebtn" onclick="toggleMute()" title="Mute" class="w-9 h-9 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white flex items-center justify-center">🎤</button>
+    <button id="camerabtn" onclick="toggleCamera()" title="Camera" class="w-9 h-9 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white flex items-center justify-center">📷</button>
+    <button id="sharebtn" onclick="toggleScreenShare()" title="Share screen" class="w-9 h-9 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white flex items-center justify-center">🖥️</button>
+    <button onclick="hangupCall()" title="Hang up" class="w-9 h-9 rounded-full bg-[#f23f43] hover:bg-[#d7373b] text-white flex items-center justify-center"><span style="display:inline-block;transform:rotate(135deg)">📞</span></button>
+   </div>
   </div>
   <div id="searchbar" class="hidden mx-4 mt-2"><input id="sq" placeholder="Search messages in this channel..." class="w-full bg-[#1e1f22] rounded px-3 py-2 text-sm text-white outline-none"><div id="sqres" class="mt-2 max-h-56 overflow-y-auto space-y-2 text-sm"></div></div>
   <div id="typing" class="px-4 h-4 text-xs text-[#949ba4] italic truncate"></div>
@@ -679,6 +685,7 @@ async function toggleGroupCall(){
   catch(e){return alert('Could not access your microphone. Check your browser\'s permission settings for this site.')}
   groupCallActive=true;groupCallId=cur.id;muted=false;
   $('callbar').classList.remove('hidden');$('calltext').textContent='Connecting to group call...';
+  ensureTile('me',dn(me));
   openGroup(cur.id);
   groupCallCh=sb.channel(groupCallKey(groupCallId),{config:{presence:{key:me.id}}});
   groupCallCh.on('broadcast',{event:'signal'},p=>{if(p.payload.to===me.id)handleGroupSignal(p.payload)});
@@ -699,8 +706,18 @@ function createGroupPeer(peerId,initiator){
   const pcx=new RTCPeerConnection(RTC_CONFIG);
   groupPeers[peerId]=pcx;
   groupLocalStream.getTracks().forEach(t=>pcx.addTrack(t,groupLocalStream));
+  if(myVideoTrack)groupVideoSenders[peerId]=pcx.addTrack(myVideoTrack,groupLocalStream);
+  ensureTile('me',dn(me));ensureTile(peerId,dn(profiles[peerId]||{username:'?'}));
   pcx.onicecandidate=e=>{if(e.candidate)groupCallCh.send({type:'broadcast',event:'signal',payload:{type:'ice',candidate:e.candidate,from:me.id,to:peerId}})};
-  pcx.ontrack=e=>{let a=document.getElementById('ga_'+peerId);if(!a){a=document.createElement('audio');a.id='ga_'+peerId;a.autoplay=true;document.body.appendChild(a)}a.srcObject=e.streams[0]};
+  pcx.ontrack=e=>{
+    if(e.track.kind==='video'){
+      setTileVideo(peerId,e.streams[0]);
+      e.track.onended=()=>clearTileVideo(peerId);
+    }else{
+      let a=document.getElementById('ga_'+peerId);if(!a){a=document.createElement('audio');a.id='ga_'+peerId;a.autoplay=true;document.body.appendChild(a)}
+      a.srcObject=e.streams[0];
+    }
+  };
   pcx.onconnectionstatechange=()=>{if(['failed','disconnected','closed'].includes(pcx.connectionState))closeGroupPeer(peerId)};
   if(initiator){
     pcx.createOffer().then(o=>pcx.setLocalDescription(o).then(()=>
@@ -725,17 +742,111 @@ async function handleGroupSignal(msg){
 
 function closeGroupPeer(peerId){
   const pcx=groupPeers[peerId];if(pcx){pcx.close();delete groupPeers[peerId]}
+  delete groupVideoSenders[peerId];
   const a=document.getElementById('ga_'+peerId);if(a){a.srcObject=null;a.remove()}
+  removeTile(peerId);
 }
 
 function leaveGroupCall(){
   Object.keys(groupPeers).forEach(closeGroupPeer);
   if(groupLocalStream){groupLocalStream.getTracks().forEach(t=>t.stop());groupLocalStream=null}
   if(groupCallCh){sb.removeChannel(groupCallCh);groupCallCh=null}
+  resetVideoState();clearAllTiles();
   const wasId=groupCallId;
   groupCallActive=false;groupCallId=null;muted=false;
-  $('callbar').classList.add('hidden');$('mutebtn').textContent='Mute';$('mutebtn').classList.remove('bg-[#f23f43]');
+  $('callbar').classList.add('hidden');$('mutebtn').textContent='🎤';$('mutebtn').classList.remove('bg-[#f23f43]');
   if(cur.type==='group'&&cur.id===wasId)openGroup(wasId);
+}
+
+// ===== shared call-tile rendering (used by both 1:1 and group calls) =====
+function ensureTile(id,label){
+  let t=document.getElementById('tile_'+id);
+  if(!t){
+    t=document.createElement('div');t.id='tile_'+id;
+    t.className='relative w-24 h-20 sm:w-32 sm:h-24 rounded-lg overflow-hidden bg-[#2b2d31] flex items-center justify-center flex-shrink-0';
+    const avwrap=document.createElement('div');avwrap.className='av-wrap';
+    avwrap.innerHTML=av(id==='me'?me:(profiles[id]||{username:'?'}),9);
+    const tag=document.createElement('span');tag.className='absolute bottom-1 left-1 text-[10px] text-white bg-black/50 px-1 rounded';tag.textContent=label;
+    t.appendChild(avwrap);t.appendChild(tag);
+    $('calltiles').appendChild(t);
+  }
+  return t;
+}
+function setTileVideo(id,stream){
+  const label=id==='me'?dn(me):dn(profiles[id]||{username:'?'});
+  const t=ensureTile(id,label);
+  let v=t.querySelector('video');
+  if(!v){
+    v=document.createElement('video');v.autoplay=true;v.playsInline=true;v.muted=(id==='me');
+    v.className='absolute inset-0 w-full h-full object-cover';
+    t.insertBefore(v,t.firstChild);
+  }
+  v.srcObject=stream;
+  const aw=t.querySelector('.av-wrap');if(aw)aw.classList.add('hidden');
+}
+function clearTileVideo(id){
+  const t=document.getElementById('tile_'+id);if(!t)return;
+  const v=t.querySelector('video');if(v)v.remove();
+  const aw=t.querySelector('.av-wrap');if(aw)aw.classList.remove('hidden');
+}
+function removeTile(id){const t=document.getElementById('tile_'+id);if(t)t.remove()}
+function clearAllTiles(){$('calltiles').innerHTML=''}
+
+async function renegotiate(pcx,channel,toId){
+  const offer=await pcx.createOffer();await pcx.setLocalDescription(offer);
+  const payload={type:'offer',sdp:offer,from:me.id};if(toId)payload.to=toId;
+  channel.send({type:'broadcast',event:'signal',payload});
+}
+
+// ===== local camera / screen-share (shared across call types) =====
+let myVideoTrack=null,videoKind=null,videoSender=null,groupVideoSenders={};
+
+async function toggleCamera(){
+  if(callState==='idle'&&!groupCallActive)return;
+  if(videoKind==='camera')return stopLocalVideo();
+  try{
+    const vs=await navigator.mediaDevices.getUserMedia({video:true});
+    await setLocalVideo(vs.getVideoTracks()[0],'camera');
+  }catch(e){alert('Could not access your camera. Check your browser\'s permission settings for this site.')}
+}
+async function toggleScreenShare(){
+  if(callState==='idle'&&!groupCallActive)return;
+  if(videoKind==='screen')return stopLocalVideo();
+  try{
+    const ds=await navigator.mediaDevices.getDisplayMedia({video:true});
+    const track=ds.getVideoTracks()[0];
+    track.onended=()=>{if(videoKind==='screen')stopLocalVideo()};
+    await setLocalVideo(track,'screen');
+  }catch(e){/* person cancelled the share picker */}
+}
+async function setLocalVideo(track,kind){
+  if(myVideoTrack)myVideoTrack.stop();
+  myVideoTrack=track;videoKind=kind;
+  setTileVideo('me',new MediaStream([track]));
+  $('camerabtn').classList.toggle('bg-[#5865f2]',kind==='camera');
+  $('sharebtn').classList.toggle('bg-[#5865f2]',kind==='screen');
+  if(activeCallWith&&pc){
+    if(!videoSender){videoSender=pc.addTrack(track,localStream);await renegotiate(pc,callCh)}
+    else await videoSender.replaceTrack(track);
+  }else if(groupCallActive){
+    for(const pid of Object.keys(groupPeers)){
+      const pcx=groupPeers[pid];
+      if(!groupVideoSenders[pid]){groupVideoSenders[pid]=pcx.addTrack(track,groupLocalStream);await renegotiate(pcx,groupCallCh,pid)}
+      else await groupVideoSenders[pid].replaceTrack(track);
+    }
+  }
+}
+function stopLocalVideo(){
+  if(myVideoTrack){myVideoTrack.stop();myVideoTrack=null}
+  videoKind=null;clearTileVideo('me');
+  $('camerabtn').classList.remove('bg-[#5865f2]');$('sharebtn').classList.remove('bg-[#5865f2]');
+  if(videoSender)videoSender.replaceTrack(null);
+  Object.values(groupVideoSenders).forEach(s=>{try{s.replaceTrack(null)}catch(e){}});
+}
+function resetVideoState(){
+  if(myVideoTrack){myVideoTrack.stop();myVideoTrack=null}
+  videoKind=null;videoSender=null;groupVideoSenders={};
+  $('camerabtn').classList.remove('bg-[#5865f2]');$('sharebtn').classList.remove('bg-[#5865f2]');
 }
 
 // ===== DM voice calls (phase 1: one-to-one only) =====
@@ -806,9 +917,19 @@ function declineCall(){
 
 function setupPeerConnection(peerId){
   pc=new RTCPeerConnection(RTC_CONFIG);
+  videoSender=null;
   localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+  ensureTile('me',dn(me));ensureTile(peerId,dn(profiles[peerId]||{username:'?'}));
   pc.onicecandidate=e=>{if(e.candidate&&callCh)callCh.send({type:'broadcast',event:'signal',payload:{type:'ice',candidate:e.candidate,from:me.id}})};
-  pc.ontrack=e=>{let a=$('remoteAudio');if(!a){a=document.createElement('audio');a.id='remoteAudio';a.autoplay=true;document.body.appendChild(a)}a.srcObject=e.streams[0]};
+  pc.ontrack=e=>{
+    if(e.track.kind==='video'){
+      setTileVideo(peerId,e.streams[0]);
+      e.track.onended=()=>clearTileVideo(peerId);
+    }else{
+      let a=$('remoteAudio');if(!a){a=document.createElement('audio');a.id='remoteAudio';a.autoplay=true;document.body.appendChild(a)}
+      a.srcObject=e.streams[0];
+    }
+  };
   pc.onconnectionstatechange=()=>{
     if(pc.connectionState==='connected'){callState='connected';$('calltext').textContent='In call with '+dn(profiles[peerId]);}
     else if(['failed','disconnected','closed'].includes(pc.connectionState)&&callState!=='idle'){endCall('Call ended.')}
@@ -833,7 +954,7 @@ async function handleCallSignal(msg){
 function toggleMute(){
   const stream=localStream||groupLocalStream;if(!stream)return;
   muted=!muted;stream.getAudioTracks().forEach(t=>t.enabled=!muted);
-  $('mutebtn').textContent=muted?'Unmute':'Mute';$('mutebtn').classList.toggle('bg-[#f23f43]',muted);
+  $('mutebtn').textContent=muted?'🔇':'🎤';$('mutebtn').classList.toggle('bg-[#f23f43]',muted);
 }
 
 function hangupCall(){if(groupCallActive)return leaveGroupCall();if(callCh)callCh.send({type:'broadcast',event:'signal',payload:{type:'hangup',from:me.id}});endCall('Call ended.')}
@@ -843,9 +964,10 @@ function endCall(reason){
   if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null}
   if(callCh){sb.removeChannel(callCh);callCh=null}
   const a=$('remoteAudio');if(a)a.srcObject=null;
+  resetVideoState();clearAllTiles();
   activeCallWith=null;callState='idle';incomingFrom=null;muted=false;
   $('callbar').classList.add('hidden');$('ringbanner').classList.add('hidden');
-  $('mutebtn').textContent='Mute';$('mutebtn').classList.remove('bg-[#f23f43]');
+  $('mutebtn').textContent='🎤';$('mutebtn').classList.remove('bg-[#f23f43]');
   if(cur.type==='dm')$('callbtn').classList.remove('hidden');
   if(reason)toast(reason);
 }
