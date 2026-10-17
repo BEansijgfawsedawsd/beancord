@@ -242,6 +242,21 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
  <div id="mem" class="w-56 bg-[#2b2d31] overflow-y-auto p-3 hidden flex-shrink-0"></div>
 </div>
 
+<div id="web" class="hidden fixed inset-0 z-[45] flex flex-col items-center p-4 overflow-y-auto" style="background:#141517 radial-gradient(circle at 50% 28%,rgba(107,120,232,.16),transparent 55%);">
+ <div class="absolute inset-0 pointer-events-none" style="background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1px);background-size:28px 28px"></div>
+ <button onclick="closeWeb()" title="Close" class="absolute top-4 right-4 w-10 h-10 rounded-xl border-2 border-[#4a4d55] bg-[#2a2c30] text-[#b5bac1] hover:text-white text-lg z-10">✕</button>
+ <div class="relative w-full max-w-2xl text-center my-auto">
+  <h1 id="webtitle" style="font-family:'Russo One',Impact,system-ui,sans-serif;font-size:3.4rem;letter-spacing:.03em;color:#efe8d6;text-shadow:0 0 40px rgba(107,120,232,.45);line-height:1.1">Beanchat</h1>
+  <p class="mt-2 text-sm font-bold text-[#dbdee1]">search the web without leaving BEANCORD 🫘</p>
+  <form id="webform" class="mt-8 flex items-center gap-2 rounded-2xl border-2 border-[#4a4d55] bg-[#1f2023] p-2 pl-4" style="box-shadow:0 6px 0 #1a1b1e,0 18px 40px rgba(0,0,0,.45)">
+   <span class="text-[#949ba4]">🔍</span>
+   <input id="webq" autocomplete="off" placeholder="Search for anything!" class="flex-1 min-w-0 bg-transparent outline-none text-white text-base py-2">
+   <button type="submit" title="Search" class="w-11 h-11 rounded-xl text-white font-bold text-lg" style="background:#3448b4;border:2px solid #4a5fd0;box-shadow:0 3px 0 #222f80">→</button>
+  </form>
+  <p class="mt-3 text-xs text-[#80848e]">Paste a web address to go straight to it.</p>
+  <div id="webres" class="mt-6 text-left space-y-3"></div>
+ </div>
+</div>
 <div id="shop" class="hidden fixed inset-0 bg-[#313338] z-40 overflow-y-auto"><div class="max-w-5xl mx-auto p-4">
  <div class="flex items-center justify-between mb-2 sticky top-0 bg-[#313338] py-2 z-10"><h2 class="text-xl font-black text-white">Tag Shop</h2>
   <div class="flex items-center gap-3 text-sm"><button id="newtagbtn" onclick="newTag()" class="hidden bg-pink-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs">+ New tag</button><span id="bal" class="font-bold text-white"></span><button onclick="claimDaily()" class="bg-[#23a55a] text-white font-bold px-3 py-1.5 rounded-lg text-xs">Claim daily beans</button><button onclick="$('shop').classList.add('hidden')" class="bg-[#4e5058] text-white px-3 py-1.5 rounded-lg text-xs">Close</button></div></div>
@@ -402,7 +417,7 @@ async function openServer(id){
   channels=c.data||[];channels.forEach(x=>chanSrv[x.id]=id);members=m.data||[];roles={};members.forEach(x=>roles[x.user_id]=x.role);if((servers.find(x=>x.id===id)||{}).is_default){defRole=roles[me.id];const nb=$('newsrvbtn');if(nb)nb.classList.toggle('hidden',defRole!=='owner')}
   bans=[];if(isStaff()){const {data:b}=await sb.from('server_bans').select('*').eq('server_id',id);bans=b||[]}
   {const {data:cd}=await sb.from('custom_roles').select('*').eq('server_id',id);croles=cd||[];cr={};members.forEach(x=>{if(x.custom_role)cr[x.user_id]=croles.find(y=>y.id===x.custom_role)})}
-  $('sh').innerHTML=`<span class="truncate">${esc(s.name)}</span><span class="flex items-center gap-2 flex-shrink-0">${defRole==='owner'?'<button onclick="openRoles()" title="Manage roles" class="text-base text-[#949ba4] hover:text-white">⚙</button>':''}${(isStaff()||myPerm('manage_channels'))?'<button onclick="newChannel()" class="text-xl text-[#949ba4] hover:text-white">+</button>':''}</span>`;
+  $('sh').innerHTML=`<span class="truncate">${esc(s.name)}</span><span class="flex items-center gap-2 flex-shrink-0"><button onclick="openWeb()" title="Beanchat — search the web" class="text-base text-[#949ba4] hover:text-white">🌐</button>${defRole==='owner'?'<button onclick="openRoles()" title="Manage roles" class="text-base text-[#949ba4] hover:text-white">⚙</button>':''}${(isStaff()||myPerm('manage_channels'))?'<button onclick="newChannel()" class="text-xl text-[#949ba4] hover:text-white">+</button>':''}</span>`;
   $('mem').classList.remove('hidden');drawChannels();try{drawMembers()}catch(e){console.error('drawMembers failed:',e);$('mem').innerHTML='<p class="text-xs text-[#f23f43]">Member list failed to load. Check the browser console (F12) for details.</p>'}
   if(channels[0])await openChannel(channels[0].id);
 }
@@ -458,7 +473,7 @@ async function openChannel(id){
   draw(data||[]);
 }
 async function showDMs(){
-  srvId=null;members=[];roles={};$('mem').classList.add('hidden');await loadProfiles();await loadFriends();await loadGroups();await loadServers();cur={};$('sh').textContent='Direct Messages';$('chtitle').textContent='Pick someone to message';$('msgs').innerHTML='';$('pinbtn').classList.add('hidden');$('searchbtn').classList.add('hidden');$('searchbar').classList.add('hidden');$('callbtn').classList.add('hidden');$('groupcallbtn').classList.add('hidden');$('groupsettingsbtn').classList.add('hidden');subscribeTyping();
+  srvId=null;members=[];roles={};$('mem').classList.add('hidden');await loadProfiles();await loadFriends();await loadGroups();await loadServers();cur={};$('sh').innerHTML='<span class="truncate">Direct Messages</span><span class="flex items-center gap-2 flex-shrink-0"><button onclick="openWeb()" title="Beanchat — search the web" class="text-base text-[#949ba4] hover:text-white">🌐</button></span>';$('chtitle').textContent='Pick someone to message';$('msgs').innerHTML='';$('pinbtn').classList.add('hidden');$('searchbtn').classList.add('hidden');$('searchbar').classList.add('hidden');$('callbtn').classList.add('hidden');$('groupcallbtn').classList.add('hidden');$('groupsettingsbtn').classList.add('hidden');subscribeTyping();
   drawPeople();
 }
 function drawPeople(){
@@ -1325,5 +1340,33 @@ async function addUserToGroup(gid,uid){
   await loadGroups();if(cur.type==='group'&&cur.id===gid)openGroup(gid);toast('Added to the group');
 }
 async function newGroupWith(uid){const gname=prompt('Group name (optional)','')||'';const {data,error}=await sb.rpc('create_group_dm',{gname,member_ids:[uid]});if(error)return alert(error.message);await loadGroups();openGroup(data)}
+// ===== Beanchat web search =====
+function openWeb(){$('web').classList.remove('hidden');setTimeout(()=>$('webq').focus(),50)}
+function closeWeb(){$('web').classList.add('hidden')}
+$('webform').onsubmit=e=>{
+  e.preventDefault();const q=$('webq').value.trim();if(!q)return;
+  let url;
+  if(/^https?:\/\/\S+$/i.test(q))url=q;
+  else if(/^[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?$/i.test(q))url='https://'+q;
+  else return webSearch(q);
+  window.open(url,'_blank','noopener,noreferrer');
+};
+async function webSearch(q){
+  const box=$('webres');$('webtitle').style.fontSize='2rem';
+  box.innerHTML='<p class="text-sm text-[#949ba4]">Searching…</p>';
+  const ddg='https://duckduckgo.com/?q='+encodeURIComponent(q);
+  const plain=t=>new DOMParser().parseFromString(String(t||''),'text/html').body.textContent||'';
+  const host=u=>{try{return new URL(u).hostname.replace(/^www\./,'')}catch(e){return u}};
+  try{
+    const {data,error}=await sb.functions.invoke('web-search',{body:{q}});
+    if(error||!data||data.error)throw new Error((data&&data.error)||'unavailable');
+    const rs=(data.results||[]).filter(r=>/^https?:\/\//i.test(r.url||''));
+    box.innerHTML=rs.length?rs.map(r=>`<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer" class="block rounded-xl border-2 border-[#34363b] bg-[#1f2023] hover:border-[#4a5fd0] p-3"><div class="text-xs text-[#80848e] truncate">${esc(host(r.url))}${r.age?' · '+esc(r.age):''}</div><div class="text-[#7fa6ff] font-bold mt-0.5">${esc(plain(r.title))}</div><div class="text-sm text-[#b5bac1] mt-1">${esc(plain(r.description))}</div></a>`).join(''):'<p class="text-sm text-[#949ba4]">No results.</p>';
+  }catch(e){
+    box.innerHTML=`<div class="rounded-xl border-2 border-[#34363b] bg-[#1f2023] p-3 text-sm text-[#b5bac1]">${esc(e.message==='unavailable'?'Beanchat search is not switched on yet.':e.message)} <a href="${esc(ddg)}" target="_blank" rel="noopener noreferrer" class="text-[#7fa6ff] underline">Search on DuckDuckGo instead</a></div>`;
+  }
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('web').classList.contains('hidden'))closeWeb()});
+
 start();
 </script></body></html>
