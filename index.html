@@ -242,20 +242,17 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
  <div id="mem" class="w-56 bg-[#2b2d31] overflow-y-auto p-3 hidden flex-shrink-0"></div>
 </div>
 
-<div id="web" class="hidden fixed inset-0 z-[45] flex flex-col items-center p-4 overflow-y-auto" style="background:#141517 radial-gradient(circle at 50% 28%,rgba(107,120,232,.16),transparent 55%);">
- <div class="absolute inset-0 pointer-events-none" style="background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1px);background-size:28px 28px"></div>
- <button onclick="closeWeb()" title="Close" class="absolute top-4 right-4 w-10 h-10 rounded-xl border-2 border-[#4a4d55] bg-[#2a2c30] text-[#b5bac1] hover:text-white text-lg z-10">✕</button>
- <div class="relative w-full max-w-2xl text-center my-auto">
-  <h1 id="webtitle" style="font-family:'Russo One',Impact,system-ui,sans-serif;font-size:3.4rem;letter-spacing:.03em;color:#efe8d6;text-shadow:0 0 40px rgba(107,120,232,.45);line-height:1.1">Beanchat</h1>
-  <p class="mt-2 text-sm font-bold text-[#dbdee1]">search the web without leaving BEANCORD 🫘</p>
-  <form id="webform" class="mt-8 flex items-center gap-2 rounded-2xl border-2 border-[#4a4d55] bg-[#1f2023] p-2 pl-4" style="box-shadow:0 6px 0 #1a1b1e,0 18px 40px rgba(0,0,0,.45)">
-   <span class="text-[#949ba4]">🔍</span>
-   <input id="webq" autocomplete="off" placeholder="Search for anything!" class="flex-1 min-w-0 bg-transparent outline-none text-white text-base py-2">
-   <button type="submit" title="Search" class="w-11 h-11 rounded-xl text-white font-bold text-lg" style="background:#3448b4;border:2px solid #4a5fd0;box-shadow:0 3px 0 #222f80">→</button>
-  </form>
-  <p class="mt-3 text-xs text-[#80848e]">Paste a web address to go straight to it.</p>
-  <div id="webres" class="mt-6 text-left space-y-3"></div>
+<div id="web" class="hidden fixed inset-0 z-[45] flex flex-col" style="background:#141517">
+ <div id="btabs" class="flex items-end gap-1 px-2 pt-2 bg-[#0f1012] overflow-x-auto flex-shrink-0"></div>
+ <div class="flex items-center gap-2 px-2 py-2 bg-[#0f1012] border-b-2 border-[#2a2c30] flex-shrink-0">
+  <button id="bback" onclick="bNav(-1)" title="Back" class="w-9 h-9 rounded-lg text-[#b5bac1] hover:bg-[#232428] hover:text-white disabled:opacity-30">←</button>
+  <button id="bfwd" onclick="bNav(1)" title="Forward" class="w-9 h-9 rounded-lg text-[#b5bac1] hover:bg-[#232428] hover:text-white disabled:opacity-30">→</button>
+  <button onclick="bReload()" title="Reload" class="w-9 h-9 rounded-lg text-[#b5bac1] hover:bg-[#232428] hover:text-white">⟳</button>
+  <form id="bform" class="flex-1 min-w-0"><input id="burl" autocomplete="off" spellcheck="false" placeholder="Search or enter address" class="w-full rounded-xl border-2 border-[#2a2c30] bg-[#17181a] px-4 py-2 text-sm text-white outline-none focus:border-[#4a5fd0]"></form>
+  <button onclick="bExternal()" title="Open in a real browser tab" class="w-9 h-9 rounded-lg text-[#b5bac1] hover:bg-[#232428] hover:text-white">↗</button>
+  <button onclick="closeWeb()" title="Back to chat" class="w-9 h-9 rounded-lg text-[#b5bac1] hover:bg-[#232428] hover:text-white">✕</button>
  </div>
+ <div id="bcont" class="flex-1 relative min-h-0"></div>
 </div>
 <div id="shop" class="hidden fixed inset-0 bg-[#313338] z-40 overflow-y-auto"><div class="max-w-5xl mx-auto p-4">
  <div class="flex items-center justify-between mb-2 sticky top-0 bg-[#313338] py-2 z-10"><h2 class="text-xl font-black text-white">Tag Shop</h2>
@@ -264,7 +261,7 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
  <div id="shopg" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div></div></div>
 <input id="sif" type="file" accept="image/*" class="hidden">
 <div id="ctx" class="hidden fixed z-50 w-56 bg-[#111214] border border-black/40 rounded-lg shadow-2xl p-1 text-sm"></div>
-<div id="vp" onclick="this.classList.add('hidden')" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"><div id="vpc" onclick="event.stopPropagation()" class="bg-[#1b1c1f] rounded-xl w-full max-w-sm text-left overflow-hidden"></div></div>
+<div id="vp" onclick="this.classList.add('hidden')" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"><div id="vpc" onclick="event.stopPropagation()" class="bg-[#1b1c1f] rounded-xl w-full max-w-sm text-left overflow-y-auto max-h-[90vh]"></div></div>
 <div id="rm" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"><div class="bg-[#313338] rounded-xl w-full max-w-md max-h-[85vh] overflow-y-auto">
  <div class="p-5 border-b border-black/30 flex items-center justify-between sticky top-0 bg-[#313338]"><h2 class="font-bold text-white">Custom roles</h2><button onclick="closeRoles()" class="text-[#949ba4] hover:text-white">✕</button></div>
  <div class="p-5 space-y-3">
@@ -525,7 +522,7 @@ function row(m){
   const r=cur.type==='ch'?roles[m.sender_id]:null;
   const t=new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   const del=cur.type==='ch'&&(m.sender_id===me.id||rank(myRole())>=3);
-  return `<div id="m_${m.id}" class="group flex gap-3 ${mentionsMe(m)?'bg-yellow-500/10 border-l-2 border-yellow-500 pl-2':''}">${av(p,9)}<div class="min-w-0"><span class="font-bold text-sm" style="color:${col(p)}">${esc(dn(p))}</span>${utag(p)}${r&&r!=='member'?` ${tag(p,r)}`:''} <span class="text-[10px] text-[#949ba4]">${t}</span>${m.pinned?' 📌':''}${del?` <button onclick="delMsg('${m.id}')" class="hidden group-hover:inline text-[10px] text-[#949ba4] hover:text-[#f23f43]">delete</button>`:''}${replyLine(m)}${m.file_url&&m.file_url.startsWith(FILEBASE)?`<a href="${esc(m.file_url)}" target="_blank" class="mt-1 flex items-center gap-2 bg-[#2b2d31] border border-[#3f4147] rounded-lg px-3 py-2 w-fit text-xs text-[#5865f2] hover:underline">📄 ${esc(m.file_name||'file')}</a>`:''}${m.image_url&&m.image_url.startsWith(IMGBASE)?`<img src="${esc(m.image_url)}" loading="lazy" onclick="window.open(this.src)" class="mt-1 max-h-64 max-w-xs rounded-lg cursor-pointer">`:''}<p class="text-sm" data-t>${fmt(m)}${m.edited_at?' <span class="text-[10px] text-[#949ba4]">(edited)</span>':''}</p>${m.channel_id?`<div id="rx_${m.id}" class="flex flex-wrap gap-1 mt-1"></div>`:''}</div></div>`;
+  return `<div id="m_${m.id}" class="group flex gap-3 ${mentionsMe(m)?'bg-yellow-500/10 border-l-2 border-yellow-500 pl-2':''}"><span onclick="showProfile('${m.sender_id}')" class="cursor-pointer flex-shrink-0">${av(p,9)}</span><div class="min-w-0"><span onclick="showProfile('${m.sender_id}')" class="font-bold text-sm cursor-pointer hover:underline" style="color:${col(p)}">${esc(dn(p))}</span>${utag(p)}${r&&r!=='member'?` ${tag(p,r)}`:''} <span class="text-[10px] text-[#949ba4]">${t}</span>${m.pinned?' 📌':''}${del?` <button onclick="delMsg('${m.id}')" class="hidden group-hover:inline text-[10px] text-[#949ba4] hover:text-[#f23f43]">delete</button>`:''}${replyLine(m)}${m.file_url&&m.file_url.startsWith(FILEBASE)?`<a href="${esc(m.file_url)}" target="_blank" class="mt-1 flex items-center gap-2 bg-[#2b2d31] border border-[#3f4147] rounded-lg px-3 py-2 w-fit text-xs text-[#5865f2] hover:underline">📄 ${esc(m.file_name||'file')}</a>`:''}${m.image_url&&m.image_url.startsWith(IMGBASE)?`<img src="${esc(m.image_url)}" loading="lazy" onclick="window.open(this.src)" class="mt-1 max-h-64 max-w-xs rounded-lg cursor-pointer">`:''}<p class="text-sm" data-t>${fmt(m)}${m.edited_at?' <span class="text-[10px] text-[#949ba4]">(edited)</span>':''}</p>${m.channel_id?`<div id="rx_${m.id}" class="flex flex-wrap gap-1 mt-1"></div>`:''}</div></div>`;
 }
 function draw(list){$('msgs').innerHTML=list.map(m=>{try{return row(m)}catch(e){console.error(e);return ''}}).join('');$('msgs').scrollTop=1e9;list.forEach(m=>drawRx(m.id))}
 function add(m){if($('m_'+m.id))return;const k=$('msgs'),near=k.scrollHeight-k.scrollTop-k.clientHeight<200||m.sender_id===me.id;let h='';try{h=row(m)}catch(e){console.error(e)}k.insertAdjacentHTML('beforeend',h);while(k.children.length>300)k.removeChild(k.firstChild);if(near)k.scrollTop=1e9;drawRx(m.id)}
@@ -686,11 +683,11 @@ async function runCmd(line){
 let ment={},sugList=[],sugIdx=0,sugStart=0,sugAt=false;
 const CMDS=['bold','ban','unban','mute','unmute','kick','nick','giverole','newrole','delrole','deleteuser','gift','switch','banip','unbanip','hwidban','unhwidban','ips','iplog','banword','unbanword','banwords','auditlog','unblock','reports','help'],ROLES=['manager','admin','goodgirl','mod','verified','member'];
 function roleSel(m,u,self){if(self||!canManage(m.role))return '';const o=ROLES.filter(r=>rank(r)<rank(myRole())).map(r=>`<option ${r===m.role?'selected':''}>${r}</option>`).join('');return `<select onchange="setRole('${u}',this.value)" class="mt-1 bg-[#1e1f22] text-[10px] text-[#949ba4] rounded px-1">${o}</select>`}
-const BOLDMARK='\u200b\u2063\u200b';
+const BOLDMARK='[[big]]';
 function fmt(m){
   const c=String(m.content||'');
-  if(c.startsWith(BOLDMARK)&&m.channel_id&&rank(roles[m.sender_id])>=4)return '<span class="block text-3xl leading-tight font-black">'+mention(esc(c.slice(BOLDMARK.length)))+'</span>';
-  return mention(esc(c.split(BOLDMARK).join('')));
+  if(c.startsWith(BOLDMARK)&&m.channel_id&&rank(roles[m.sender_id])>=4)return '<span style="display:block;font-size:1.875rem;line-height:1.15;font-weight:900">'+mention(esc(c.slice(BOLDMARK.length).trim()))+'</span>';
+  return mention(esc(c.startsWith(BOLDMARK)?c.slice(BOLDMARK.length).trim():c));
 }
 function mention(t){return t.replace(/@(everyone|here|[a-z0-9_]+)/gi,(x,n)=>{const l=n.toLowerCase();return(l==='everyone'||l==='here'||Object.values(profiles).some(p=>p.username===l)||Object.keys(RANK).includes(l))?`<span class="bg-[#5865f2]/30 text-[#c9cdfb] rounded px-0.5">@${l}</span>`:x})}
 function mentionsMe(m){if(m.sender_id===me.id)return false;
@@ -757,6 +754,28 @@ function chanMenu(id,x,y){let h='';if(isStaff()||myPerm('manage_channels'))h+=mi
 async function moveChannel(id,delta){const {error}=await sb.rpc('set_channel_position',{cid:id,delta});if(error)return alert(error.message);await openServer(srvId)}
 function startReply(id){const m=msgCache[id];replyTo=id;$('rb').innerHTML=`<span class="truncate">Replying to <b>${esc(dn(profiles[m.sender_id]))}</b>: ${esc(m.content.slice(0,60))}</span><span onclick="replyTo=null;$('rb').classList.add('hidden')" class="cursor-pointer ml-3">✕</span>`;$('rb').classList.remove('hidden');$('i').focus()}
 function mentionUser(uid){const el=$('i');el.value+=(el.value&&!el.value.endsWith(' ')?' ':'')+'@'+profiles[uid].username+' ';el.focus()}
+
+async function profFriend(act,uid){
+  let r;
+  if(act==='add')r=await sb.from('friendships').insert({requester:me.id,addressee:uid,status:'pending'});
+  else{const f=fr(uid);if(!f)return;r=act==='accept'?await sb.from('friendships').update({status:'accepted'}).eq('id',f.id):await sb.from('friendships').delete().eq('id',f.id)}
+  if(r.error)alert(r.error.message);
+  await loadFriends();if(!srvId)drawPeople();showProfile(uid);
+}
+async function refreshMembersOnly(){
+  const {data}=await sb.from('server_members').select('*').eq('server_id',srvId);
+  members=data||[];roles={};members.forEach(x=>roles[x.user_id]=x.role);drawMembers();
+}
+async function profSetRole(uid,newrole){
+  const {error}=await sb.rpc('set_builtin_role',{sid:srvId,uid,newrole});
+  if(error)alert(error.message);
+  await refreshMembersOnly();showProfile(uid);
+}
+async function profGiveRole(uid,rid){
+  const {error}=await sb.rpc('give_role',{sid:srvId,uid,rid});
+  if(error)alert(error.message);
+  await refreshMembersOnly();showProfile(uid);
+}
 function closeVp(){$('vp').classList.add('hidden')}
 function linkify(t){return esc(t).replace(/(https?:\/\/[^\s<"]+)/g,'<a href="$1" target="_blank" rel="noopener noreferrer" class="text-[#4f9cf5] hover:underline">$1</a>')}
 function showProfile(uid){
@@ -771,13 +790,32 @@ function showProfile(uid){
   if(isMe)rows+=row('✎','Edit Profile','',"closeVp();openProfile()")+sep;
   rows+=row(`<span class="inline-block w-3 h-3 rounded-full" style="background:${on?'#23a55a':'#80848e'}"></span>`,status);
   if(isMe)rows+=sep+row('🫘',(me.beans??0)+' Beans','<span class="text-[#80848e]">›</span>',"closeVp();openShop()");
+  const f=isMe?null:fr(uid);
+  let friendHtml='';
+  if(!isMe){
+    const gbtn='class="px-4 py-2 rounded-xl text-sm font-bold text-[#c9f0d4]" style="background:#25643a;border:2px solid #3a8a54;box-shadow:0 3px 0 #17432a"';
+    const rbtn='class="px-4 py-2 rounded-xl text-sm font-bold text-[#eef0ff]" style="background:#3448b4;border:2px solid #4a5fd0;box-shadow:0 3px 0 #222f80"';
+    const xbtn='class="px-4 py-2 rounded-xl text-sm font-bold text-[#b5bac1] border-2 border-[#4a4d55] bg-[#2a2c30]"';
+    if(!f)friendHtml=`<button onclick="profFriend('add','${uid}')" ${gbtn}>Add Friend</button>`;
+    else if(f.status==='accepted')friendHtml=`<span class="px-4 py-2 rounded-xl text-sm font-bold text-[#c9f0d4] border-2 border-[#3a8a54] bg-[#17321f]">✓ Friends</span><button onclick="if(confirm('Remove this friend?'))profFriend('remove','${uid}')" ${xbtn}>Remove</button>`;
+    else if(f.requester===me.id)friendHtml=`<span class="px-4 py-2 rounded-xl text-sm font-bold text-[#949ba4] border-2 border-[#4a4d55] bg-[#2a2c30]">Request sent</span><button onclick="profFriend('remove','${uid}')" ${xbtn}>Cancel</button>`;
+    else friendHtml=`<button onclick="profFriend('accept','${uid}')" ${gbtn}>Accept request</button><button onclick="profFriend('remove','${uid}')" ${xbtn}>Decline</button>`;
+  }
+  const mem=srvId&&!isMe?members.find(x=>x.user_id===uid):null;
+  let roleHtml='';
+  if(mem&&defRole==='owner'&&mem.role!=='owner'){
+    const chips=croles.map(r=>`<button onclick="profGiveRole('${uid}','${r.id}')" class="text-[10px] font-black uppercase px-2 py-1 rounded text-white ${mem.custom_role===r.id?'ring-2 ring-white':'opacity-70 hover:opacity-100'}" style="background:${esc(r.color)}">${esc(r.name)}</button>`).join('');
+    roleHtml=`<div class="mt-3 rounded-xl bg-[#232428] border-2 border-[#34363b] p-3"><div class="text-xs font-bold uppercase text-[#949ba4] mb-2">Roles</div><div class="flex items-center gap-2 text-sm text-[#b5bac1] mb-2"><span>Tier</span><select onchange="profSetRole('${uid}',this.value)" class="bg-[#1b1c1f] text-white rounded-lg border-2 border-[#4a4d55] px-2 py-1 text-sm">${['member','verified','mod','admin','manager','coowner'].map(r=>`<option value="${r}" ${r===mem.role?'selected':''}>${r}</option>`).join('')}</select></div><div class="flex flex-wrap gap-1.5">${chips||'<span class="text-xs text-[#80848e]">No custom roles yet. Make one with /newrole.</span>'}${mem.custom_role?`<button onclick="profGiveRole('${uid}',null)" class="text-[10px] font-bold uppercase px-2 py-1 rounded border-2 border-[#4a4d55] text-[#b5bac1] hover:text-white">Remove role</button>`:''}</div></div>`;
+  }
   $('vpc').innerHTML=`<div class="h-24" style="background:${banner}"></div>
   <div class="px-5 -mt-10 relative"><div class="relative inline-block rounded-full" style="border:5px solid #1b1c1f">${av(p,20)}${dot}</div></div>
   <div class="px-5 pt-3 pb-5">
    <div class="flex items-center flex-wrap gap-x-2 gap-y-1"><span class="font-black text-2xl" style="color:${col(p)}">${esc(dn(p))}</span>${r?tag(p,r):''}${utag(p)}</div>
    <div class="text-sm text-[#949ba4] mt-0.5">${esc(p.username)}${p.nickname?'':''}</div>
    ${p.bio?`<p class="mt-3 text-sm text-[#dbdee1] break-words whitespace-pre-wrap">${linkify(p.bio)}</p>`:''}
+   ${friendHtml?`<div class="mt-4 flex flex-wrap gap-2">${friendHtml}</div>`:''}
    <div class="mt-4 rounded-xl bg-[#232428] border-2 border-[#34363b] overflow-hidden">${rows}</div>
+   ${roleHtml}
   </div>`;
   $('vp').classList.remove('hidden')}
 async function blockUser(uid){if(!confirm('Block '+dn(profiles[uid])+'? You will stop seeing their messages. Undo with /unblock username'))return;const {error}=await sb.from('blocks').insert({blocked:uid});if(error)return alert(error.message);blocked.add(uid);if(cur.type==='ch')openChannel(cur.id);else if(cur.type==='dm')openDM(cur.id)}
@@ -1370,26 +1408,89 @@ async function addUserToGroup(gid,uid){
   await loadGroups();if(cur.type==='group'&&cur.id===gid)openGroup(gid);toast('Added to the group');
 }
 async function newGroupWith(uid){const gname=prompt('Group name (optional)','')||'';const {data,error}=await sb.rpc('create_group_dm',{gname,member_ids:[uid]});if(error)return alert(error.message);await loadGroups();openGroup(data)}
-// ===== Beanchat web search =====
-function openWeb(){$('web').classList.remove('hidden');setTimeout(()=>$('webq').focus(),50)}
-function closeWeb(){$('web').classList.add('hidden')}
-$('webform').onsubmit=e=>{
-  e.preventDefault();const q=$('webq').value.trim();if(!q)return;
-  let url;
-  if(/^https?:\/\/\S+$/i.test(q))url=q;
-  else if(/^[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?$/i.test(q))url='https://'+q;
-  else return webSearch(q);
-  window.open(url,'_blank','noopener,noreferrer');
-};
+// ===== Beanchat browser (tabs, address bar, back/forward) =====
 const WEB_FN='web-search'; // name of the Supabase edge function that holds the search code
-async function webSearch(q){
-  const box=$('webres');$('webtitle').style.fontSize='2rem';
-  box.innerHTML='<p class="text-sm text-[#949ba4]">Searching…</p>';
-  const ddg='https://duckduckgo.com/?q='+encodeURIComponent(q);
-  const plain=t=>new DOMParser().parseFromString(String(t||''),'text/html').body.textContent||'';
-  const host=u=>{try{return new URL(u).hostname.replace(/^www\./,'')}catch(e){return u}};
+let btabs=[],bact=null,bseq=0;
+const hostOf=u=>{try{return new URL(u).hostname.replace(/^www\./,'')}catch(e){return u}};
+const bCur=()=>btabs.find(t=>t.id===bact);
+const bEntry=t=>t.hist[t.i];
+function bTitle(t){const e=bEntry(t);return e.type==='home'?'New tab':e.type==='search'?e.q:hostOf(e.url)}
+function openWeb(){$('web').classList.remove('hidden');if(!btabs.length)bNewTab();else bSync();const e=bEntry(bCur());if(e.type==='home')setTimeout(()=>{const i=$('bh_'+bact);if(i)i.focus()},50)}
+function closeWeb(){$('web').classList.add('hidden')}
+function bNewTab(entry){const t={id:++bseq,hist:[entry||{type:'home'}],i:0};btabs.push(t);bact=t.id;bShow(t);bSync();return t}
+function bSwitch(id){bact=id;bShow(bCur());bSync()}
+function bClose(id){
+  const k=btabs.findIndex(t=>t.id===id);if(k<0)return;
+  const pane=$('bp_'+id);if(pane)pane.remove();btabs.splice(k,1);
+  if(!btabs.length)return bNewTab();
+  if(bact===id){bact=btabs[Math.min(k,btabs.length-1)].id;bShow(bCur())}
+  bSync();
+}
+function bSync(){
+  $('btabs').innerHTML=btabs.map(t=>`<div onclick="bSwitch(${t.id})" class="flex items-center gap-2 w-44 max-w-[45vw] px-3 py-2 rounded-t-xl text-sm cursor-pointer flex-shrink-0 ${t.id===bact?'bg-[#3448b4] text-white font-bold':'bg-[#1b1c1f] text-[#b5bac1] hover:bg-[#232428]'}"><span class="truncate flex-1">${esc(bTitle(t))}</span><button onclick="event.stopPropagation();bClose(${t.id})" class="opacity-70 hover:opacity-100 leading-none">✕</button></div>`).join('')+'<button onclick="bNewTab()" title="New tab" class="w-9 h-9 mb-0.5 rounded-lg text-[#b5bac1] hover:bg-[#232428] hover:text-white text-lg flex-shrink-0">+</button>';
+  const t=bCur();if(!t)return;const e=bEntry(t);
+  $('bback').disabled=t.i<=0;$('bfwd').disabled=t.i>=t.hist.length-1;
+  if(document.activeElement!==$('burl'))$('burl').value=e.type==='page'?e.url:e.type==='search'?e.q:'';
+}
+function bResolve(txt){
+  txt=String(txt||'').trim();if(!txt)return null;
+  if(/^https?:\/\/\S+$/i.test(txt))return {type:'page',url:txt};
+  if(/^[a-z0-9-]+(\.[a-z0-9-]+)+(:\d+)?(\/\S*)?$/i.test(txt))return {type:'page',url:'https://'+txt};
+  return {type:'search',q:txt.slice(0,200)};
+}
+function bGo(txt){
+  const t=bCur(),e=bResolve(txt);if(!t||!e)return;
+  t.hist=t.hist.slice(0,t.i+1);t.hist.push(e);t.i++;bShow(t);bSync();
+}
+function bNav(d){const t=bCur();if(!t)return;const n=t.i+d;if(n<0||n>=t.hist.length)return;t.i=n;bShow(t);bSync()}
+function bReload(){const t=bCur();if(!t)return;const e=bEntry(t);if(e.type==='search'){delete e.results;delete e.err}bShow(t,true)}
+function bExternal(){const e=bEntry(bCur());if(!e||e.type==='home')return;window.open(e.type==='page'?e.url:'https://duckduckgo.com/?q='+encodeURIComponent(e.q),'_blank','noopener,noreferrer')}
+$('bform').onsubmit=e=>{e.preventDefault();bGo($('burl').value);$('burl').blur()};
+$('burl').addEventListener('focus',()=>$('burl').select());
+
+function bShow(t,force){
+  const cont=$('bcont');
+  let pane=$('bp_'+t.id);
+  if(!pane){pane=document.createElement('div');pane.id='bp_'+t.id;pane.className='absolute inset-0 overflow-y-auto';cont.appendChild(pane);
+    pane.addEventListener('click',ev=>{const a=ev.target.closest('a[data-bu]');if(!a||ev.ctrlKey||ev.metaKey||ev.shiftKey)return;ev.preventDefault();bGo(a.dataset.bu)})}
+  [...cont.children].forEach(c=>c.classList.toggle('hidden',c!==pane));
+  const e=bEntry(t);
+  if(pane.dataset.shown===String(e._k||'')&&!force&&e.type==='page')return; // keep a loaded page as is
+  e._k=e._k||(++bseq);pane.dataset.shown=String(e._k);
+  if(e.type==='home')return bHome(t,pane);
+  if(e.type==='search')return bSearch(t,pane,e);
+  bPage(pane,e);
+}
+function bHome(t,pane){
+  pane.className='absolute inset-0 overflow-y-auto';
+  pane.innerHTML=`<div class="min-h-full flex flex-col items-center justify-center p-4 text-center" style="background:radial-gradient(circle at 50% 30%,rgba(107,120,232,.16),transparent 55%)"><h1 style="font-family:'Russo One',Impact,system-ui,sans-serif;font-size:3.4rem;letter-spacing:.03em;color:#efe8d6;text-shadow:0 0 40px rgba(107,120,232,.45);line-height:1.1">Beanchat</h1><p class="mt-2 text-sm font-bold text-[#dbdee1]">search the web without leaving BEANCORD 🫘</p><form class="mt-8 w-full max-w-2xl flex items-center gap-2 rounded-2xl border-2 border-[#4a4d55] bg-[#1f2023] p-2 pl-4" style="box-shadow:0 6px 0 #1a1b1e,0 18px 40px rgba(0,0,0,.45)" onsubmit="event.preventDefault();bGo(this.q.value)"><span class="text-[#949ba4]">🔍</span><input name="q" id="bh_${t.id}" autocomplete="off" placeholder="Search for anything!" class="flex-1 min-w-0 bg-transparent outline-none text-white text-base py-2"><button type="submit" title="Search" class="w-11 h-11 rounded-xl text-white font-bold text-lg" style="background:#3448b4;border:2px solid #4a5fd0;box-shadow:0 3px 0 #222f80">→</button></form></div>`;
+}
+function bPage(pane,e){
+  pane.className='absolute inset-0 flex flex-col';
+  pane.innerHTML='';
+  const bar=document.createElement('div');bar.className='flex items-center gap-3 px-3 py-1.5 bg-[#1b1c1f] text-xs text-[#949ba4] flex-shrink-0';
+  bar.innerHTML='<span class="flex-1 truncate">Blank page or "refused to connect"? Some sites do not allow being shown inside another site.</span>';
+  const a=document.createElement('a');a.href=e.url;a.target='_blank';a.rel='noopener noreferrer';a.className='text-[#7fa6ff] underline flex-shrink-0';a.textContent='Open in a new tab ↗';bar.appendChild(a);
+  const f=document.createElement('iframe');f.className='flex-1 w-full bg-white border-0';f.setAttribute('sandbox','allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation');f.referrerPolicy='no-referrer';f.allow='fullscreen';f.src=e.url;
+  pane.appendChild(bar);pane.appendChild(f);
+}
+function bSearch(t,pane,e){
+  pane.className='absolute inset-0 overflow-y-auto';
+  const plain=x=>new DOMParser().parseFromString(String(x||''),'text/html').body.textContent||'';
+  let body;
+  if(e.results){
+    body=e.results.length?e.results.map(r=>`<a href="${esc(r.url)}" data-bu="${esc(r.url)}" target="_blank" rel="noopener noreferrer" class="block rounded-xl border-2 border-[#34363b] bg-[#1f2023] hover:border-[#4a5fd0] p-3"><div class="text-xs text-[#80848e] truncate">${esc(hostOf(r.url))}${r.age?' · '+esc(r.age):''}</div><div class="text-[#7fa6ff] font-bold mt-0.5">${esc(plain(r.title))}</div><div class="text-sm text-[#b5bac1] mt-1">${esc(plain(r.description))}</div></a>`).join(''):'<p class="text-sm text-[#949ba4]">No results.</p>';
+  }else if(e.err){
+    body=`<div class="rounded-xl border-2 border-[#34363b] bg-[#1f2023] p-3 text-sm text-[#b5bac1]">${esc(e.err)} <a href="${esc('https://duckduckgo.com/?q='+encodeURIComponent(e.q))}" target="_blank" rel="noopener noreferrer" class="text-[#7fa6ff] underline">Search on DuckDuckGo instead</a></div>`;
+  }else{
+    body='<p class="text-sm text-[#949ba4]">Searching…</p>';
+    if(!e.loading){e.loading=true;bFetch(t,e)}
+  }
+  pane.innerHTML=`<div class="max-w-2xl mx-auto p-4"><h2 class="mb-3 text-[#efe8d6]" style="font-family:'Russo One',Impact,system-ui,sans-serif">Beanchat <span class="text-[#80848e] text-sm" style="font-family:system-ui">— ${esc(e.q)}</span></h2><div class="space-y-3">${body}</div></div>`;
+}
+async function bFetch(t,e){
   try{
-    const {data,error}=await sb.functions.invoke(WEB_FN,{body:{q}});
+    const {data,error}=await sb.functions.invoke(WEB_FN,{body:{q:e.q}});
     if(error){
       let msg='Could not reach the search function.';const c=error.context;
       try{
@@ -1398,14 +1499,13 @@ async function webSearch(q){
       }catch(_){}
       throw new Error(msg);
     }
-    if(!data||data.error)throw new Error((data&&data.error)||'unavailable');
-    const rs=(data.results||[]).filter(r=>/^https?:\/\//i.test(r.url||''));
-    box.innerHTML=rs.length?rs.map(r=>`<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer" class="block rounded-xl border-2 border-[#34363b] bg-[#1f2023] hover:border-[#4a5fd0] p-3"><div class="text-xs text-[#80848e] truncate">${esc(host(r.url))}${r.age?' · '+esc(r.age):''}</div><div class="text-[#7fa6ff] font-bold mt-0.5">${esc(plain(r.title))}</div><div class="text-sm text-[#b5bac1] mt-1">${esc(plain(r.description))}</div></a>`).join(''):'<p class="text-sm text-[#949ba4]">No results.</p>';
-  }catch(e){
-    box.innerHTML=`<div class="rounded-xl border-2 border-[#34363b] bg-[#1f2023] p-3 text-sm text-[#b5bac1]">${esc(e.message==='unavailable'?'Beanchat search is not switched on yet.':e.message)} <a href="${esc(ddg)}" target="_blank" rel="noopener noreferrer" class="text-[#7fa6ff] underline">Search on DuckDuckGo instead</a></div>`;
-  }
+    if(!data||data.error)throw new Error((data&&data.error)||'Beanchat search is not switched on yet.');
+    e.results=(data.results||[]).filter(r=>/^https?:\/\//i.test(r.url||''));
+  }catch(err){e.err=err.message||'Search failed.'}
+  e.loading=false;
+  if(btabs.includes(t)&&bEntry(t)===e&&bact===t.id)bShow(t,true);
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('web').classList.contains('hidden'))closeWeb()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('web').classList.contains('hidden')&&document.activeElement!==$('burl'))closeWeb()});
 
 start();
 </script></body></html>
