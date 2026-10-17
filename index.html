@@ -525,7 +525,7 @@ function row(m){
   const r=cur.type==='ch'?roles[m.sender_id]:null;
   const t=new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   const del=cur.type==='ch'&&(m.sender_id===me.id||rank(myRole())>=3);
-  return `<div id="m_${m.id}" class="group flex gap-3 ${mentionsMe(m)?'bg-yellow-500/10 border-l-2 border-yellow-500 pl-2':''}">${av(p,9)}<div class="min-w-0"><span class="font-bold text-sm" style="color:${col(p)}">${esc(dn(p))}</span>${utag(p)}${r&&r!=='member'?` ${tag(p,r)}`:''} <span class="text-[10px] text-[#949ba4]">${t}</span>${m.pinned?' 📌':''}${del?` <button onclick="delMsg('${m.id}')" class="hidden group-hover:inline text-[10px] text-[#949ba4] hover:text-[#f23f43]">delete</button>`:''}${replyLine(m)}${m.file_url&&m.file_url.startsWith(FILEBASE)?`<a href="${esc(m.file_url)}" target="_blank" class="mt-1 flex items-center gap-2 bg-[#2b2d31] border border-[#3f4147] rounded-lg px-3 py-2 w-fit text-xs text-[#5865f2] hover:underline">📄 ${esc(m.file_name||'file')}</a>`:''}${m.image_url&&m.image_url.startsWith(IMGBASE)?`<img src="${esc(m.image_url)}" loading="lazy" onclick="window.open(this.src)" class="mt-1 max-h-64 max-w-xs rounded-lg cursor-pointer">`:''}<p class="text-sm" data-t>${mention(esc(m.content))}${m.edited_at?' <span class="text-[10px] text-[#949ba4]">(edited)</span>':''}</p>${m.channel_id?`<div id="rx_${m.id}" class="flex flex-wrap gap-1 mt-1"></div>`:''}</div></div>`;
+  return `<div id="m_${m.id}" class="group flex gap-3 ${mentionsMe(m)?'bg-yellow-500/10 border-l-2 border-yellow-500 pl-2':''}">${av(p,9)}<div class="min-w-0"><span class="font-bold text-sm" style="color:${col(p)}">${esc(dn(p))}</span>${utag(p)}${r&&r!=='member'?` ${tag(p,r)}`:''} <span class="text-[10px] text-[#949ba4]">${t}</span>${m.pinned?' 📌':''}${del?` <button onclick="delMsg('${m.id}')" class="hidden group-hover:inline text-[10px] text-[#949ba4] hover:text-[#f23f43]">delete</button>`:''}${replyLine(m)}${m.file_url&&m.file_url.startsWith(FILEBASE)?`<a href="${esc(m.file_url)}" target="_blank" class="mt-1 flex items-center gap-2 bg-[#2b2d31] border border-[#3f4147] rounded-lg px-3 py-2 w-fit text-xs text-[#5865f2] hover:underline">📄 ${esc(m.file_name||'file')}</a>`:''}${m.image_url&&m.image_url.startsWith(IMGBASE)?`<img src="${esc(m.image_url)}" loading="lazy" onclick="window.open(this.src)" class="mt-1 max-h-64 max-w-xs rounded-lg cursor-pointer">`:''}<p class="text-sm" data-t>${fmt(m)}${m.edited_at?' <span class="text-[10px] text-[#949ba4]">(edited)</span>':''}</p>${m.channel_id?`<div id="rx_${m.id}" class="flex flex-wrap gap-1 mt-1"></div>`:''}</div></div>`;
 }
 function draw(list){$('msgs').innerHTML=list.map(m=>{try{return row(m)}catch(e){console.error(e);return ''}}).join('');$('msgs').scrollTop=1e9;list.forEach(m=>drawRx(m.id))}
 function add(m){if($('m_'+m.id))return;const k=$('msgs'),near=k.scrollHeight-k.scrollTop-k.clientHeight<200||m.sender_id===me.id;let h='';try{h=row(m)}catch(e){console.error(e)}k.insertAdjacentHTML('beforeend',h);while(k.children.length>300)k.removeChild(k.firstChild);if(near)k.scrollTop=1e9;drawRx(m.id)}
@@ -545,6 +545,19 @@ function ping(){
   }catch(e){}
 }
 const _watching=()=>!document.hidden&&document.hasFocus();
+// ===== call buzz: loops while a call is ringing (incoming = loud, outgoing = softer) =====
+function buzz(vol){
+  try{
+    _unlockAudio();if(!_ac||_ac.state!=='running')return;
+    const t=_ac.currentTime,o=_ac.createOscillator(),lfo=_ac.createOscillator(),lg=_ac.createGain(),g=_ac.createGain(),out=_ac.createGain(),f=_ac.createBiquadFilter();
+    o.type='sawtooth';o.frequency.value=150;f.type='lowpass';f.frequency.value=900;
+    lfo.frequency.value=28;lg.gain.value=vol*0.5;g.gain.value=vol*0.5;lfo.connect(lg);lg.connect(g.gain);
+    out.gain.setValueAtTime(1,t);out.gain.setValueAtTime(1,t+0.8);out.gain.linearRampToValueAtTime(0,t+0.9);
+    o.connect(f);f.connect(g);g.connect(out);out.connect(_ac.destination);
+    o.start(t);lfo.start(t);o.stop(t+0.92);lfo.stop(t+0.92);
+  }catch(e){}
+}
+setInterval(()=>{try{if(callState==='ringing-in')buzz(0.5);else if(callState==='calling')buzz(0.22)}catch(e){}},1600);
 function listen(){
   rt=sb.channel('live')
    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'profiles',filter:'id=eq.'+me.id},p=>{
@@ -558,7 +571,7 @@ function listen(){
      if(cur.type==='ch'&&cur.id===p.new.channel_id){add(p.new);if(mentionsMe(p.new))ping()}else if(p.new.sender_id!==me.id){const cid=p.new.channel_id,sv=chanSrv[cid];unreadCh[cid]=1;if(sv)unreadSrv[sv]=(unreadSrv[sv]||0)+1;
        if(mentionsMe(p.new)){ment[cid]=(ment[cid]||0)+1;if(sv)mentSrv[sv]=(mentSrv[sv]||0)+1;const ch=channels.find(x=>x.id===cid);toast((profiles[p.new.sender_id]||{username:'Someone'}).username+' mentioned you'+(ch?' in #'+ch.name:''));ping()}
        if(srvId)drawChannels();drawServerNav()}})
-   .on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages'},p=>{msgCache[p.new.id]=p.new;const d=$('m_'+p.new.id),t=d&&d.querySelector('[data-t]');if(t)t.innerHTML=mention(esc(p.new.content))+' <span class="text-[10px] text-[#949ba4]">(edited)</span>'})
+   .on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages'},p=>{msgCache[p.new.id]=p.new;const d=$('m_'+p.new.id),t=d&&d.querySelector('[data-t]');if(t)t.innerHTML=fmt(p.new)+' <span class="text-[10px] text-[#949ba4]">(edited)</span>'})
    .on('postgres_changes',{event:'DELETE',schema:'public',table:'messages'},p=>{const e=$('m_'+p.old.id);if(e)e.remove()})
    .on('postgres_changes',{event:'*',schema:'public',table:'reactions'},p=>{const id=(p.new&&p.new.message_id)||p.old.message_id;
      if(p.eventType==='INSERT'){const a=rx[id]=rx[id]||[];if(!a.some(x=>x.user_id===p.new.user_id&&x.emoji===p.new.emoji))a.push(p.new)}
@@ -621,7 +634,18 @@ async function addByName(){const n=$('fadd').value.trim().toLowerCase().replace(
   if(error)return say(error.message);await loadFriends();drawPeople();$('fmsg').textContent='Request sent to '+u.username}
 async function runCmd(line){
   const [c,name,arg]=line.slice(1).trim().split(/\s+/);const cmd=(c||'').toLowerCase();
-  if(cmd==='help')return sys('Commands: /ban user hours · /unban user · /mute user minutes · /unmute user · /kick user · /nick user newname · /newrole name #color member|verified|mod|admin · /giverole user rolename|none · /delrole name · /deleteuser user · /gift user amount · /switch user · /banword word · /unbanword word · /banwords · /auditlog. Built-in roles are managed only from the gear icon. Deleting a server is only in its right-click menu. /hwidban user bans the devices they have used (works through VPNs) · /unhwidban user · /banip user bans the network address on their account, and is not foolproof since addresses change · /ips user · /iplog');
+  if(cmd==='help')return sys('Commands: /bold text (admins and up: big bold message) · /ban user hours · /unban user · /mute user minutes · /unmute user · /kick user · /nick user newname · /newrole name #color member|verified|mod|admin · /giverole user rolename|none · /delrole name · /deleteuser user · /gift user amount · /switch user · /banword word · /unbanword word · /banwords · /auditlog. Built-in roles are managed only from the gear icon. Deleting a server is only in its right-click menu. /hwidban user bans the devices they have used (works through VPNs) · /unhwidban user · /banip user bans the network address on their account, and is not foolproof since addresses change · /ips user · /iplog');
+  if(cmd==='bold'){
+    if(cur.type!=='ch')return sys('/bold only works in server channels.');
+    if(!isStaff())return sys('Only admins and up can use /bold.');
+    const txt=line.slice(1).trim().replace(/^\S+\s*/,'').trim();
+    if(!txt)return sys('Usage: /bold your text');
+    {const mu=until(me,'muted_until');if(mu)return alert('You are muted until '+mu.toLocaleString())}
+    if(/@(everyone|here)\b/i.test(txt)&&myRole()!=='owner')return alert('Only the owner can use @everyone and @here.');
+    const {error}=await sb.from('messages').insert({channel_id:cur.id,content:BOLDMARK+txt});
+    if(error)sys('Could not send: '+error.message);
+    return;
+  }
   const P=line.slice(1).trim().split(/\s+/);
   const rpc=async(f,a,ok)=>{const {error}=await sb.rpc(f,a);if(error)return sys(error.message);if(srvId)await openServer(srvId);sys(ok)};
   if(cmd==='newrole'){if(!srvId)return sys('Open a server first.');const n=P[1],c=P[2],b=(P[3]||'').toLowerCase();if(!n||!/^#[0-9a-fA-F]{6}$/.test(c||'')||!['member','verified','mod','admin','manager','coowner'].includes(b))return sys('Usage: /newrole name #hexcolor member|verified|mod|admin|manager|coowner');return rpc('create_role',{sid:srvId,rname:n,rcolor:c,rbase:b},'Role "'+n+'" created. Give it with /giverole username '+n)}
@@ -660,8 +684,14 @@ async function runCmd(line){
   sys('Unknown command. Type /help');
 }
 let ment={},sugList=[],sugIdx=0,sugStart=0,sugAt=false;
-const CMDS=['ban','unban','mute','unmute','kick','nick','giverole','newrole','delrole','deleteuser','gift','switch','banip','unbanip','hwidban','unhwidban','ips','iplog','banword','unbanword','banwords','auditlog','unblock','reports','help'],ROLES=['manager','admin','goodgirl','mod','verified','member'];
+const CMDS=['bold','ban','unban','mute','unmute','kick','nick','giverole','newrole','delrole','deleteuser','gift','switch','banip','unbanip','hwidban','unhwidban','ips','iplog','banword','unbanword','banwords','auditlog','unblock','reports','help'],ROLES=['manager','admin','goodgirl','mod','verified','member'];
 function roleSel(m,u,self){if(self||!canManage(m.role))return '';const o=ROLES.filter(r=>rank(r)<rank(myRole())).map(r=>`<option ${r===m.role?'selected':''}>${r}</option>`).join('');return `<select onchange="setRole('${u}',this.value)" class="mt-1 bg-[#1e1f22] text-[10px] text-[#949ba4] rounded px-1">${o}</select>`}
+const BOLDMARK='\u200b\u2063\u200b';
+function fmt(m){
+  const c=String(m.content||'');
+  if(c.startsWith(BOLDMARK)&&m.channel_id&&rank(roles[m.sender_id])>=4)return '<span class="block text-3xl leading-tight font-black">'+mention(esc(c.slice(BOLDMARK.length)))+'</span>';
+  return mention(esc(c.split(BOLDMARK).join('')));
+}
 function mention(t){return t.replace(/@(everyone|here|[a-z0-9_]+)/gi,(x,n)=>{const l=n.toLowerCase();return(l==='everyone'||l==='here'||Object.values(profiles).some(p=>p.username===l)||Object.keys(RANK).includes(l))?`<span class="bg-[#5865f2]/30 text-[#c9cdfb] rounded px-0.5">@${l}</span>`:x})}
 function mentionsMe(m){if(m.sender_id===me.id)return false;
   if(m.channel_id){if(/@(everyone|here)\b/i.test(m.content))return true;const myR=roles[me.id];if(myR&&new RegExp('@'+myR+'\\b','i').test(m.content))return true;}
@@ -1351,6 +1381,7 @@ $('webform').onsubmit=e=>{
   else return webSearch(q);
   window.open(url,'_blank','noopener,noreferrer');
 };
+const WEB_FN='web-search'; // name of the Supabase edge function that holds the search code
 async function webSearch(q){
   const box=$('webres');$('webtitle').style.fontSize='2rem';
   box.innerHTML='<p class="text-sm text-[#949ba4]">Searching…</p>';
@@ -1358,8 +1389,16 @@ async function webSearch(q){
   const plain=t=>new DOMParser().parseFromString(String(t||''),'text/html').body.textContent||'';
   const host=u=>{try{return new URL(u).hostname.replace(/^www\./,'')}catch(e){return u}};
   try{
-    const {data,error}=await sb.functions.invoke('web-search',{body:{q}});
-    if(error||!data||data.error)throw new Error((data&&data.error)||'unavailable');
+    const {data,error}=await sb.functions.invoke(WEB_FN,{body:{q}});
+    if(error){
+      let msg='Could not reach the search function.';const c=error.context;
+      try{
+        if(c&&c.status===404)msg='The search function is not deployed. The page is looking for one named '+WEB_FN+'.';
+        else if(c&&c.json){const j=await c.json();msg=(j&&(j.error||j.message))||msg;if(c.status)msg+=' (status '+c.status+')'}
+      }catch(_){}
+      throw new Error(msg);
+    }
+    if(!data||data.error)throw new Error((data&&data.error)||'unavailable');
     const rs=(data.results||[]).filter(r=>/^https?:\/\//i.test(r.url||''));
     box.innerHTML=rs.length?rs.map(r=>`<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer" class="block rounded-xl border-2 border-[#34363b] bg-[#1f2023] hover:border-[#4a5fd0] p-3"><div class="text-xs text-[#80848e] truncate">${esc(host(r.url))}${r.age?' · '+esc(r.age):''}</div><div class="text-[#7fa6ff] font-bold mt-0.5">${esc(plain(r.title))}</div><div class="text-sm text-[#b5bac1] mt-1">${esc(plain(r.description))}</div></a>`).join(''):'<p class="text-sm text-[#949ba4]">No results.</p>';
   }catch(e){
