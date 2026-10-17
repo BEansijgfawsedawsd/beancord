@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BEANCORD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -9,6 +10,54 @@
   #leftcol.open{transform:translateX(0)}
   #backdrop.open{display:block}
 }
+
+/* ===== login screen ===== */
+#auth{background:#1b1c1f;overflow:hidden}
+#auth .art{position:absolute;fill:none;stroke:#fff;stroke-opacity:.07;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+#auth .card{position:relative;z-index:1;width:100%;max-width:420px;padding:2.5rem 2.25rem 2.25rem;border-radius:14px;border:2px solid #4a4d55;background:linear-gradient(180deg,#2e3035,#2a2c30);box-shadow:0 6px 0 #1a1b1e,0 18px 40px rgba(0,0,0,.45)}
+#auth .logo{font-family:'Russo One',Impact,system-ui,sans-serif;font-size:1.9rem;letter-spacing:.04em;text-align:center;color:#efe8d6;margin:0 0 1.6rem;line-height:1}
+#auth .field{display:block;width:100%;box-sizing:border-box;margin-bottom:.9rem;padding:.8rem .9rem;border-radius:10px;border:2px solid #4a4d55;background:#2a2b2f;color:#fff;font-size:.95rem;outline:none;transition:border-color .15s}
+#auth .field::placeholder{color:#8a8d94}
+#auth .field:focus{border-color:#6b78e8}
+#auth #err{min-height:3rem;padding-top:.5rem;font-size:.78rem;color:#f87171}
+#auth .btn{display:block;width:100%;box-sizing:border-box;margin-bottom:.9rem;padding:.8rem 1rem;border-radius:12px;font-weight:700;font-size:1rem;cursor:pointer;transition:transform .08s,box-shadow .08s,filter .15s}
+#auth .btn:hover{filter:brightness(1.1)}
+#auth .btn:active{transform:translateY(3px)}
+#auth .btn-in{color:#eef0ff;background:#3448b4;border:2px solid #4a5fd0;box-shadow:0 4px 0 #222f80}
+#auth .btn-in:active{box-shadow:0 1px 0 #222f80}
+#auth .btn-up{color:#c9f0d4;background:#25643a;border:2px solid #3a8a54;box-shadow:0 4px 0 #17432a;margin-bottom:0}
+#auth .btn-up:active{box-shadow:0 1px 0 #17432a}
+
+/* ===== BEANCORD skin: matches the new login screen ===== */
+html[data-theme="default"] [class~="bg-[#313338]"]{background-color:#232428 !important}
+html[data-theme="default"] [class~="bg-[#2b2d31]"]{background-color:#2a2c30 !important}
+html[data-theme="default"] [class~="bg-[#1e1f22]"]{background-color:#1b1c1f !important}
+html[data-theme="default"] [class~="bg-[#232428]"]{background-color:#1f2023 !important}
+html[data-theme="default"] [class~="bg-[#383a40]"]{background-color:#2a2b2f !important}
+html[data-theme="default"] [class~="hover:bg-[#35373c]"]:hover,html[data-theme="default"] [class~="bg-[#35373c]"]{background-color:#33353a !important}
+html[data-theme="default"] [class~="bg-[#404249]"]{background-color:#3a3d44 !important}
+html[data-theme="default"] [class~="hover:bg-[#404249]"]:hover{background-color:#3a3d44 !important}
+html[data-theme="default"] [class~="bg-[#111214]"]{background-color:#17181a !important}
+#sh,#ch{font-family:'Russo One',Impact,system-ui,sans-serif;letter-spacing:.03em;font-weight:400;color:#efe8d6;border-bottom:2px solid #3a3d44 !important}
+#shop h2,#rm h2{font-family:'Russo One',Impact,system-ui,sans-serif;letter-spacing:.03em;font-weight:400;color:#efe8d6}
+#leftcol>div:first-child{border-right:2px solid #34363b}
+#leftcol>div:nth-child(2){border-right:2px solid #34363b}
+#mem{border-left:2px solid #34363b}
+#f input#i,#sq,#shop input,#pm input,#pm select,#pm textarea,#rm input[type=text],#rm select{border:2px solid #4a4d55;border-radius:10px}
+#f input#i:focus,#sq:focus{border-color:#6b78e8}
+#f button[type=button]{border:2px solid #4a4d55;border-radius:10px}
+#ctx,#vpc,#rm>div,#pm>div{border:2px solid #4a4d55}
+#vpc,#rm>div,#pm>div{border-radius:14px;box-shadow:0 6px 0 #1a1b1e,0 18px 40px rgba(0,0,0,.45)}
+#ctx{border-radius:12px}
+/* raised blue / green buttons everywhere inside the app */
+#app [class~="bg-[#5865f2]"]:is(button),#shop [class~="bg-[#5865f2]"]:is(button),#rm [class~="bg-[#5865f2]"]:is(button),#pm [class~="bg-[#5865f2]"]:is(button){background:#3448b4 !important;border:2px solid #4a5fd0;box-shadow:0 3px 0 #222f80;color:#eef0ff;border-radius:10px;transition:transform .08s,box-shadow .08s,filter .15s}
+#app [class~="bg-[#23a55a]"]:is(button),#shop [class~="bg-[#23a55a]"]:is(button),#rm [class~="bg-[#23a55a]"]:is(button),#pm [class~="bg-[#23a55a]"]:is(button){background:#25643a !important;border:2px solid #3a8a54;box-shadow:0 3px 0 #17432a;color:#c9f0d4;border-radius:10px;transition:transform .08s,box-shadow .08s,filter .15s}
+#f button[type=submit]{border-radius:10px}
+#app [class~="bg-[#5865f2]"]:is(button):hover,#app [class~="bg-[#23a55a]"]:is(button):hover,#shop button:hover{filter:brightness(1.12)}
+#app [class~="bg-[#5865f2]"]:is(button):active,#app [class~="bg-[#23a55a]"]:is(button):active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.5)}
+#vpc .vrow{background:transparent;border:0;cursor:default}
+#vpc button.vrow{cursor:pointer}
+#vpc button.vrow:hover{background:#2a2c30}
 body{font-family:system-ui,sans-serif}::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:#1a1b1e;border-radius:4px}html[data-theme="maroon"] [class~="bg-[#313338]"]{background-color:#140b0e !important}
 html[data-theme="maroon"] [class~="hover:bg-[#313338]"]:hover{background-color:#140b0e !important}
 html[data-theme="maroon"] [class~="bg-[#2b2d31]"]{background-color:#1a0f12 !important}
@@ -84,14 +133,20 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
 </style></head>
 <body class="bg-[#313338] text-[#dbdee1] h-screen overflow-hidden">
 
-<div id="auth" class="fixed inset-0 bg-[#1e1f22] flex items-center justify-center p-4 z-50">
- <div class="bg-[#313338] p-8 rounded-xl w-full max-w-sm shadow-2xl space-y-4">
-  <h1 class="text-2xl font-black text-white text-center">BEANCORD</h1>
-  <input id="u" placeholder="Username" autocomplete="off" class="w-full bg-[#1e1f22] rounded-lg p-2.5 text-white text-sm outline-none">
-  <input id="p" type="password" placeholder="Password (6+ characters)" autocomplete="new-password" class="w-full bg-[#1e1f22] rounded-lg p-2.5 text-white text-sm outline-none">
-  <div id="err" class="text-red-400 text-xs min-h-4"></div>
-  <button onclick="doAuth('in')" class="w-full bg-[#5865f2] hover:bg-[#4752c4] text-white font-bold py-2.5 rounded-lg">Log In</button>
-  <button onclick="doAuth('up')" class="w-full bg-[#23a55a] hover:bg-[#1a8a49] text-white font-bold py-2.5 rounded-lg">Create Account</button>
+<div id="auth" class="fixed inset-0 flex items-center justify-center p-4 z-50">
+ <!-- faint hardware line-art background -->
+ <svg class="art" style="top:-30px;left:-30px;width:240px;transform:rotate(-12deg)" viewBox="0 0 240 240"><rect x="70" y="60" width="80" height="80" rx="5"/><rect x="86" y="76" width="48" height="48" rx="3"/><circle cx="96" cy="86" r="3"/><path d="M82 60V40M98 60V30M114 60V40M130 60V30M146 60V40M82 140v20M98 140v30M114 140v20M130 140v30M146 140v20M70 80H40M70 100H30M70 120H40M150 80h30M150 100h40M150 120h30M98 30h-30l-14-14M130 30h30l14-14M98 170H60l-14 14"/><circle cx="54" cy="16" r="4"/><circle cx="174" cy="16" r="4"/><circle cx="46" cy="184" r="4"/><circle cx="30" cy="100" r="4"/><circle cx="190" cy="100" r="4"/><rect x="170" y="150" width="34" height="20" rx="3"/><rect x="20" y="150" width="22" height="34" rx="3"/></svg>
+ <svg class="art" style="top:30px;right:-40px;width:300px;transform:rotate(10deg)" viewBox="0 0 260 180"><path d="M60 50C35 50 20 70 14 110c-4 26 10 38 28 30l26-16c8-5 14-6 24-6h76c10 0 16 1 24 6l26 16c18 8 32-4 28-30-6-40-21-60-46-60-14 0-20 6-34 6H94c-14 0-20-6-34-6Z"/><path d="M72 76v28M58 90h28"/><circle cx="186" cy="78" r="7"/><circle cx="206" cy="92" r="7"/><circle cx="166" cy="92" r="7"/><circle cx="186" cy="106" r="7"/><circle cx="116" cy="92" r="5"/><circle cx="144" cy="92" r="5"/></svg>
+ <svg class="art" style="bottom:-20px;right:-30px;width:280px;transform:rotate(-8deg)" viewBox="0 0 260 240"><rect x="30" y="20" width="200" height="200" rx="10"/><rect x="60" y="50" width="56" height="56" rx="4"/><rect x="72" y="62" width="32" height="32" rx="2"/><rect x="150" y="48" width="50" height="24" rx="3"/><rect x="150" y="150" width="60" height="40" rx="3"/><path d="M116 78h20l14-14M88 106v34h40l12 12v0M200 60h20M60 170h40v30M100 170h30M210 110v30"/><circle cx="52" cy="40" r="5"/><circle cx="208" cy="40" r="5"/><circle cx="52" cy="200" r="5"/><circle cx="208" cy="200" r="5"/><circle cx="140" cy="152" r="3"/><circle cx="210" cy="110" r="3"/><path d="M60 140h-20M60 128H40"/></svg>
+ <svg class="art" style="bottom:20px;left:-50px;width:280px;transform:rotate(12deg)" viewBox="0 0 260 150"><rect x="20" y="20" width="220" height="110" rx="46"/><path d="M62 52v46M44 75h36"/><circle cx="188" cy="62" r="11"/><circle cx="214" cy="84" r="11"/><path d="M104 96h20M132 96h20"/></svg>
+
+ <div class="card">
+  <h1 class="logo">BEANCORD</h1>
+  <input id="u" class="field" placeholder="Username (e.g., PixelBean42)" autocomplete="off">
+  <input id="p" class="field" type="password" placeholder="Password (min. 8 chars, 1 num)" autocomplete="new-password">
+  <div id="err"></div>
+  <button class="btn btn-in" onclick="doAuth('in')">Log In</button>
+  <button class="btn btn-up" onclick="doAuth('up')">Create Account</button>
  </div>
 </div>
 
@@ -154,7 +209,7 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
  <div id="shopg" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div></div></div>
 <input id="sif" type="file" accept="image/*" class="hidden">
 <div id="ctx" class="hidden fixed z-50 w-56 bg-[#111214] border border-black/40 rounded-lg shadow-2xl p-1 text-sm"></div>
-<div id="vp" onclick="this.classList.add('hidden')" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"><div id="vpc" class="bg-[#313338] rounded-xl p-6 w-full max-w-xs text-center overflow-hidden"></div></div>
+<div id="vp" onclick="this.classList.add('hidden')" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"><div id="vpc" onclick="event.stopPropagation()" class="bg-[#1b1c1f] rounded-xl w-full max-w-sm text-left overflow-hidden"></div></div>
 <div id="rm" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"><div class="bg-[#313338] rounded-xl w-full max-w-md max-h-[85vh] overflow-y-auto">
  <div class="p-5 border-b border-black/30 flex items-center justify-between sticky top-0 bg-[#313338]"><h2 class="font-bold text-white">Custom roles</h2><button onclick="closeRoles()" class="text-[#949ba4] hover:text-white">✕</button></div>
  <div class="p-5 space-y-3">
@@ -248,7 +303,9 @@ let me,profiles={},servers=[],channels=[],cur={},unread={},rt=null,srvId=null;
 
 async function doAuth(mode){
   const u=clean($('u').value.trim()),p=$('p').value;
-  if(u.length<2||p.length<6){$('err').textContent='Username 2+ letters/numbers, password 6+ characters';return}
+  if(u.length<2){$('err').textContent='Username needs 2+ letters/numbers';return}
+  if(mode==='up'&&(p.length<8||!/\d/.test(p))){$('err').textContent='Password needs 8+ characters and at least 1 number';return}
+  if(!p){$('err').textContent='Enter your password';return}
   $('err').textContent='';
   try{
     const res=await fetch('https://ilmzklhvkacnljfgnxvq.supabase.co/functions/v1/auth-gate',{
@@ -400,18 +457,34 @@ function row(m){
 }
 function draw(list){$('msgs').innerHTML=list.map(m=>{try{return row(m)}catch(e){console.error(e);return ''}}).join('');$('msgs').scrollTop=1e9;list.forEach(m=>drawRx(m.id))}
 function add(m){if($('m_'+m.id))return;const k=$('msgs'),near=k.scrollHeight-k.scrollTop-k.clientHeight<200||m.sender_id===me.id;let h='';try{h=row(m)}catch(e){console.error(e)}k.insertAdjacentHTML('beforeend',h);while(k.children.length>300)k.removeChild(k.firstChild);if(near)k.scrollTop=1e9;drawRx(m.id)}
+
+// ===== notification sound (Discord-style ping for DMs and @mentions) =====
+let _ac=null;
+function _unlockAudio(){try{if(!_ac)_ac=new (window.AudioContext||window.webkitAudioContext)();if(_ac.state==='suspended')_ac.resume()}catch(e){}}
+['pointerdown','keydown','touchstart'].forEach(ev=>window.addEventListener(ev,_unlockAudio,{passive:true}));
+let _lastPing=0;
+function ping(){
+  const now=Date.now();if(now-_lastPing<400)return;_lastPing=now;
+  try{
+    _unlockAudio();if(!_ac||_ac.state!=='running')return;
+    const t=_ac.currentTime,g=_ac.createGain();g.connect(_ac.destination);
+    g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.22,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+0.42);
+    [[880,0],[1318.5,0.11]].forEach(([f,d])=>{const o=_ac.createOscillator();o.type='sine';o.frequency.setValueAtTime(f,t+d);o.connect(g);o.start(t+d);o.stop(t+d+0.3)});
+  }catch(e){}
+}
+const _watching=()=>!document.hidden&&document.hasFocus();
 function listen(){
   rt=sb.channel('live')
    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'profiles',filter:'id=eq.'+me.id},p=>{
      const wasB=until(me,'banned_until'),wasM=until(me,'muted_until');
-     me=p.new;profiles[me.id]=me;
+     me={...me,...p.new};profiles[me.id]=me;
      const nowB=until(me,'banned_until'),nowM=until(me,'muted_until');
      if((nowB&&!wasB)||(nowM&&!wasM))location.reload();
    })
    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},async p=>{
      if(!profiles[p.new.sender_id])await loadProfiles();
-     if(cur.type==='ch'&&cur.id===p.new.channel_id)add(p.new);else if(p.new.sender_id!==me.id){const cid=p.new.channel_id,sv=chanSrv[cid];unreadCh[cid]=1;if(sv)unreadSrv[sv]=(unreadSrv[sv]||0)+1;
-       if(mentionsMe(p.new)){ment[cid]=(ment[cid]||0)+1;if(sv)mentSrv[sv]=(mentSrv[sv]||0)+1;const ch=channels.find(x=>x.id===cid);toast((profiles[p.new.sender_id]||{username:'Someone'}).username+' mentioned you'+(ch?' in #'+ch.name:''))}
+     if(cur.type==='ch'&&cur.id===p.new.channel_id){add(p.new);if(mentionsMe(p.new))ping()}else if(p.new.sender_id!==me.id){const cid=p.new.channel_id,sv=chanSrv[cid];unreadCh[cid]=1;if(sv)unreadSrv[sv]=(unreadSrv[sv]||0)+1;
+       if(mentionsMe(p.new)){ment[cid]=(ment[cid]||0)+1;if(sv)mentSrv[sv]=(mentSrv[sv]||0)+1;const ch=channels.find(x=>x.id===cid);toast((profiles[p.new.sender_id]||{username:'Someone'}).username+' mentioned you'+(ch?' in #'+ch.name:''));ping()}
        if(srvId)drawChannels();drawServerNav()}})
    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages'},p=>{msgCache[p.new.id]=p.new;const d=$('m_'+p.new.id),t=d&&d.querySelector('[data-t]');if(t)t.innerHTML=mention(esc(p.new.content))+' <span class="text-[10px] text-[#949ba4]">(edited)</span>'})
    .on('postgres_changes',{event:'DELETE',schema:'public',table:'messages'},p=>{const e=$('m_'+p.old.id);if(e)e.remove()})
@@ -423,13 +496,13 @@ function listen(){
    .on('postgres_changes',{event:'INSERT',schema:'public',table:'dm_messages'},async p=>{
      const m=p.new,peer=m.sender_id===me.id?m.recipient_id:m.sender_id;
      if(!profiles[peer])await loadProfiles();
-     if(cur.type==='dm'&&cur.id===peer)add(m);
-     else if(m.sender_id!==me.id){unread[peer]=(unread[peer]||0)+1;if(!srvId)drawPeople()}})
+     if(cur.type==='dm'&&cur.id===peer){add(m);if(m.sender_id!==me.id&&!_watching())ping()}
+     else if(m.sender_id!==me.id){unread[peer]=(unread[peer]||0)+1;ping();if(!srvId)drawPeople()}})
    .on('postgres_changes',{event:'INSERT',schema:'public',table:'group_dm_messages'},async p=>{
      const m=p.new;
      if(!profiles[m.sender_id])await loadProfiles();
-     if(cur.type==='group'&&cur.id===m.group_id)add(m);
-     else if(m.sender_id!==me.id){unread[m.group_id]=(unread[m.group_id]||0)+1;if(!srvId)drawPeople()}})
+     if(cur.type==='group'&&cur.id===m.group_id){add(m);if(m.sender_id!==me.id&&!_watching())ping()}
+     else if(m.sender_id!==me.id){unread[m.group_id]=(unread[m.group_id]||0)+1;ping();if(!srvId)drawPeople()}})
    .subscribe(st=>{if(st==='SUBSCRIBED'){if(everUp)syncCurrent(true);everUp=true}else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){setTimeout(()=>{if(rt){sb.removeChannel(rt);listen()}},3000)}});
 }
 $('f').onsubmit=async e=>{
@@ -440,7 +513,7 @@ $('f').onsubmit=async e=>{
   if(!r.error){replyTo=null;$('rb').classList.add('hidden')}if(r.error)$('i').value=t;if(r.error)alert(cur.type==='dm'?'Could not send. You can only message accepted friends, and you must not be muted.':cur.type==='group'?'Could not send: '+r.error.message:'Could not send: '+r.error.message);
 };
 const col=p=>/^#[0-9a-fA-F]{6}$/.test((p||{}).color||'')?p.color:'#ffffff';
-function av(p,n){p=p||{username:'?'};const z=n===16?'w-16 h-16':n===6?'w-6 h-6':n===9?'w-9 h-9':'w-8 h-8';
+function av(p,n){p=p||{username:'?'};const z=n===20?'w-20 h-20':n===16?'w-16 h-16':n===6?'w-6 h-6':n===9?'w-9 h-9':'w-8 h-8';
   if(p.avatar&&p.avatar.startsWith('data:image/'))return `<img src="${esc(p.avatar)}" class="${z} rounded-full object-cover flex-shrink-0">`;
   return `<span class="${z} rounded-full bg-[#2b2d31] flex items-center justify-center overflow-hidden flex-shrink-0">${bean(p.username)}</span>`}
 function pickAvatar(f){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const c=document.createElement('canvas');c.width=c.height=96;const x=c.getContext('2d');const q=Math.min(i.width,i.height);x.drawImage(i,(i.width-q)/2,(i.height-q)/2,q,q,0,0,96,96);res(c.toDataURL('image/jpeg',0.8))};i.src=r.result};r.readAsDataURL(f)})}
@@ -454,9 +527,6 @@ async function saveProfile(){
   const {error}=await sb.from('profiles').update(u).eq('id',me.id);
   if(error)return alert('Could not save: '+error.message);
   await loadProfiles();me=profiles[me.id];
-  if(newAvatar&&me.avatar!==newAvatar){
-    alert('Your new picture was sent, but it did not stick in the database. This confirms the bug — please screenshot this message and send it over.');
-  }
   $('pm').classList.add('hidden');if(srvId)openServer(srvId);else showDMs();
 }
 async function punish(uid,kind,mins){const {error}=await sb.rpc('punish',{uid,kind,mins});if(error)alert(error.message);await loadProfiles();drawMembers()}
@@ -583,9 +653,29 @@ function chanMenu(id,x,y){let h='';if(isStaff()||myPerm('manage_channels'))h+=mi
 async function moveChannel(id,delta){const {error}=await sb.rpc('set_channel_position',{cid:id,delta});if(error)return alert(error.message);await openServer(srvId)}
 function startReply(id){const m=msgCache[id];replyTo=id;$('rb').innerHTML=`<span class="truncate">Replying to <b>${esc(dn(profiles[m.sender_id]))}</b>: ${esc(m.content.slice(0,60))}</span><span onclick="replyTo=null;$('rb').classList.add('hidden')" class="cursor-pointer ml-3">✕</span>`;$('rb').classList.remove('hidden');$('i').focus()}
 function mentionUser(uid){const el=$('i');el.value+=(el.value&&!el.value.endsWith(' ')?' ':'')+'@'+profiles[uid].username+' ';el.focus()}
-function showProfile(uid){const p=profiles[uid]||{username:'?'},r=roles[uid];
-  const seenLine=uid===me.id?'':`<div class="text-[10px] text-[#949ba4] mt-1">${online.has(uid)?'Online now':p.last_seen?'Last seen '+ago(p.last_seen):'Offline'}</div>`;
-  $('vpc').innerHTML=`<div class="-mx-6 -mt-6 h-20" style="background:${/^#[0-9a-fA-F]{6}$/.test(p.banner||'')?p.banner:'#5865f2'}"></div><div class="flex justify-center -mt-8 mb-2"><div class="rounded-full border-4 border-[#313338]">${av(p,16)}</div></div><div class="font-bold text-lg" style="color:${col(p)}">${esc(dn(p))}</div><div class="text-xs text-[#949ba4]">@${esc(p.username)}</div>${seenLine}<div class="mt-2 flex justify-center gap-1">${r?tag(p,r):''}${utag(p)}</div>${p.bio?`<p class="mt-3 text-sm text-left bg-[#2b2d31] rounded-lg p-3">${esc(p.bio)}</p>`:''}`;$('vp').classList.remove('hidden')}
+function closeVp(){$('vp').classList.add('hidden')}
+function linkify(t){return esc(t).replace(/(https?:\/\/[^\s<"]+)/g,'<a href="$1" target="_blank" rel="noopener noreferrer" class="text-[#4f9cf5] hover:underline">$1</a>')}
+function showProfile(uid){
+  const p=profiles[uid]||{username:'?'},r=roles[uid],isMe=uid===me.id;
+  const on=isMe||online.has(uid);
+  const banner=/^#[0-9a-fA-F]{6}$/.test(p.banner||'')?p.banner:'#5865f2';
+  const status=on?'Online':(p.last_seen?'Last seen '+ago(p.last_seen):'Offline');
+  const dot=`<span class="absolute bottom-0.5 right-0.5 w-5 h-5 rounded-full" style="background:${on?'#23a55a':'#80848e'};border:3px solid #1b1c1f"></span>`;
+  const row=(icon,label,extra,click)=>`<${click?'button onclick="'+click+'"':'div'} class="vrow w-full flex items-center gap-3 px-3 py-3 text-left text-sm text-[#b5bac1] ${click?'hover:text-white':''}"><span class="w-5 text-center">${icon}</span><span class="flex-1">${label}</span>${extra||''}</${click?'button':'div'}>`;
+  const sep='<div class="h-[2px] bg-[#34363b] mx-3"></div>';
+  let rows='';
+  if(isMe)rows+=row('✎','Edit Profile','',"closeVp();openProfile()")+sep;
+  rows+=row(`<span class="inline-block w-3 h-3 rounded-full" style="background:${on?'#23a55a':'#80848e'}"></span>`,status);
+  if(isMe)rows+=sep+row('🫘',(me.beans??0)+' Beans','<span class="text-[#80848e]">›</span>',"closeVp();openShop()");
+  $('vpc').innerHTML=`<div class="h-24" style="background:${banner}"></div>
+  <div class="px-5 -mt-10 relative"><div class="relative inline-block rounded-full" style="border:5px solid #1b1c1f">${av(p,20)}${dot}</div></div>
+  <div class="px-5 pt-3 pb-5">
+   <div class="flex items-center flex-wrap gap-x-2 gap-y-1"><span class="font-black text-2xl" style="color:${col(p)}">${esc(dn(p))}</span>${r?tag(p,r):''}${utag(p)}</div>
+   <div class="text-sm text-[#949ba4] mt-0.5">${esc(p.username)}${p.nickname?'':''}</div>
+   ${p.bio?`<p class="mt-3 text-sm text-[#dbdee1] break-words whitespace-pre-wrap">${linkify(p.bio)}</p>`:''}
+   <div class="mt-4 rounded-xl bg-[#232428] border-2 border-[#34363b] overflow-hidden">${rows}</div>
+  </div>`;
+  $('vp').classList.remove('hidden')}
 async function blockUser(uid){if(!confirm('Block '+dn(profiles[uid])+'? You will stop seeing their messages. Undo with /unblock username'))return;const {error}=await sb.from('blocks').insert({blocked:uid});if(error)return alert(error.message);blocked.add(uid);if(cur.type==='ch')openChannel(cur.id);else if(cur.type==='dm')openDM(cur.id)}
 async function reportMsg(id){const r=prompt('Why are you reporting this message? (optional)');if(r===null)return;const {error}=await sb.from('reports').insert({message_id:id,reason:r.slice(0,300)});toast(error?error.message:'Report sent to the staff')}
 async function showReports(){const {data:r,error}=await sb.from('reports').select('*').order('created_at',{ascending:false}).limit(15);if(error)return sys(error.message);if(!r.length)return sys('No reports.');
