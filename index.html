@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BEANCORD</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1b1c1f">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2064%2064%27%3E%3Cpath%20d=%27M46%209C36%201%2018%207%2012%2022C6%2036%2014%2055%2030%2059C44%2063%2057%2052%2054%2041C52.5%2035%2046%2035%2043%2040C40%2045%2033%2044%2032%2038C31%2032%2038%2031%2043%2026C48%2021%2051%2014%2046%209Z%27%20fill=%27%238e2b25%27%20stroke=%27%235a1512%27%20stroke-width=%273%27%20stroke-linejoin=%27round%27/%3E%3Cpath%20d=%27M20%2024C23%2017%2030%2013%2037%2012%27%20fill=%27none%27%20stroke=%27%23ffffff%27%20stroke-opacity=%27.45%27%20stroke-width=%273.5%27%20stroke-linecap=%27round%27/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
@@ -194,7 +198,7 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
 <div id="app" class="hidden h-full flex relative">
  <div id="leftcol" class="flex flex-shrink-0">
  <div class="w-[72px] bg-[#1e1f22] flex flex-col items-center py-3 space-y-2 flex-shrink-0">
-  <button onclick="showDMs()" title="Direct Messages" class="w-12 h-12 bg-[#5865f2] rounded-2xl hover:rounded-xl text-white text-xl relative">📋<span id="tot" class="hidden absolute -top-1 -right-1 bg-[#f23f43] text-[10px] font-black px-1.5 rounded-full"></span></button>
+  <button onclick="showDMs()" title="Direct Messages" class="w-12 h-12 bg-[#5865f2] rounded-2xl hover:rounded-xl text-white text-sm font-black tracking-wide relative">DMs<span id="tot" class="hidden absolute -top-1 -right-1 bg-[#f23f43] text-[10px] font-black px-1.5 rounded-full"></span></button>
   <div class="w-8 h-[2px] bg-[#35363c]"></div>
   <div id="srv" class="flex-1 w-full flex flex-col items-center space-y-2 overflow-y-auto"></div>
   <button id="newsrvbtn" onclick="newServer()" title="Create a server" class="hidden w-12 h-12 bg-[#313338] hover:bg-[#23a55a] rounded-3xl hover:rounded-xl text-[#23a55a] hover:text-white text-2xl">+</button>
@@ -204,7 +208,7 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
   <div id="sc" class="flex-1 overflow-y-auto p-2 space-y-0.5"></div>
   <div class="h-14 bg-[#232428] px-3 flex items-center justify-between">
    <span id="me" class="font-bold text-white text-sm truncate"></span>
-   <span class="flex gap-3"><button onclick="openShop()" class="text-xs text-[#949ba4] hover:text-white">Shop</button><button onclick="openProfile()" class="text-xs text-[#949ba4] hover:text-white">Profile</button><button onclick="logout()" class="text-xs text-[#949ba4] hover:text-[#f23f43]">Log out</button></span>
+   <span class="flex gap-3"><button onclick="openShop()" class="text-xs text-[#949ba4] hover:text-white">Shop</button><button onclick="openProfile()" class="text-xs text-[#949ba4] hover:text-white">Profile</button><button onclick="togglePush()" title="Notifications when BEANCORD is closed" class="text-xs text-[#949ba4] hover:text-white">Alerts</button><button onclick="logout()" class="text-xs text-[#949ba4] hover:text-[#f23f43]">Log out</button></span>
   </div>
  </div>
  </div>
@@ -387,7 +391,7 @@ async function doAuth(mode){
   }catch(e){$('err').textContent='Could not reach the server. Try again.';return}
   start();
 }
-async function logout(){if(callState!=='idle'||groupCallActive)hangupCall();if(ringCh)sb.removeChannel(ringCh);await sb.auth.signOut();if(rt)sb.removeChannel(rt);location.reload()}
+async function logout(){if(callState!=='idle'||groupCallActive)hangupCall();if(ringCh)sb.removeChannel(ringCh);try{await pushDetach()}catch(e){}await sb.auth.signOut();if(rt)sb.removeChannel(rt);location.reload()}
 async function loadProfiles(){const {data}=await sb.from('profiles').select('*');profiles={};(data||[]).forEach(p=>profiles[p.id]=p);if(me&&profiles[me.id]){me=profiles[me.id];const b=until(me,'banned_until');if(b)kickOut(b)}}
 async function kickOut(b){await sb.auth.signOut();$('app').classList.add('hidden');$('auth').classList.remove('hidden');$('err').textContent='This account is banned until '+b.toLocaleString()}
 function until(p,k){const v=p&&p[k];return v&&new Date(v)>new Date()?new Date(v):null}
@@ -397,6 +401,7 @@ async function start(){
   $('auth').classList.add('hidden');$('app').classList.remove('hidden');
   await loadProfiles();me=profiles[user.id];{const b=until(me,'banned_until');if(b)return kickOut(b)}
   try{const dv=await getDeviceIds();const {data:devBanned,error:devErr}=await sb.rpc('register_device',{h:dv.h,d:dv.d});if(!devErr&&devBanned===true)return kickDevice()}catch(e){}
+  pushRebind();
   await loadFriends();await loadBlocks();await loadShopTags();await loadChanMap();$('me').textContent=me?dn(me):'';
   await loadGroups();await loadServers();const d=servers.find(x=>x.is_default);if(d)openServer(d.id);else showDMs();listen();track();
 }
@@ -632,7 +637,7 @@ async function addByName(){const n=$('fadd').value.trim().toLowerCase().replace(
   if(error)return say(error.message);await loadFriends();drawPeople();$('fmsg').textContent='Request sent to '+u.username}
 async function runCmd(line){
   const [c,name,arg]=line.slice(1).trim().split(/\s+/);const cmd=(c||'').toLowerCase();
-  if(cmd==='help')return sys('BeanBot: /poll question | option 1 | option 2 · /polls · /endpoll number · /usercount · /serverinfo · /userinfo user · /topbeans · /roll 2d6 · /flip · /8ball question · /choose a | b | c · /rate thing · /hug user · /beanfact · /ping · /cmds · admins: /addcmd name text · /delcmd name · /botset disable|enable command · mods: /warn user reason · /warnings user · /purge 20 · /mutes · admins: /clearwarns user · /slowmode 10 · /announce text · anyone: /seen user · /stats · owner: /automod (automatic mutes for banned words, spam and warnings). Other commands: /bold text (admins and up: big bold message) · /ban user hours · /unban user · /mute user minutes · /unmute user · /kick user · /nick user newname · /newrole name #color member|verified|mod|admin · /giverole user rolename|none · /delrole name · /deleteuser user · /gift user amount · /switch user · /banword word · /unbanword word · /banwords · /auditlog. Built-in roles are managed only from the gear icon. Deleting a server is only in its right-click menu. /hwidban user bans the devices they have used (works through VPNs) · /unhwidban user · /banip user bans the network address on their account, and is not foolproof since addresses change · /ips user · /iplog');
+  if(cmd==='help')return sys('BeanBot: /welcome · /goodbye (admins: join and leave messages) · /poll question | option 1 | option 2 · /polls · /endpoll number · /usercount · /serverinfo · /userinfo user · /topbeans · /roll 2d6 · /flip · /8ball question · /choose a | b | c · /rate thing · /hug user · /beanfact · /ping · /cmds · admins: /addcmd name text · /delcmd name · /botset disable|enable command · mods: /warn user reason · /warnings user · /purge 20 · /mutes · admins: /clearwarns user · /slowmode 10 · /announce text · anyone: /seen user · /stats · owner: /automod (automatic mutes for banned words, spam and warnings). Other commands: /bold text (admins and up: big bold message) · /ban user hours · /unban user · /mute user minutes · /unmute user · /kick user · /nick user newname · /newrole name #color member|verified|mod|admin · /giverole user rolename|none · /delrole name · /deleteuser user · /gift user amount · /switch user · /banword word · /unbanword word · /banwords · /auditlog. Built-in roles are managed only from the gear icon. Deleting a server is only in its right-click menu. /hwidban user bans the devices they have used (works through VPNs) · /unhwidban user · /banip user bans the network address on their account, and is not foolproof since addresses change · /ips user · /iplog');
   if(!STAFF_CMDS.has(cmd))return botCall(cmd,line);
   if(cmd==='bold'){
     if(cur.type!=='ch')return sys('/bold only works in server channels.');
@@ -683,7 +688,7 @@ async function runCmd(line){
   sys('Unknown command. Type /help');
 }
 let ment={},sugList=[],sugIdx=0,sugStart=0,sugAt=false;
-const CMDS=['poll','polls','endpoll','warn','warnings','clearwarns','purge','slowmode','announce','seen','stats','mutes','automod','usercount','serverinfo','userinfo','topbeans','roll','flip','8ball','choose','rate','hug','beanfact','ping','cmds','addcmd','delcmd','botset','bold','ban','unban','mute','unmute','kick','nick','giverole','newrole','delrole','deleteuser','gift','switch','banip','unbanip','hwidban','unhwidban','ips','iplog','banword','unbanword','banwords','auditlog','unblock','reports','help'],ROLES=['manager','admin','goodgirl','mod','verified','member'];
+const CMDS=['welcome','goodbye','poll','polls','endpoll','warn','warnings','clearwarns','purge','slowmode','announce','seen','stats','mutes','automod','usercount','serverinfo','userinfo','topbeans','roll','flip','8ball','choose','rate','hug','beanfact','ping','cmds','addcmd','delcmd','botset','bold','ban','unban','mute','unmute','kick','nick','giverole','newrole','delrole','deleteuser','gift','switch','banip','unbanip','hwidban','unhwidban','ips','iplog','banword','unbanword','banwords','auditlog','unblock','reports','help'],ROLES=['manager','admin','goodgirl','mod','verified','member'];
 function roleSel(m,u,self){if(self||!canManage(m.role))return '';const o=ROLES.filter(r=>rank(r)<rank(myRole())).map(r=>`<option ${r===m.role?'selected':''}>${r}</option>`).join('');return `<select onchange="setRole('${u}',this.value)" class="mt-1 bg-[#1e1f22] text-[10px] text-[#949ba4] rounded px-1">${o}</select>`}
 const BOLDMARK='[[big]]';
 const isBot=p=>!!p&&p.username==='beanbot';
@@ -1453,6 +1458,46 @@ async function pollVote(id,opt){
   pollTick();
 }
 setInterval(()=>{if(!document.hidden)pollTick()},5000);
+
+// ===== offline notifications (Web Push) =====
+const pushOK=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;
+const b64uToBytes=str=>{const pad='='.repeat((4-str.length%4)%4),b=(str+pad).replace(/-/g,'+').replace(/_/g,'/'),r=atob(b);return Uint8Array.from([...r].map(c=>c.charCodeAt(0)))};
+async function pushSave(sub){const j=sub.toJSON();return sb.functions.invoke('push',{body:{action:'subscribe',sub:{endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth}}})}
+async function togglePush(){
+  if(!pushOK())return alert('This browser cannot show notifications. On an iPhone, tap Share, then Add to Home Screen, and open BEANCORD from your home screen first.');
+  try{
+    const reg=await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;
+    const existing=await reg.pushManager.getSubscription();
+    if(existing){
+      if(!confirm('Notifications are ON for this device. Turn them off?'))return;
+      await sb.functions.invoke('push',{body:{action:'unsubscribe',endpoint:existing.endpoint}});
+      await existing.unsubscribe();return alert('Notifications are off for this device.');
+    }
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted')return alert('Notifications are blocked. Allow them for this site in your browser settings, then try again.');
+    const {data:k,error:ke}=await sb.functions.invoke('push',{body:{action:'key'}});
+    if(ke||!k||!k.key)return alert('Notifications are not set up on the server yet.');
+    const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64uToBytes(k.key)});
+    const {error}=await pushSave(sub);
+    if(error){await sub.unsubscribe();return alert('Could not save this device. Try again.')}
+    alert('Done! You will get notifications for DMs and @mentions even when BEANCORD is closed.');
+  }catch(e){alert('Could not turn on notifications: '+(e.message||e))}
+}
+// a device that already allowed notifications gets attached to whoever logs in on it
+async function pushRebind(){
+  try{
+    if(!pushOK()||Notification.permission!=='granted')return;
+    const reg=await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;
+    const sub=await reg.pushManager.getSubscription();if(sub)await pushSave(sub);
+  }catch(e){}
+}
+async function pushDetach(){
+  try{
+    if(!pushOK())return;
+    const reg=await navigator.serviceWorker.getRegistration();const sub=reg&&await reg.pushManager.getSubscription();
+    if(sub)await sb.functions.invoke('push',{body:{action:'unsubscribe',endpoint:sub.endpoint}});
+  }catch(e){}
+}
 
 // ===== BeanBot =====
 const BOT_FN='beanbot'; // name of the Supabase edge function that runs BeanBot
