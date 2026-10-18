@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BEANCORD</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2064%2064%27%3E%3Cpath%20d=%27M46%209C36%201%2018%207%2012%2022C6%2036%2014%2055%2030%2059C44%2063%2057%2052%2054%2041C52.5%2035%2046%2035%2043%2040C40%2045%2033%2044%2032%2038C31%2032%2038%2031%2043%2026C48%2021%2051%2014%2046%209Z%27%20fill=%27%238e2b25%27%20stroke=%27%235a1512%27%20stroke-width=%273%27%20stroke-linejoin=%27round%27/%3E%3Cpath%20d=%27M20%2024C23%2017%2030%2013%2037%2012%27%20fill=%27none%27%20stroke=%27%23ffffff%27%20stroke-opacity=%27.45%27%20stroke-width=%273.5%27%20stroke-linecap=%27round%27/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -242,15 +243,15 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
  <div id="mem" class="w-56 bg-[#2b2d31] overflow-y-auto p-3 hidden flex-shrink-0"></div>
 </div>
 
-<div id="web" class="hidden fixed inset-0 z-[45] flex flex-col" style="background:#141517">
- <div id="btabs" class="flex items-end gap-1 px-2 pt-2 bg-[#0f1012] overflow-x-auto flex-shrink-0"></div>
- <div class="flex items-center gap-2 px-2 py-2 bg-[#0f1012] border-b-2 border-[#2a2c30] flex-shrink-0">
-  <button id="bback" onclick="bNav(-1)" title="Back" class="w-9 h-9 rounded-lg text-[#b5bac1] hover:bg-[#232428] hover:text-white disabled:opacity-30">←</button>
-  <button id="bfwd" onclick="bNav(1)" title="Forward" class="w-9 h-9 rounded-lg text-[#b5bac1] hover:bg-[#232428] hover:text-white disabled:opacity-30">→</button>
-  <button onclick="bReload()" title="Reload" class="w-9 h-9 rounded-lg text-[#b5bac1] hover:bg-[#232428] hover:text-white">⟳</button>
-  <form id="bform" class="flex-1 min-w-0"><input id="burl" autocomplete="off" spellcheck="false" placeholder="Search or enter address" class="w-full rounded-xl border-2 border-[#2a2c30] bg-[#17181a] px-4 py-2 text-sm text-white outline-none focus:border-[#4a5fd0]"></form>
-  <button onclick="bExternal()" title="Open in a real browser tab" class="w-9 h-9 rounded-lg text-[#b5bac1] hover:bg-[#232428] hover:text-white">↗</button>
-  <button onclick="closeWeb()" title="Back to chat" class="w-9 h-9 rounded-lg text-[#b5bac1] hover:bg-[#232428] hover:text-white">✕</button>
+<div id="web" class="hidden fixed inset-0 z-[45] flex flex-col bg-[#313338]">
+ <div id="btabs" class="flex items-end gap-1 px-2 pt-2 bg-[#1e1f22] overflow-x-auto flex-shrink-0"></div>
+ <div class="flex items-center gap-2 px-2 py-2 bg-[#1e1f22] border-b-2 border-[#34363b] flex-shrink-0">
+  <button id="bback" onclick="bNav(-1)" title="Back" class="w-9 h-9 rounded-lg text-[#b5bac1] hover:bg-[#35373c] hover:text-white disabled:opacity-30">←</button>
+  <button id="bfwd" onclick="bNav(1)" title="Forward" class="w-9 h-9 rounded-lg text-[#b5bac1] hover:bg-[#35373c] hover:text-white disabled:opacity-30">→</button>
+  <button onclick="bReload()" title="Reload" class="w-9 h-9 rounded-lg text-[#b5bac1] hover:bg-[#35373c] hover:text-white">⟳</button>
+  <form id="bform" class="flex-1 min-w-0"><input id="burl" autocomplete="off" spellcheck="false" placeholder="Search or enter address" class="w-full rounded-[10px] border-2 border-[#4a4d55] bg-[#383a40] px-3 py-2 text-sm text-white outline-none focus:border-[#6b78e8]"></form>
+  <button onclick="bExternal()" title="Open in a real browser tab" class="w-9 h-9 rounded-lg text-[#b5bac1] hover:bg-[#35373c] hover:text-white">↗</button>
+  <button onclick="closeWeb()" title="Back to chat" class="w-9 h-9 rounded-lg text-[#b5bac1] hover:bg-[#35373c] hover:text-white">✕</button>
  </div>
  <div id="bcont" class="flex-1 relative min-h-0"></div>
 </div>
@@ -414,7 +415,7 @@ async function openServer(id){
   channels=c.data||[];channels.forEach(x=>chanSrv[x.id]=id);members=m.data||[];roles={};members.forEach(x=>roles[x.user_id]=x.role);if((servers.find(x=>x.id===id)||{}).is_default){defRole=roles[me.id];const nb=$('newsrvbtn');if(nb)nb.classList.toggle('hidden',defRole!=='owner')}
   bans=[];if(isStaff()){const {data:b}=await sb.from('server_bans').select('*').eq('server_id',id);bans=b||[]}
   {const {data:cd}=await sb.from('custom_roles').select('*').eq('server_id',id);croles=cd||[];cr={};members.forEach(x=>{if(x.custom_role)cr[x.user_id]=croles.find(y=>y.id===x.custom_role)})}
-  $('sh').innerHTML=`<span class="truncate">${esc(s.name)}</span><span class="flex items-center gap-2 flex-shrink-0"><button onclick="openWeb()" title="Beanchat — search the web" class="text-base text-[#949ba4] hover:text-white">🌐</button>${defRole==='owner'?'<button onclick="openRoles()" title="Manage roles" class="text-base text-[#949ba4] hover:text-white">⚙</button>':''}${(isStaff()||myPerm('manage_channels'))?'<button onclick="newChannel()" class="text-xl text-[#949ba4] hover:text-white">+</button>':''}</span>`;
+  $('sh').innerHTML=`<span class="truncate">${esc(s.name)}</span><span class="flex items-center gap-2 flex-shrink-0"><button onclick="openWeb()" title="Beanchat — search the web" class="text-base text-[#949ba4] hover:text-white">🫘</button>${defRole==='owner'?'<button onclick="openRoles()" title="Manage roles" class="text-base text-[#949ba4] hover:text-white">⚙</button>':''}${(isStaff()||myPerm('manage_channels'))?'<button onclick="newChannel()" class="text-xl text-[#949ba4] hover:text-white">+</button>':''}</span>`;
   $('mem').classList.remove('hidden');drawChannels();try{drawMembers()}catch(e){console.error('drawMembers failed:',e);$('mem').innerHTML='<p class="text-xs text-[#f23f43]">Member list failed to load. Check the browser console (F12) for details.</p>'}
   if(channels[0])await openChannel(channels[0].id);
 }
@@ -470,7 +471,7 @@ async function openChannel(id){
   draw(data||[]);
 }
 async function showDMs(){
-  srvId=null;members=[];roles={};$('mem').classList.add('hidden');await loadProfiles();await loadFriends();await loadGroups();await loadServers();cur={};$('sh').innerHTML='<span class="truncate">Direct Messages</span><span class="flex items-center gap-2 flex-shrink-0"><button onclick="openWeb()" title="Beanchat — search the web" class="text-base text-[#949ba4] hover:text-white">🌐</button></span>';$('chtitle').textContent='Pick someone to message';$('msgs').innerHTML='';$('pinbtn').classList.add('hidden');$('searchbtn').classList.add('hidden');$('searchbar').classList.add('hidden');$('callbtn').classList.add('hidden');$('groupcallbtn').classList.add('hidden');$('groupsettingsbtn').classList.add('hidden');subscribeTyping();
+  srvId=null;members=[];roles={};$('mem').classList.add('hidden');await loadProfiles();await loadFriends();await loadGroups();await loadServers();cur={};$('sh').innerHTML='<span class="truncate">Direct Messages</span><span class="flex items-center gap-2 flex-shrink-0"><button onclick="openWeb()" title="Beanchat — search the web" class="text-base text-[#949ba4] hover:text-white">🫘</button></span>';$('chtitle').textContent='Pick someone to message';$('msgs').innerHTML='';$('pinbtn').classList.add('hidden');$('searchbtn').classList.add('hidden');$('searchbar').classList.add('hidden');$('callbtn').classList.add('hidden');$('groupcallbtn').classList.add('hidden');$('groupsettingsbtn').classList.add('hidden');subscribeTyping();
   drawPeople();
 }
 function drawPeople(){
@@ -1455,7 +1456,7 @@ function bClose(id){
   bSync();
 }
 function bSync(){
-  $('btabs').innerHTML=btabs.map(t=>`<div onclick="bSwitch(${t.id})" class="flex items-center gap-2 w-44 max-w-[45vw] px-3 py-2 rounded-t-xl text-sm cursor-pointer flex-shrink-0 ${t.id===bact?'bg-[#3448b4] text-white font-bold':'bg-[#1b1c1f] text-[#b5bac1] hover:bg-[#232428]'}"><span class="truncate flex-1">${esc(bTitle(t))}</span><button onclick="event.stopPropagation();bClose(${t.id})" class="opacity-70 hover:opacity-100 leading-none">✕</button></div>`).join('')+'<button onclick="bNewTab()" title="New tab" class="w-9 h-9 mb-0.5 rounded-lg text-[#b5bac1] hover:bg-[#232428] hover:text-white text-lg flex-shrink-0">+</button>';
+  $('btabs').innerHTML=btabs.map(t=>`<div onclick="bSwitch(${t.id})" class="flex items-center gap-2 w-44 max-w-[45vw] px-3 py-2 rounded-t-lg text-sm cursor-pointer flex-shrink-0 ${t.id===bact?'bg-[#313338] text-white':'bg-transparent text-[#949ba4] hover:bg-[#35373c] hover:text-white'}"><span class="truncate flex-1">${esc(bTitle(t))}</span><button onclick="event.stopPropagation();bClose(${t.id})" class="opacity-70 hover:opacity-100 leading-none">✕</button></div>`).join('')+'<button onclick="bNewTab()" title="New tab" class="w-9 h-9 mb-0.5 rounded-lg text-[#b5bac1] hover:bg-[#35373c] hover:text-white text-lg flex-shrink-0">+</button>';
   const t=bCur();if(!t)return;const e=bEntry(t);
   $('bback').disabled=t.i<=0;$('bfwd').disabled=t.i>=t.hist.length-1;
   if(document.activeElement!==$('burl'))$('burl').value=e.type==='page'?e.url:e.type==='search'?e.q:'';
@@ -1491,14 +1492,14 @@ function bShow(t,force){
 }
 function bHome(t,pane){
   pane.className='absolute inset-0 overflow-y-auto';
-  pane.innerHTML=`<div class="min-h-full flex flex-col items-center justify-center p-4 text-center" style="background:radial-gradient(circle at 50% 30%,rgba(107,120,232,.16),transparent 55%)"><h1 style="font-family:'Russo One',Impact,system-ui,sans-serif;font-size:3.4rem;letter-spacing:.03em;color:#efe8d6;text-shadow:0 0 40px rgba(107,120,232,.45);line-height:1.1">Beanchat</h1><p class="mt-2 text-sm font-bold text-[#dbdee1]">search the web without leaving BEANCORD 🫘</p><form class="mt-8 w-full max-w-2xl flex items-center gap-2 rounded-2xl border-2 border-[#4a4d55] bg-[#1f2023] p-2 pl-4" style="box-shadow:0 6px 0 #1a1b1e,0 18px 40px rgba(0,0,0,.45)" onsubmit="event.preventDefault();bGo(this.q.value)"><span class="text-[#949ba4]">🔍</span><input name="q" id="bh_${t.id}" autocomplete="off" placeholder="Search for anything!" class="flex-1 min-w-0 bg-transparent outline-none text-white text-base py-2"><button type="submit" title="Search" class="w-11 h-11 rounded-xl text-white font-bold text-lg" style="background:#3448b4;border:2px solid #4a5fd0;box-shadow:0 3px 0 #222f80">→</button></form></div>`;
+  pane.innerHTML=`<div class="min-h-full flex flex-col items-center justify-center p-4 text-center"><h1 style="font-family:'Russo One',Impact,system-ui,sans-serif;font-size:2.2rem;letter-spacing:.04em;color:#efe8d6;line-height:1">BEANCHAT</h1><p class="mt-2 text-sm text-[#949ba4]">Search the web</p><form class="mt-6 w-full max-w-xl flex items-center gap-2" onsubmit="event.preventDefault();bGo(this.q.value)"><input name="q" id="bh_${t.id}" autocomplete="off" placeholder="Search or enter an address" class="flex-1 min-w-0 rounded-[10px] border-2 border-[#4a4d55] bg-[#383a40] px-3 py-3 text-white text-sm outline-none focus:border-[#6b78e8]"><button type="submit" class="px-5 py-3 rounded-[10px] text-white text-sm font-bold" style="background:#3448b4;border:2px solid #4a5fd0;box-shadow:0 3px 0 #222f80">Search</button></form></div>`;
 }
 function bPage(pane,e){
   pane.className='absolute inset-0 flex flex-col';
   pane.innerHTML='';
-  const bar=document.createElement('div');bar.className='flex items-center gap-3 px-3 py-1.5 bg-[#1b1c1f] text-xs text-[#949ba4] flex-shrink-0';
+  const bar=document.createElement('div');bar.className='flex items-center gap-3 px-3 py-1.5 bg-[#2b2d31] border-b-2 border-[#34363b] text-xs text-[#949ba4] flex-shrink-0';
   bar.innerHTML='<span class="flex-1 truncate">Blank page or "refused to connect"? Some sites do not allow being shown inside another site.</span>';
-  const a=document.createElement('a');a.href=e.url;a.target='_blank';a.rel='noopener noreferrer';a.className='text-[#7fa6ff] underline flex-shrink-0';a.textContent='Open in a new tab ↗';bar.appendChild(a);
+  const a=document.createElement('a');a.href=e.url;a.target='_blank';a.rel='noopener noreferrer';a.className='text-[#8f9aff] underline flex-shrink-0';a.textContent='Open in a new tab ↗';bar.appendChild(a);
   const f=document.createElement('iframe');f.className='flex-1 w-full bg-white border-0';f.setAttribute('sandbox','allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation');f.referrerPolicy='no-referrer';f.allow='fullscreen';f.src=e.url;
   pane.appendChild(bar);pane.appendChild(f);
 }
@@ -1507,14 +1508,14 @@ function bSearch(t,pane,e){
   const plain=x=>new DOMParser().parseFromString(String(x||''),'text/html').body.textContent||'';
   let body;
   if(e.results){
-    body=e.results.length?e.results.map(r=>`<a href="${esc(r.url)}" data-bu="${esc(r.url)}" target="_blank" rel="noopener noreferrer" class="block rounded-xl border-2 border-[#34363b] bg-[#1f2023] hover:border-[#4a5fd0] p-3"><div class="text-xs text-[#80848e] truncate">${esc(hostOf(r.url))}${r.age?' · '+esc(r.age):''}</div><div class="text-[#7fa6ff] font-bold mt-0.5">${esc(plain(r.title))}</div><div class="text-sm text-[#b5bac1] mt-1">${esc(plain(r.description))}</div></a>`).join(''):'<p class="text-sm text-[#949ba4]">No results.</p>';
+    body=e.results.length?e.results.map(r=>`<a href="${esc(r.url)}" data-bu="${esc(r.url)}" target="_blank" rel="noopener noreferrer" class="block rounded-xl border-2 border-[#34363b] bg-[#2b2d31] hover:bg-[#35373c] p-3"><div class="text-xs text-[#80848e] truncate">${esc(hostOf(r.url))}${r.age?' · '+esc(r.age):''}</div><div class="text-[#8f9aff] font-bold mt-0.5">${esc(plain(r.title))}</div><div class="text-sm text-[#b5bac1] mt-1">${esc(plain(r.description))}</div></a>`).join(''):'<p class="text-sm text-[#949ba4]">No results.</p>';
   }else if(e.err){
-    body=`<div class="rounded-xl border-2 border-[#34363b] bg-[#1f2023] p-3 text-sm text-[#b5bac1]">${esc(e.err)} <a href="${esc('https://duckduckgo.com/?q='+encodeURIComponent(e.q))}" target="_blank" rel="noopener noreferrer" class="text-[#7fa6ff] underline">Search on DuckDuckGo instead</a></div>`;
+    body=`<div class="rounded-xl border-2 border-[#34363b] bg-[#2b2d31] p-3 text-sm text-[#b5bac1]">${esc(e.err)} <a href="${esc('https://duckduckgo.com/?q='+encodeURIComponent(e.q))}" target="_blank" rel="noopener noreferrer" class="text-[#8f9aff] underline">Search on DuckDuckGo instead</a></div>`;
   }else{
     body='<p class="text-sm text-[#949ba4]">Searching…</p>';
     if(!e.loading){e.loading=true;bFetch(t,e)}
   }
-  pane.innerHTML=`<div class="max-w-2xl mx-auto p-4"><h2 class="mb-3 text-[#efe8d6]" style="font-family:'Russo One',Impact,system-ui,sans-serif">Beanchat <span class="text-[#80848e] text-sm" style="font-family:system-ui">— ${esc(e.q)}</span></h2><div class="space-y-3">${body}</div></div>`;
+  pane.innerHTML=`<div class="max-w-2xl mx-auto p-4"><div class="mb-3 text-sm text-[#949ba4]">Results for <span class="text-white font-semibold">${esc(e.q)}</span></div><div class="space-y-3">${body}</div></div>`;
 }
 async function bFetch(t,e){
   try{
