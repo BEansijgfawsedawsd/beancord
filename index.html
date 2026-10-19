@@ -1262,9 +1262,9 @@ function pickAvatar(f){return new Promise(res=>{const r=new FileReader();r.onloa
 async function punish(uid,kind,mins){const {error}=await sb.rpc('punish',{uid,kind,mins});if(error)alert(error.message);await loadProfiles();drawMembers()}
 function askBan(uid){const h=prompt('Ban this account for how many hours? (0 = remove ban)');if(h===null)return;punish(uid,'ban',Math.round(parseFloat(h)*60)||0)}
 function askMute(uid){const m=prompt('Mute for how many minutes? (0 = unmute)');if(m===null)return;punish(uid,'mute',Math.round(parseFloat(m))||0)}
-async function removeFriend(id,noConfirm){if(!noConfirm&&!confirm('Remove this friend?'))return;const f=fr(id);if(!f)return;const {error}=await sb.from('friendships').delete().eq('id',f.id);if(error)alert(error.message);await loadFriends();drawPeople()}
+async function removeFriend(id,noConfirm){if(!noConfirm&&!confirm('Remove this friend?'))return;const f=fr(id);if(!f)return;const {data,error}=await sb.from('friendships').delete().eq('id',f.id).select();if(error)alert(error.message);else if(!(data&&data.length))alert('That did not save. A database rule blocked it, or the request no longer exists.');await loadFriends();drawPeople()}
 async function addFriend(id){const {error}=await sb.from('friendships').insert({requester:me.id,addressee:id,status:'pending'});if(error)alert(error.message);await loadFriends();drawPeople()}
-async function answer(id,ok){const f=fr(id);const r=ok?await sb.from('friendships').update({status:'accepted'}).eq('id',f.id):await sb.from('friendships').delete().eq('id',f.id);if(r.error)alert(r.error.message);await loadFriends();drawPeople()}
+async function answer(id,ok){const f=fr(id);if(!f){await loadFriends();drawPeople();return alert('That request no longer exists.')}const r=ok?await sb.from('friendships').update({status:'accepted'}).eq('id',f.id).select():await sb.from('friendships').delete().eq('id',f.id).select();if(r.error)alert(r.error.message);else if(!(r.data&&r.data.length))alert('That did not save. A database rule blocked it, or the request no longer exists.');await loadFriends();drawPeople()}
 async function rejoin(){const {error}=await sb.rpc('rejoin_default');if(error)alert(error.message);await loadServers();const d=servers.find(x=>x.is_default);if(d)openServer(d.id)}
 function sys(t){$('msgs').insertAdjacentHTML('beforeend',`<div class="text-xs italic text-[#949ba4]">${esc(t)}</div>`);$('msgs').scrollTop=1e9}
 async function addByName(){const n=$('fadd').value.trim().toLowerCase().replace(/^@/,'');const say=t=>{$('fmsg').textContent=t};
@@ -1413,8 +1413,8 @@ function mentionUser(uid){const el=$('i');el.value+=(el.value&&!el.value.endsWit
 async function profFriend(act,uid){
   let r;
   if(act==='add')r=await sb.from('friendships').insert({requester:me.id,addressee:uid,status:'pending'});
-  else{const f=fr(uid);if(!f)return;r=act==='accept'?await sb.from('friendships').update({status:'accepted'}).eq('id',f.id):await sb.from('friendships').delete().eq('id',f.id)}
-  if(r.error)alert(r.error.message);
+  else{const f=fr(uid);if(!f)return;r=act==='accept'?await sb.from('friendships').update({status:'accepted'}).eq('id',f.id).select():await sb.from('friendships').delete().eq('id',f.id).select()}
+  if(r.error)alert(r.error.message);else if(act!=='add'&&!(r.data&&r.data.length))alert('That did not save. A database rule blocked it, or the request no longer exists.');
   await loadFriends();if(!srvId)drawPeople();showProfile(uid);
 }
 async function refreshMembersOnly(){
