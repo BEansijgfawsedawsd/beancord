@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>BEANCORD</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1b1c1f">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2064%2064%27%3E%3Cpath%20d=%27M46%209C36%201%2018%207%2012%2022C6%2036%2014%2055%2030%2059C44%2063%2057%2052%2054%2041C52.5%2035%2046%2035%2043%2040C40%2045%2033%2044%2032%2038C31%2032%2038%2031%2043%2026C48%2021%2051%2014%2046%209Z%27%20fill=%27%238e2b25%27%20stroke=%27%235a1512%27%20stroke-width=%273%27%20stroke-linejoin=%27round%27/%3E%3Cpath%20d=%27M20%2024C23%2017%2030%2013%2037%2012%27%20fill=%27none%27%20stroke=%27%23ffffff%27%20stroke-opacity=%27.45%27%20stroke-width=%273.5%27%20stroke-linecap=%27round%27/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -726,7 +726,51 @@ html[data-theme="bubblegum"] [class~="bg-[#5865f2]"]{background-color:#ad1f69 !i
 html[data-theme="bubblegum"] [class~="hover:bg-[#4752c4]"]:hover{background-color:#79154a !important}
 html[data-theme="bubblegum"] [class~="text-[#5865f2]"]{color:#ff8cc8 !important}
 html[data-theme="bubblegum"] #app [class~="bg-[#5865f2]"]:is(button),html[data-theme="bubblegum"] #shop [class~="bg-[#5865f2]"]:is(button),html[data-theme="bubblegum"] #rm [class~="bg-[#5865f2]"]:is(button){background:#ad1f69 !important;border-color:#ff8cc8 !important;box-shadow:0 3px 0 #79154a !important;color:#fff !important}
-body{font-family:system-ui,sans-serif}::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:#1a1b1e;border-radius:4px}html[data-theme="maroon"] [class~="bg-[#313338]"]{background-color:#140b0e !important}
+
+/* ===== polish ===== */
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:8px;border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22);background-clip:content-box;border:2px solid transparent}
+#sh,#ch{border-bottom:1px solid rgba(255,255,255,.07) !important;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+#sc button{border-radius:8px;transition:background .12s,color .12s}
+#srv button,#leftcol>div:first-child>button{transition:border-radius .15s,background .15s,transform .1s}
+#srv button:active,#leftcol>div:first-child>button:active{transform:scale(.94)}
+#msgs>div{border-radius:10px;padding:6px 10px;margin:0 -10px;transition:background .1s}
+#msgs>div:hover{background:rgba(255,255,255,.035)}
+#msgs{scroll-behavior:smooth;overscroll-behavior:contain}
+#f{padding:12px 16px 16px}
+#f input#i{padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.08);transition:border-color .15s,box-shadow .15s}
+#f input#i:focus{border-color:#6b78e8;box-shadow:0 0 0 3px rgba(107,120,232,.18)}
+#f button{border-radius:12px;border:1px solid rgba(255,255,255,.06)}
+#f button[type=submit]{padding-left:20px;padding-right:20px}
+#mem{border-left:1px solid rgba(255,255,255,.06)}
+#vpc{padding:20px}
+#vpc:has(>.pcard-top){padding:0}
+.pbtn{font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.08);color:#dbdee1;border:0;cursor:pointer}
+.pbtn:hover{background:rgba(255,255,255,.14)}
+.pbtn.danger{background:rgba(242,63,67,.15);color:#ff7b7e}
+.pbtn.danger:hover{background:rgba(242,63,67,.28)}
+#app:has(#mem.hidden) #membtn{display:none}
+
+/* ===== phones and tablets ===== */
+@media (hover:none){
+  #msgs [class~="group-hover:inline"]{display:inline !important}
+}
+@media (max-width:767px){
+  #app{height:100dvh}
+  #leftcol{max-width:92vw}
+  #mem{display:none !important}
+  #mem.mopen{display:block !important;position:fixed;top:0;right:0;bottom:0;width:82%;max-width:20rem;z-index:30;box-shadow:-12px 0 40px rgba(0,0,0,.55);border-left:0}
+  #msgs{padding:10px 12px}
+  #msgs>div{margin:0 -6px;padding:6px}
+  #f{padding:8px 10px calc(10px + env(safe-area-inset-bottom))}
+  #f button{padding-left:.65rem;padding-right:.65rem}
+  input,select,textarea{font-size:16px !important}
+  #ch{padding-left:8px;padding-right:8px}
+  #vpc,#pm>div{max-height:88vh}
+  #web #btabs div{width:9.5rem}
+}
+body{font-family:'Inter',system-ui,sans-serif}::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:#1a1b1e;border-radius:4px}html[data-theme="maroon"] [class~="bg-[#313338]"]{background-color:#140b0e !important}
 html[data-theme="maroon"] [class~="hover:bg-[#313338]"]:hover{background-color:#140b0e !important}
 html[data-theme="maroon"] [class~="bg-[#2b2d31]"]{background-color:#1a0f12 !important}
 html[data-theme="maroon"] [class~="hover:bg-[#2b2d31]"]:hover{background-color:#1a0f12 !important}
@@ -829,13 +873,14 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
  <div class="w-60 bg-[#2b2d31] flex flex-col flex-shrink-0">
   <div id="sh" class="h-12 border-b border-black/30 px-4 flex items-center justify-between font-bold text-white"></div>
   <div id="sc" class="flex-1 overflow-y-auto p-2 space-y-0.5"></div>
-  <div class="h-14 bg-[#232428] px-3 flex items-center justify-between">
+  <div class="bg-[#232428] px-3 py-2.5 flex flex-col gap-1.5">
    <span id="me" class="font-bold text-white text-sm truncate"></span>
-   <span class="flex gap-3"><button onclick="openShop()" class="text-xs text-[#949ba4] hover:text-white">Shop</button><button onclick="openProfile()" class="text-xs text-[#949ba4] hover:text-white">Profile</button><button onclick="togglePush()" title="Notifications when BEANCORD is closed" class="text-xs text-[#949ba4] hover:text-white">Alerts</button><button onclick="logout()" class="text-xs text-[#949ba4] hover:text-[#f23f43]">Log out</button></span>
+   <span class="flex justify-between"><button onclick="openShop()" class="text-xs text-[#949ba4] hover:text-white">Shop</button><button onclick="openProfile()" class="text-xs text-[#949ba4] hover:text-white">Profile</button><button onclick="togglePush()" title="Notifications when BEANCORD is closed" class="text-xs text-[#949ba4] hover:text-white">Alerts</button><button onclick="logout()" class="text-xs text-[#949ba4] hover:text-[#f23f43]">Log out</button></span>
   </div>
  </div>
  </div>
  <div id="backdrop" onclick="toggleLeft()" class="hidden fixed inset-0 bg-black/50 z-20"></div>
+ <div id="backdrop2" onclick="closeMem()" class="hidden fixed inset-0 bg-black/50 z-20"></div>
  <div class="flex-1 flex flex-col min-w-0">
   <div id="ch" class="h-12 border-b border-black/30 px-3 flex items-center gap-2 font-bold text-white">
    <button onclick="toggleLeft()" class="block md:hidden text-lg px-1">☰</button>
@@ -843,6 +888,7 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
    <button id="callbtn" onclick="startCall()" title="Call" class="hidden text-sm text-[#23a55a] hover:text-white px-1">📞</button>
    <button id="groupcallbtn" onclick="toggleGroupCall()" title="Voice call" class="hidden text-sm text-[#23a55a] hover:text-white px-1">🔊</button>
    <button id="groupsettingsbtn" onclick="groupSettings(cur.id)" title="Group settings" class="hidden text-sm text-[#949ba4] hover:text-white px-1">⚙</button>
+   <button id="membtn" onclick="toggleMem()" title="Members" class="md:hidden text-sm text-[#949ba4] hover:text-white px-1">👥</button>
    <button id="pinbtn" onclick="togglePins()" title="Pinned messages" class="hidden text-sm text-[#949ba4] hover:text-white px-1">📌</button>
    <button id="searchbtn" onclick="toggleSearch()" title="Search messages" class="hidden text-sm text-[#949ba4] hover:text-white px-1">🔍</button>
   </div>
@@ -934,7 +980,9 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
 const sb=supabase.createClient('https://ilmzklhvkacnljfgnxvq.supabase.co','sb_publishable_x-V1hylTRRhC0yBakWp7SQ_srDESHhp');
 const $=id=>document.getElementById(id);
 function toggleLeft(){$('leftcol').classList.toggle('open');$('backdrop').classList.toggle('open')}
-function closeLeftMobile(){$('leftcol').classList.remove('open');$('backdrop').classList.remove('open')}
+function closeLeftMobile(){$('leftcol').classList.remove('open');$('backdrop').classList.remove('open');closeMem()}
+  function toggleMem(){if($('mem').classList.contains('hidden'))return;const on=$('mem').classList.toggle('mopen');$('backdrop2').classList.toggle('hidden',!on)}
+  function closeMem(){$('mem').classList.remove('mopen');$('backdrop2').classList.add('hidden')}
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clean=u=>u.toLowerCase().replace(/[^a-z0-9_]/g,'');
 const RANK={owner:7,coowner:6,manager:5,admin:4,goodgirl:4,mod:3,verified:2,member:1},BADGE={owner:'bg-[#8b5a2b]',coowner:'bg-amber-500 !text-black',manager:'bg-lime-400 !text-black',admin:'bg-red-600',goodgirl:'bg-pink-500',mod:'bg-green-600',verified:'bg-sky-500',member:'bg-[#4e5058]'};
@@ -1223,8 +1271,14 @@ $('f').onsubmit=async e=>{
   const r=cur.type==='ch'?await sb.from('messages').insert({channel_id:cur.id,content:t,reply_to:replyTo})
     :cur.type==='group'?await sb.from('group_dm_messages').insert({group_id:cur.id,content:t,reply_to:replyTo})
     :await sb.from('dm_messages').insert({recipient_id:cur.id,content:t});
-  if(!r.error){replyTo=null;$('rb').classList.add('hidden')}if(r.error)$('i').value=t;if(r.error&&cur.type==='ch')sb.rpc('automod_word_strike',{chan:String(cur.id),txt:t}).then(()=>{},()=>{});if(r.error)alert(cur.type==='dm'?'Could not send. You can only message accepted friends, and you must not be muted.':cur.type==='group'?'Could not send: '+r.error.message:'Could not send: '+r.error.message);
+  if(!r.error){replyTo=null;$('rb').classList.add('hidden')}if(r.error)$('i').value=t;if(r.error&&cur.type==='ch')sb.rpc('automod_word_strike',{chan:String(cur.id),txt:t}).then(()=>{},()=>{});if(r.error)alert(cur.type==='dm'?dmWhy(r.error):cur.type==='group'?'Could not send: '+r.error.message:'Could not send: '+r.error.message);
 };
+function dmWhy(err){
+  const f=fr(cur.id),who=dn(profiles[cur.id]);
+  if(!f)return 'Could not send. You and '+who+' are not friends yet. Send a friend request from their profile first.';
+  if(f.status!=='accepted')return 'Could not send. Your friend request with '+who+' is still pending, so DMs are blocked until it is accepted.';
+  return 'Could not send, even though the site shows you and '+who+' as friends. The database refused it: '+(err.message||'no details')+(err.code?' (code '+err.code+')':'')+'\nTell the site owner this exact message.';
+}
 const col=p=>/^#[0-9a-fA-F]{6}$/.test((p||{}).color||'')?p.color:'#ffffff';
 function av(p,n){p=p||{username:'?'};const z=n===20?'w-20 h-20':n===16?'w-16 h-16':n===6?'w-6 h-6':n===9?'w-9 h-9':'w-8 h-8';
   if(p.avatar&&p.avatar.startsWith('data:image/'))return `<img src="${esc(p.avatar)}" class="${z} rounded-full object-cover flex-shrink-0">`;
@@ -1463,7 +1517,7 @@ function showProfile(uid){
     const chips=croles.map(r=>`<button onclick="profGiveRole('${uid}','${r.id}')" class="text-[11px] font-bold px-2.5 py-1 rounded-full text-white ${mem.custom_role===r.id?'ring-2 ring-white':'opacity-70 hover:opacity-100'}" style="background:${esc(r.color)}">${esc(r.name)}</button>`).join('');
     roleHtml=`<div class="mt-3 rounded-xl bg-black/20 p-4"><div class="text-[11px] font-bold uppercase tracking-wide text-[#949ba4] mb-2">Roles</div><div class="flex items-center gap-2 text-sm text-[#b5bac1] mb-3"><span>Tier</span><select onchange="profSetRole('${uid}',this.value)" class="bg-[#1e1f22] text-white rounded-lg px-2 py-1 text-sm outline-none">${['member','verified','mod','admin','manager','coowner'].map(x=>`<option value="${x}" ${x===mem.role?'selected':''}>${x}</option>`).join('')}</select></div><div class="flex flex-wrap gap-1.5">${chips||'<span class="text-xs text-[#80848e]">No custom roles yet. Make one with /newrole.</span>'}${mem.custom_role?`<button onclick="profGiveRole('${uid}',null)" class="text-[11px] font-semibold px-2.5 py-1 rounded-full text-[#b5bac1] hover:text-white" style="background:rgba(255,255,255,.08)">Remove role</button>`:''}</div></div>`;
   }
-  $('vpc').innerHTML=`<div class="h-28" style="${bgStyle}"></div>
+  $('vpc').innerHTML=`<div class="h-28 pcard-top" style="${bgStyle}"></div>
   <div class="px-5 -mt-10 relative"><div class="relative inline-block rounded-full" style="border:5px solid #2a2c30">${av(p,20)}${dot}</div></div>
   <div class="px-5 pt-3 pb-5">
    <div class="flex items-center flex-wrap gap-x-2 gap-y-1"><span class="font-bold text-xl" style="color:${col(p)}">${esc(dn(p))}</span>${isBot(p)?BOTBADGE:''}${r?tag(p,r):''}${utag(p)}</div>
@@ -1966,9 +2020,16 @@ async function togglePins(){
   if(cur.type!=='ch')return;
   const {data,error}=await sb.from('messages').select('*').eq('channel_id',cur.id).eq('pinned',true).order('created_at');
   if(error)return alert(error.message);
-  $('vpc').innerHTML='<h3 class="font-bold text-white mb-3">📌 Pinned messages</h3><div class="text-left space-y-3 max-h-80 overflow-y-auto">'+
-    (data.length?data.map(m=>{const p=profiles[m.sender_id]||{username:'?'};return `<div class="text-sm"><b style="color:${col(p)}">${esc(dn(p))}</b> <span class="text-[10px] text-[#949ba4]">${new Date(m.created_at).toLocaleString()}</span><p>${esc(m.content)}</p></div>`}).join(''):'<p class="text-xs text-[#949ba4]">No pinned messages yet.</p>')+'</div>';
+  const canMod=rank(myRole())>=4;
+  const item=m=>{const p=profiles[m.sender_id]||{username:'?'};
+    return `<div class="rounded-xl bg-black/20 p-3 text-sm"><div class="flex items-center gap-2"><b style="color:${col(p)}">${esc(dn(p))}</b><span class="text-[10px] text-[#949ba4]">${new Date(m.created_at).toLocaleString()}</span></div><p class="mt-1 break-words whitespace-pre-wrap">${esc(m.content)}</p>${canMod?`<div class="mt-2 flex gap-2"><button onclick="pinAction('${m.id}','unpin')" class="pbtn">Unpin</button><button onclick="pinAction('${m.id}','delete')" class="pbtn danger">Delete message</button></div>`:''}</div>`};
+  $('vpc').innerHTML=`<div class="flex items-center justify-between mb-3"><h3 class="font-bold text-white">📌 Pinned messages</h3><button onclick="closeVp()" class="text-[#949ba4] hover:text-white">✕</button></div><div class="text-left space-y-3 max-h-[60vh] overflow-y-auto">${data.length?data.map(item).join(''):'<p class="text-xs text-[#949ba4]">No pinned messages yet.</p>'}</div>`;
   $('vp').classList.remove('hidden');
+}
+async function pinAction(id,act){
+  if(act==='delete'){if(!confirm('Delete this message for everyone? This cannot be undone.'))return;await delMsg(id)}
+  else await setPinned(id,false);
+  togglePins();
 }
 async function setPinned(id,val){const {error}=await sb.rpc('set_pinned',{mid:id,val});if(error)return alert(error.message);toast(val?'Message pinned':'Message unpinned');const m=msgCache[id];if(m)m.pinned=val;if(cur.type==='ch')openChannel(cur.id)}
 
