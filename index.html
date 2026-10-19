@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BEANCORD</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1b1c1f">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2064%2064%27%3E%3Cpath%20d=%27M46%209C36%201%2018%207%2012%2022C6%2036%2014%2055%2030%2059C44%2063%2057%2052%2054%2041C52.5%2035%2046%2035%2043%2040C40%2045%2033%2044%2032%2038C31%2032%2038%2031%2043%2026C48%2021%2051%2014%2046%209Z%27%20fill=%27%238e2b25%27%20stroke=%27%235a1512%27%20stroke-width=%273%27%20stroke-linejoin=%27round%27/%3E%3Cpath%20d=%27M20%2024C23%2017%2030%2013%2037%2012%27%20fill=%27none%27%20stroke=%27%23ffffff%27%20stroke-opacity=%27.45%27%20stroke-width=%273.5%27%20stroke-linecap=%27round%27/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
@@ -44,15 +48,22 @@ html[data-theme="default"] [class~="bg-[#111214]"]{background-color:#17181a !imp
 #leftcol>div:first-child{border-right:2px solid #34363b}
 #leftcol>div:nth-child(2){border-right:2px solid #34363b}
 #mem{border-left:2px solid #34363b}
-#f input#i,#sq,#shop input,#pm input,#pm select,#pm textarea,#rm input[type=text],#rm select{border:2px solid #4a4d55;border-radius:10px}
+#f input#i,#sq,#shop input,#rm input[type=text],#rm select{border:2px solid #4a4d55;border-radius:10px}
 #f input#i:focus,#sq:focus{border-color:#6b78e8}
 #f button[type=button]{border:2px solid #4a4d55;border-radius:10px}
-#ctx,#vpc,#rm>div,#pm>div{border:2px solid #4a4d55}
-#vpc,#rm>div,#pm>div{border-radius:14px;box-shadow:0 6px 0 #1a1b1e,0 18px 40px rgba(0,0,0,.45)}
+#ctx,#rm>div{border:2px solid #4a4d55}
+#rm>div{border-radius:14px;box-shadow:0 6px 0 #1a1b1e,0 18px 40px rgba(0,0,0,.45)}
+#vpc,#pm>div{border:1px solid rgba(255,255,255,.08);border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.55)}
+.pill{background:rgba(0,0,0,.55);color:#fff;font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;cursor:pointer;border:0}
+.pill:hover{background:rgba(0,0,0,.75)}
+#pm input[type=color]{width:30px;height:30px;border:0;border-radius:50%;padding:0;background:none;cursor:pointer}
+#pm input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+#pm input[type=color]::-webkit-color-swatch{border:2px solid rgba(255,255,255,.25);border-radius:50%}
+#pm input[type=color]::-moz-color-swatch{border:2px solid rgba(255,255,255,.25);border-radius:50%}
 #ctx{border-radius:12px}
 /* raised blue / green buttons everywhere inside the app */
-#app [class~="bg-[#5865f2]"]:is(button),#shop [class~="bg-[#5865f2]"]:is(button),#rm [class~="bg-[#5865f2]"]:is(button),#pm [class~="bg-[#5865f2]"]:is(button){background:#3448b4 !important;border:2px solid #4a5fd0;box-shadow:0 3px 0 #222f80;color:#eef0ff;border-radius:10px;transition:transform .08s,box-shadow .08s,filter .15s}
-#app [class~="bg-[#23a55a]"]:is(button),#shop [class~="bg-[#23a55a]"]:is(button),#rm [class~="bg-[#23a55a]"]:is(button),#pm [class~="bg-[#23a55a]"]:is(button){background:#25643a !important;border:2px solid #3a8a54;box-shadow:0 3px 0 #17432a;color:#c9f0d4;border-radius:10px;transition:transform .08s,box-shadow .08s,filter .15s}
+#app [class~="bg-[#5865f2]"]:is(button),#shop [class~="bg-[#5865f2]"]:is(button),#rm [class~="bg-[#5865f2]"]:is(button){background:#3448b4 !important;border:2px solid #4a5fd0;box-shadow:0 3px 0 #222f80;color:#eef0ff;border-radius:10px;transition:transform .08s,box-shadow .08s,filter .15s}
+#app [class~="bg-[#23a55a]"]:is(button),#shop [class~="bg-[#23a55a]"]:is(button),#rm [class~="bg-[#23a55a]"]:is(button){background:#25643a !important;border:2px solid #3a8a54;box-shadow:0 3px 0 #17432a;color:#c9f0d4;border-radius:10px;transition:transform .08s,box-shadow .08s,filter .15s}
 #f button[type=submit]{border-radius:10px}
 #app [class~="bg-[#5865f2]"]:is(button):hover,#app [class~="bg-[#23a55a]"]:is(button):hover,#shop button:hover{filter:brightness(1.12)}
 #app [class~="bg-[#5865f2]"]:is(button):active,#app [class~="bg-[#23a55a]"]:is(button):active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.5)}
@@ -194,7 +205,7 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
 <div id="app" class="hidden h-full flex relative">
  <div id="leftcol" class="flex flex-shrink-0">
  <div class="w-[72px] bg-[#1e1f22] flex flex-col items-center py-3 space-y-2 flex-shrink-0">
-  <button onclick="showDMs()" title="Direct Messages" class="w-12 h-12 bg-[#5865f2] rounded-2xl hover:rounded-xl text-white text-xl relative">📋<span id="tot" class="hidden absolute -top-1 -right-1 bg-[#f23f43] text-[10px] font-black px-1.5 rounded-full"></span></button>
+  <button onclick="showDMs()" title="Direct Messages" class="w-12 h-12 bg-[#5865f2] rounded-2xl hover:rounded-xl text-white text-sm font-black tracking-wide relative">DMs<span id="tot" class="hidden absolute -top-1 -right-1 bg-[#f23f43] text-[10px] font-black px-1.5 rounded-full"></span></button>
   <div class="w-8 h-[2px] bg-[#35363c]"></div>
   <div id="srv" class="flex-1 w-full flex flex-col items-center space-y-2 overflow-y-auto"></div>
   <button id="newsrvbtn" onclick="newServer()" title="Create a server" class="hidden w-12 h-12 bg-[#313338] hover:bg-[#23a55a] rounded-3xl hover:rounded-xl text-[#23a55a] hover:text-white text-2xl">+</button>
@@ -204,7 +215,7 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
   <div id="sc" class="flex-1 overflow-y-auto p-2 space-y-0.5"></div>
   <div class="h-14 bg-[#232428] px-3 flex items-center justify-between">
    <span id="me" class="font-bold text-white text-sm truncate"></span>
-   <span class="flex gap-3"><button onclick="openShop()" class="text-xs text-[#949ba4] hover:text-white">Shop</button><button onclick="openProfile()" class="text-xs text-[#949ba4] hover:text-white">Profile</button><button onclick="logout()" class="text-xs text-[#949ba4] hover:text-[#f23f43]">Log out</button></span>
+   <span class="flex gap-3"><button onclick="openShop()" class="text-xs text-[#949ba4] hover:text-white">Shop</button><button onclick="openProfile()" class="text-xs text-[#949ba4] hover:text-white">Profile</button><button onclick="togglePush()" title="Notifications when BEANCORD is closed" class="text-xs text-[#949ba4] hover:text-white">Alerts</button><button onclick="logout()" class="text-xs text-[#949ba4] hover:text-[#f23f43]">Log out</button></span>
   </div>
  </div>
  </div>
@@ -262,7 +273,7 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
  <div id="shopg" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div></div></div>
 <input id="sif" type="file" accept="image/*" class="hidden">
 <div id="ctx" class="hidden fixed z-50 w-56 bg-[#111214] border border-black/40 rounded-lg shadow-2xl p-1 text-sm"></div>
-<div id="vp" onclick="this.classList.add('hidden')" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"><div id="vpc" onclick="event.stopPropagation()" class="bg-[#1b1c1f] rounded-xl w-full max-w-sm text-left overflow-y-auto max-h-[90vh]"></div></div>
+<div id="vp" onclick="this.classList.add('hidden')" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"><div id="vpc" onclick="event.stopPropagation()" class="bg-[#2b2d31] rounded-2xl w-full max-w-sm text-left overflow-y-auto max-h-[90vh]"></div></div>
 <div id="rm" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"><div class="bg-[#313338] rounded-xl w-full max-w-md max-h-[85vh] overflow-y-auto">
  <div class="p-5 border-b border-black/30 flex items-center justify-between sticky top-0 bg-[#313338]"><h2 class="font-bold text-white">Custom roles</h2><button onclick="closeRoles()" class="text-[#949ba4] hover:text-white">✕</button></div>
  <div class="p-5 space-y-3">
@@ -288,18 +299,19 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
   </div>
  </div>
 </div></div>
-<div id="pm" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"><div class="bg-[#313338] p-6 rounded-xl w-full max-w-xs space-y-4 max-h-[90vh] overflow-y-auto">
- <h2 class="font-bold text-white">Your profile</h2>
- <div id="pprev" class="flex items-center gap-3"></div>
- <label class="block text-xs text-[#949ba4]">Nickname <input id="pn" maxlength="24" placeholder="Shown instead of your username" class="block mt-1 w-full bg-[#1e1f22] rounded px-2 py-1.5 text-white text-sm outline-none"></label>
- <label class="block text-xs text-[#949ba4]">About me <textarea id="pb" maxlength="200" rows="3" placeholder="Tell people about yourself" class="block mt-1 w-full bg-[#1e1f22] rounded px-2 py-1.5 text-white text-sm outline-none"></textarea></label>
- <label class="block text-xs text-[#949ba4]">Username color <input id="pc" type="color" class="ml-2 align-middle"></label>
- <label class="block text-xs text-[#949ba4]">Profile banner color <input id="pbn" type="color" class="ml-2 align-middle"></label>
- <label class="block text-xs text-[#949ba4]">Background style <select id="pt" class="block mt-1 w-full bg-[#1e1f22] rounded px-2 py-1.5 text-white text-sm outline-none"><option value="default">Default dark</option><option value="maroon">Maroon</option><option value="midnight">Midnight blue</option><option value="forest">Forest</option><option value="plum">Plum</option><option value="purple">Purple</option><option value="midnightblack">Midnight black</option></select></label>
- <div><div class="text-xs text-[#949ba4] mb-1">Blocked users</div><div id="pblk" class="space-y-1"></div></div>
- <button onclick="deleteMe()" class="w-full text-xs text-[#f23f43] hover:underline pt-2">Delete my account</button>
- <label class="block text-xs text-[#949ba4]">Profile picture <input id="pf" type="file" accept="image/*" class="block mt-1 text-xs"></label>
- <div class="flex gap-2"><button onclick="saveProfile()" class="flex-1 bg-[#5865f2] text-white py-2 rounded-lg text-sm font-bold">Save</button><button onclick="$('pm').classList.add('hidden')" class="flex-1 bg-[#4e5058] text-white py-2 rounded-lg text-sm">Cancel</button></div>
+<div id="pm" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"><div class="w-full max-w-sm bg-[#2b2d31] rounded-2xl overflow-hidden max-h-[92vh] overflow-y-auto">
+ <div id="pbanner" class="relative h-28" style="background:#5865f2"><div class="absolute right-3 top-3 flex gap-2"><label class="pill">Change banner<input id="pbi" type="file" accept="image/*" class="hidden"></label><button id="pbrm" type="button" onclick="clearBannerImg()" class="pill hidden">Remove</button></div></div>
+ <div class="px-5 -mt-10 relative"><div class="relative inline-block"><div id="pavwrap" class="rounded-full" style="border:5px solid #2a2c30"></div><label title="Change picture" class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#4e5058] hover:bg-[#5d6068] text-white text-xs flex items-center justify-center cursor-pointer">✎<input id="pf" type="file" accept="image/*" class="hidden"></label></div></div>
+ <div class="px-5 pb-5 pt-2 space-y-4">
+  <div id="pprev"></div>
+  <label class="block text-[11px] font-bold uppercase tracking-wide text-[#949ba4]">Nickname<input id="pn" maxlength="24" placeholder="Shown instead of your username" class="block mt-1.5 w-full bg-[#1e1f22] rounded-lg px-3 py-2 text-white text-sm font-normal normal-case outline-none focus:ring-2 focus:ring-[#5865f2]/60"></label>
+  <label class="block text-[11px] font-bold uppercase tracking-wide text-[#949ba4]">About me<textarea id="pb" maxlength="200" rows="3" placeholder="Tell people about yourself" class="block mt-1.5 w-full bg-[#1e1f22] rounded-lg px-3 py-2 text-white text-sm font-normal normal-case outline-none focus:ring-2 focus:ring-[#5865f2]/60"></textarea></label>
+  <div class="flex gap-6 text-[11px] font-bold uppercase tracking-wide text-[#949ba4]"><label class="flex items-center gap-2">Name color<input id="pc" type="color"></label><label class="flex items-center gap-2">Banner color<input id="pbn" type="color"></label></div>
+  <label class="block text-[11px] font-bold uppercase tracking-wide text-[#949ba4]">Background style<select id="pt" class="block mt-1.5 w-full bg-[#1e1f22] rounded-lg px-3 py-2 text-white text-sm font-normal normal-case outline-none"><option value="default">Default dark</option><option value="maroon">Maroon</option><option value="midnight">Midnight blue</option><option value="forest">Forest</option><option value="plum">Plum</option><option value="purple">Purple</option><option value="midnightblack">Midnight black</option></select></label>
+  <div><div class="text-[11px] font-bold uppercase tracking-wide text-[#949ba4] mb-1">Blocked users</div><div id="pblk" class="space-y-1"></div></div>
+  <div class="flex gap-2 pt-1"><button onclick="saveProfile()" class="flex-1 bg-[#5865f2] hover:bg-[#4752c4] text-white py-2 rounded-lg text-sm font-semibold">Save</button><button onclick="$('pm').classList.add('hidden')" class="flex-1 bg-[#4e5058] hover:bg-[#5d6068] text-white py-2 rounded-lg text-sm">Cancel</button></div>
+  <button onclick="deleteMe()" class="w-full text-xs text-[#f23f43] hover:underline">Delete my account</button>
+ </div>
 </div></div>
 
 <script>
@@ -387,7 +399,7 @@ async function doAuth(mode){
   }catch(e){$('err').textContent='Could not reach the server. Try again.';return}
   start();
 }
-async function logout(){if(callState!=='idle'||groupCallActive)hangupCall();if(ringCh)sb.removeChannel(ringCh);await sb.auth.signOut();if(rt)sb.removeChannel(rt);location.reload()}
+async function logout(){if(callState!=='idle'||groupCallActive)hangupCall();if(ringCh)sb.removeChannel(ringCh);try{await pushDetach()}catch(e){}await sb.auth.signOut();if(rt)sb.removeChannel(rt);location.reload()}
 async function loadProfiles(){const {data}=await sb.from('profiles').select('*');profiles={};(data||[]).forEach(p=>profiles[p.id]=p);if(me&&profiles[me.id]){me=profiles[me.id];const b=until(me,'banned_until');if(b)kickOut(b)}}
 async function kickOut(b){await sb.auth.signOut();$('app').classList.add('hidden');$('auth').classList.remove('hidden');$('err').textContent='This account is banned until '+b.toLocaleString()}
 function until(p,k){const v=p&&p[k];return v&&new Date(v)>new Date()?new Date(v):null}
@@ -397,6 +409,7 @@ async function start(){
   $('auth').classList.add('hidden');$('app').classList.remove('hidden');
   await loadProfiles();me=profiles[user.id];{const b=until(me,'banned_until');if(b)return kickOut(b)}
   try{const dv=await getDeviceIds();const {data:devBanned,error:devErr}=await sb.rpc('register_device',{h:dv.h,d:dv.d});if(!devErr&&devBanned===true)return kickDevice()}catch(e){}
+  pushRebind();
   await loadFriends();await loadBlocks();await loadShopTags();await loadChanMap();$('me').textContent=me?dn(me):'';
   await loadGroups();await loadServers();const d=servers.find(x=>x.is_default);if(d)openServer(d.id);else showDMs();listen();track();
 }
@@ -484,9 +497,9 @@ function drawPeople(){
   const nmx=p=>`<span class="flex items-center gap-2">${av(p,8)}${dot(p.id)}<span style="color:${col(p)}">${esc(dn(p))}</span></span>`;
   let h=servers.some(x=>x.is_default)?'':'<button onclick="rejoin()" class="w-full bg-[#5865f2] text-white text-sm font-bold rounded-md py-1.5 mb-1">Join BEANCORD</button>';
   if(inc.length)h+=head('Friend requests')+inc.map(p=>`<div class="flex items-center justify-between px-2 py-1 text-sm">${nmx(p)}<span class="text-xs"><button onclick="answer('${p.id}',true)" class="text-[#23a55a]">Accept</button><button onclick="answer('${p.id}',false)" class="text-[#f23f43] ml-2">Decline</button></span></div>`).join('');
-  h+=head('Friends')+(fri.length?fri.map(p=>`<button data-friend-uid="${p.id}" onclick="openDM('${p.id}')" class="w-full flex justify-between items-center px-2 py-2 rounded-md text-sm ${cur.id===p.id?'bg-[#404249] text-white':'text-[#949ba4] hover:bg-[#35373c]'}">${nmx(p)}${unread[p.id]?`<span class="bg-[#f23f43] text-white text-[10px] font-black px-2 rounded-full">${unread[p.id]}</span>`:''}</button>`).join(''):'<p class="text-xs text-[#949ba4] px-2">No friends yet. Add someone below.</p>');
+  h+=head('Friends')+(fri.length?fri.map(p=>`<button data-friend-uid="${p.id}" onclick="openDM('${p.id}')" class="w-full flex justify-between items-center px-2 py-2 rounded-md text-sm ${cur.id===p.id?'bg-[#404249] text-white':'text-[#949ba4] hover:bg-[#35373c]'}">${nmx(p)}<span class="flex items-center gap-2">${unread[p.id]?`<span class="bg-[#f23f43] text-white text-[10px] font-black px-2 rounded-full">${unread[p.id]}</span>`:''}<span onclick="event.stopPropagation();removeFriend('${p.id}')" title="Remove friend" class="text-[#80848e] hover:text-[#f23f43] text-xs px-1">✕</span></span></button>`).join(''):'<p class="text-xs text-[#949ba4] px-2">No friends yet. Add someone below.</p>');
   const sent=others.filter(p=>F(p)&&F(p).status==='pending'&&F(p).requester===me.id);
-  if(sent.length)h+=head('Sent requests')+sent.map(p=>`<div class="flex items-center justify-between px-2 py-1 text-sm">${nmx(p)}<span class="text-xs text-[#949ba4]">Pending</span></div>`).join('');
+  if(sent.length)h+=head('Sent requests')+sent.map(p=>`<div class="flex items-center justify-between px-2 py-1 text-sm">${nmx(p)}<span class="text-xs text-[#949ba4]">Pending <button onclick="removeFriend('${p.id}',true)" class="ml-2 text-[#f23f43] hover:underline">Cancel</button></span></div>`).join('');
   h+=head('Group Chats')+groups.map(g=>{
     const mnames=g.members.filter(id=>id!==me.id).map(id=>dn(profiles[id]||{username:'?'})).join(', ');
     return `<button onclick="openGroup('${g.id}')" class="w-full flex justify-between items-center px-2 py-2 rounded-md text-sm ${cur.type==='group'&&cur.id===g.id?'bg-[#404249] text-white':'text-[#949ba4] hover:bg-[#35373c]'}"><span class="truncate">👥 ${esc(g.name)}<span class="block text-[10px] text-[#80848e] truncate font-normal">${esc(mnames)}</span></span>${unread[g.id]?`<span class="bg-[#f23f43] text-white text-[10px] font-black px-2 rounded-full flex-shrink-0">${unread[g.id]}</span>`:''}</button>`
@@ -593,28 +606,46 @@ $('f').onsubmit=async e=>{
   const r=cur.type==='ch'?await sb.from('messages').insert({channel_id:cur.id,content:t,reply_to:replyTo})
     :cur.type==='group'?await sb.from('group_dm_messages').insert({group_id:cur.id,content:t,reply_to:replyTo})
     :await sb.from('dm_messages').insert({recipient_id:cur.id,content:t});
-  if(!r.error){replyTo=null;$('rb').classList.add('hidden')}if(r.error)$('i').value=t;if(r.error)alert(cur.type==='dm'?'Could not send. You can only message accepted friends, and you must not be muted.':cur.type==='group'?'Could not send: '+r.error.message:'Could not send: '+r.error.message);
+  if(!r.error){replyTo=null;$('rb').classList.add('hidden')}if(r.error)$('i').value=t;if(r.error&&cur.type==='ch')sb.rpc('automod_word_strike',{chan:String(cur.id),txt:t}).then(()=>{},()=>{});if(r.error)alert(cur.type==='dm'?'Could not send. You can only message accepted friends, and you must not be muted.':cur.type==='group'?'Could not send: '+r.error.message:'Could not send: '+r.error.message);
 };
 const col=p=>/^#[0-9a-fA-F]{6}$/.test((p||{}).color||'')?p.color:'#ffffff';
 function av(p,n){p=p||{username:'?'};const z=n===20?'w-20 h-20':n===16?'w-16 h-16':n===6?'w-6 h-6':n===9?'w-9 h-9':'w-8 h-8';
   if(p.avatar&&p.avatar.startsWith('data:image/'))return `<img src="${esc(p.avatar)}" class="${z} rounded-full object-cover flex-shrink-0">`;
   return `<span class="${z} rounded-full bg-[#2b2d31] flex items-center justify-center overflow-hidden flex-shrink-0">${bean(p.username)}</span>`}
 function pickAvatar(f){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const c=document.createElement('canvas');c.width=c.height=96;const x=c.getContext('2d');const q=Math.min(i.width,i.height);x.drawImage(i,(i.width-q)/2,(i.height-q)/2,q,q,0,0,96,96);res(c.toDataURL('image/jpeg',0.8))};i.src=r.result};r.readAsDataURL(f)})}
-function prev(){$('pprev').innerHTML=av({...me,avatar:newAvatar||me.avatar},9)+`<span class="font-bold" style="color:${$('pc').value}">${esc($('pn').value.trim()||me.username)}</span>`}
-function openProfile(){newAvatar=null;$('pc').value=col(me);$('pn').value=me.nickname||'';$('pb').value=me.bio||'';$('pbn').value=/^#[0-9a-fA-F]{6}$/.test(me.banner||'')?me.banner:'#5865f2';$('pt').value=theme;drawBlocked();$('pf').value='';prev();$('pm').classList.remove('hidden')}
-$('pf').onchange=async e=>{if(e.target.files[0]){newAvatar=await pickAvatar(e.target.files[0]);prev()}};
-$('pc').oninput=prev;$('pn').oninput=prev;
-async function saveProfile(){
-  const u={color:$('pc').value,nickname:$('pn').value.trim()||null,bio:$('pb').value.trim()||null,banner:$('pbn').value};
-  if(newAvatar)u.avatar=newAvatar;
-  const {error}=await sb.from('profiles').update(u).eq('id',me.id);
-  if(error)return alert('Could not save: '+error.message);
-  await loadProfiles();me=profiles[me.id];
-  $('pm').classList.add('hidden');if(srvId)openServer(srvId);else showDMs();
-}
+  let newBannerBlob=null,newBannerUrl='',bannerCleared=false;
+  function shrinkBanner(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const W=960,H=320,c=document.createElement('canvas');c.width=W;c.height=H;const k=Math.max(W/i.width,H/i.height),w=i.width*k,h=i.height*k;c.getContext('2d').drawImage(i,(W-w)/2,(H-h)/2,w,h);c.toBlob(b=>b?res(b):rej(),'image/jpeg',0.85)};i.onerror=rej;i.src=r.result};r.onerror=rej;r.readAsDataURL(f)})}
+  function prev(){
+    const saved=!bannerCleared&&me.banner_image&&String(me.banner_image).startsWith(IMGBASE)?me.banner_image:'';
+    const bi=newBannerBlob?newBannerUrl:saved;
+    $('pbanner').style.cssText='background:'+$('pbn').value+(bi?';background-image:url('+bi+');background-size:cover;background-position:center':'');
+    $('pbrm').classList.toggle('hidden',!bi);
+    $('pavwrap').innerHTML=av({...me,avatar:newAvatar||me.avatar},20);
+    $('pprev').innerHTML=`<div class="font-bold text-xl" style="color:${$('pc').value}">${esc($('pn').value.trim()||me.username)}</div><div class="text-sm text-[#949ba4]">${esc(me.username)}</div>`;
+  }
+  function openProfile(){newAvatar=null;newBannerBlob=null;bannerCleared=false;$('pc').value=col(me);$('pn').value=me.nickname||'';$('pb').value=me.bio||'';$('pbn').value=/^#[0-9a-fA-F]{6}$/.test(me.banner||'')?me.banner:'#5865f2';$('pt').value=theme;drawBlocked();$('pf').value='';prev();$('pm').classList.remove('hidden')}
+  $('pf').onchange=async e=>{if(e.target.files[0]){newAvatar=await pickAvatar(e.target.files[0]);prev()}};
+  $('pbi').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const b=await shrinkBanner(f);if(newBannerUrl)URL.revokeObjectURL(newBannerUrl);newBannerBlob=b;newBannerUrl=URL.createObjectURL(b);bannerCleared=false;prev()}catch(_){alert('Could not read that image.')}e.target.value=''};
+  function clearBannerImg(){newBannerBlob=null;bannerCleared=true;prev()}
+  $('pc').oninput=prev;$('pn').oninput=prev;$('pbn').oninput=prev;
+  async function saveProfile(){
+    const u={color:$('pc').value,nickname:$('pn').value.trim()||null,bio:$('pb').value.trim()||null,banner:$('pbn').value};
+    if(newAvatar)u.avatar=newAvatar;
+    if(newBannerBlob){
+      const path=me.id+'/banner-'+crypto.randomUUID()+'.jpg';
+      const up=await sb.storage.from('chat-images').upload(path,newBannerBlob,{contentType:'image/jpeg'});
+      if(up.error)return alert('Banner upload failed: '+up.error.message);
+      u.banner_image=sb.storage.from('chat-images').getPublicUrl(path).data.publicUrl;
+    }else if(bannerCleared)u.banner_image=null;
+    const {error}=await sb.from('profiles').update(u).eq('id',me.id);
+    if(error)return alert('Could not save: '+error.message+(String(error.message).includes('banner_image')?'\n\nRun banner_setup.sql in Supabase first.':''));
+    await loadProfiles();me=profiles[me.id];
+    $('pm').classList.add('hidden');if(srvId)openServer(srvId);else showDMs();
+  }
 async function punish(uid,kind,mins){const {error}=await sb.rpc('punish',{uid,kind,mins});if(error)alert(error.message);await loadProfiles();drawMembers()}
 function askBan(uid){const h=prompt('Ban this account for how many hours? (0 = remove ban)');if(h===null)return;punish(uid,'ban',Math.round(parseFloat(h)*60)||0)}
 function askMute(uid){const m=prompt('Mute for how many minutes? (0 = unmute)');if(m===null)return;punish(uid,'mute',Math.round(parseFloat(m))||0)}
+async function removeFriend(id,noConfirm){if(!noConfirm&&!confirm('Remove this friend?'))return;const f=fr(id);if(!f)return;const {error}=await sb.from('friendships').delete().eq('id',f.id);if(error)alert(error.message);await loadFriends();drawPeople()}
 async function addFriend(id){const {error}=await sb.from('friendships').insert({requester:me.id,addressee:id,status:'pending'});if(error)alert(error.message);await loadFriends();drawPeople()}
 async function answer(id,ok){const f=fr(id);const r=ok?await sb.from('friendships').update({status:'accepted'}).eq('id',f.id):await sb.from('friendships').delete().eq('id',f.id);if(r.error)alert(r.error.message);await loadFriends();drawPeople()}
 async function rejoin(){const {error}=await sb.rpc('rejoin_default');if(error)alert(error.message);await loadServers();const d=servers.find(x=>x.is_default);if(d)openServer(d.id)}
@@ -632,7 +663,7 @@ async function addByName(){const n=$('fadd').value.trim().toLowerCase().replace(
   if(error)return say(error.message);await loadFriends();drawPeople();$('fmsg').textContent='Request sent to '+u.username}
 async function runCmd(line){
   const [c,name,arg]=line.slice(1).trim().split(/\s+/);const cmd=(c||'').toLowerCase();
-  if(cmd==='help')return sys('BeanBot: /usercount · /serverinfo · /userinfo user · /topbeans · /roll 2d6 · /flip · /8ball question · /choose a | b | c · /rate thing · /hug user · /beanfact · /ping · /cmds · admins: /addcmd name text · /delcmd name · /botset disable|enable command. Other commands: /bold text (admins and up: big bold message) · /ban user hours · /unban user · /mute user minutes · /unmute user · /kick user · /nick user newname · /newrole name #color member|verified|mod|admin · /giverole user rolename|none · /delrole name · /deleteuser user · /gift user amount · /switch user · /banword word · /unbanword word · /banwords · /auditlog. Built-in roles are managed only from the gear icon. Deleting a server is only in its right-click menu. /hwidban user bans the devices they have used (works through VPNs) · /unhwidban user · /banip user bans the network address on their account, and is not foolproof since addresses change · /ips user · /iplog');
+  if(cmd==='help')return sys('BeanBot: /welcome · /goodbye (admins: join and leave messages) · /poll question | option 1 | option 2 · /polls · /endpoll number · /usercount · /serverinfo · /userinfo user · /topbeans · /roll 2d6 · /flip · /8ball question · /choose a | b | c · /rate thing · /hug user · /beanfact · /ping · /cmds · admins: /addcmd name text · /delcmd name · /botset disable|enable command · mods: /warn user reason · /warnings user · /purge 20 · /mutes · admins: /clearwarns user · /slowmode 10 · /announce text · anyone: /seen user · /stats · owner: /automod (automatic mutes for banned words, spam and warnings). Other commands: /bold text (admins and up: big bold message) · /ban user hours · /unban user · /mute user minutes · /unmute user · /kick user · /nick user newname · /newrole name #color member|verified|mod|admin · /giverole user rolename|none · /delrole name · /deleteuser user · /gift user amount · /switch user · /banword word · /unbanword word · /banwords · /auditlog. Built-in roles are managed only from the gear icon. Deleting a server is only in its right-click menu. /hwidban user bans the devices they have used (works through VPNs) · /unhwidban user · /banip user bans the network address on their account, and is not foolproof since addresses change · /ips user · /iplog');
   if(!STAFF_CMDS.has(cmd))return botCall(cmd,line);
   if(cmd==='bold'){
     if(cur.type!=='ch')return sys('/bold only works in server channels.');
@@ -683,13 +714,14 @@ async function runCmd(line){
   sys('Unknown command. Type /help');
 }
 let ment={},sugList=[],sugIdx=0,sugStart=0,sugAt=false;
-const CMDS=['usercount','serverinfo','userinfo','topbeans','roll','flip','8ball','choose','rate','hug','beanfact','ping','cmds','addcmd','delcmd','botset','bold','ban','unban','mute','unmute','kick','nick','giverole','newrole','delrole','deleteuser','gift','switch','banip','unbanip','hwidban','unhwidban','ips','iplog','banword','unbanword','banwords','auditlog','unblock','reports','help'],ROLES=['manager','admin','goodgirl','mod','verified','member'];
+const CMDS=['welcome','goodbye','poll','polls','endpoll','warn','warnings','clearwarns','purge','slowmode','announce','seen','stats','mutes','automod','usercount','serverinfo','userinfo','topbeans','roll','flip','8ball','choose','rate','hug','beanfact','ping','cmds','addcmd','delcmd','botset','bold','ban','unban','mute','unmute','kick','nick','giverole','newrole','delrole','deleteuser','gift','switch','banip','unbanip','hwidban','unhwidban','ips','iplog','banword','unbanword','banwords','auditlog','unblock','reports','help'],ROLES=['manager','admin','goodgirl','mod','verified','member'];
 function roleSel(m,u,self){if(self||!canManage(m.role))return '';const o=ROLES.filter(r=>rank(r)<rank(myRole())).map(r=>`<option ${r===m.role?'selected':''}>${r}</option>`).join('');return `<select onchange="setRole('${u}',this.value)" class="mt-1 bg-[#1e1f22] text-[10px] text-[#949ba4] rounded px-1">${o}</select>`}
 const BOLDMARK='[[big]]';
 const isBot=p=>!!p&&p.username==='beanbot';
 const BOTBADGE='<span class="text-[9px] font-black uppercase text-white px-1.5 rounded bg-[#5865f2]">BOT</span>';
 function fmt(m){
   const c=String(m.content||'');let h;
+  if(c.startsWith('[[poll:')&&isBot(profiles[m.sender_id])){const ph=pollCardHtml(c);if(ph)return ph}
   if(c.startsWith(BOLDMARK)&&m.channel_id&&rank(roles[m.sender_id])>=4)h='<span style="display:block;font-size:1.875rem;line-height:1.15;font-weight:900">'+mention(esc(c.slice(BOLDMARK.length).trim()))+'</span>';
   else h=mention(esc(c.startsWith(BOLDMARK)?c.slice(BOLDMARK.length).trim():c));
   if(isBot(profiles[m.sender_id]))h='<span style="white-space:pre-wrap">'+h+'</span>';
@@ -788,39 +820,40 @@ function showProfile(uid){
   const p=profiles[uid]||{username:'?'},r=roles[uid],isMe=uid===me.id;
   const on=isMe||online.has(uid);
   const banner=/^#[0-9a-fA-F]{6}$/.test(p.banner||'')?p.banner:'#5865f2';
+  const bimg=p.banner_image&&String(p.banner_image).startsWith(IMGBASE)?p.banner_image:'';
+  const bgStyle='background:'+banner+(bimg?';background-image:url('+esc(bimg)+');background-size:cover;background-position:center':'');
   const status=on?'Online':(p.last_seen?'Last seen '+ago(p.last_seen):'Offline');
-  const dot=`<span class="absolute bottom-0.5 right-0.5 w-5 h-5 rounded-full" style="background:${on?'#23a55a':'#80848e'};border:3px solid #1b1c1f"></span>`;
-  const row=(icon,label,extra,click)=>`<${click?'button onclick="'+click+'"':'div'} class="vrow w-full flex items-center gap-3 px-3 py-3 text-left text-sm text-[#b5bac1] ${click?'hover:text-white':''}"><span class="w-5 text-center">${icon}</span><span class="flex-1">${label}</span>${extra||''}</${click?'button':'div'}>`;
-  const sep='<div class="h-[2px] bg-[#34363b] mx-3"></div>';
-  let rows='';
-  if(isMe)rows+=row('✎','Edit Profile','',"closeVp();openProfile()")+sep;
-  rows+=row(`<span class="inline-block w-3 h-3 rounded-full" style="background:${on?'#23a55a':'#80848e'}"></span>`,status);
-  if(isMe)rows+=sep+row('🫘',(me.beans??0)+' Beans','<span class="text-[#80848e]">›</span>',"closeVp();openShop()");
+  const dotc=on?'#23a55a':'#80848e';
+  const dot=`<span class="absolute bottom-0.5 right-0.5 w-5 h-5 rounded-full" style="background:${dotc};border:3px solid #2a2c30"></span>`;
+  const pill='rounded-full px-4 py-1.5 text-sm font-semibold';
+  const row=(icon,label,extra,click)=>`<${click?'button onclick="'+click+'"':'div'} class="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-[#b5bac1] ${click?'hover:bg-white/5 hover:text-white':''}"><span class="w-5 text-center">${icon}</span><span class="flex-1">${label}</span>${extra||''}</${click?'button':'div'}>`;
+  const rowsArr=[];
+  if(isMe)rowsArr.push(row('✎','Edit profile','',"closeVp();openProfile()"));
+  rowsArr.push(row(`<span class="inline-block w-2.5 h-2.5 rounded-full" style="background:${dotc}"></span>`,status));
+  if(isMe)rowsArr.push(row('🫘',(me.beans??0)+' Beans','<span class="text-[#80848e]">›</span>',"closeVp();openShop()"));
   const f=isMe?null:fr(uid);
   let friendHtml='';
   if(!isMe&&!isBot(p)){
-    const gbtn='class="px-4 py-2 rounded-xl text-sm font-bold text-[#c9f0d4]" style="background:#25643a;border:2px solid #3a8a54;box-shadow:0 3px 0 #17432a"';
-    const rbtn='class="px-4 py-2 rounded-xl text-sm font-bold text-[#eef0ff]" style="background:#3448b4;border:2px solid #4a5fd0;box-shadow:0 3px 0 #222f80"';
-    const xbtn='class="px-4 py-2 rounded-xl text-sm font-bold text-[#b5bac1] border-2 border-[#4a4d55] bg-[#2a2c30]"';
-    if(!f)friendHtml=`<button onclick="profFriend('add','${uid}')" ${gbtn}>Add Friend</button>`;
-    else if(f.status==='accepted')friendHtml=`<span class="px-4 py-2 rounded-xl text-sm font-bold text-[#c9f0d4] border-2 border-[#3a8a54] bg-[#17321f]">✓ Friends</span><button onclick="if(confirm('Remove this friend?'))profFriend('remove','${uid}')" ${xbtn}>Remove</button>`;
-    else if(f.requester===me.id)friendHtml=`<span class="px-4 py-2 rounded-xl text-sm font-bold text-[#949ba4] border-2 border-[#4a4d55] bg-[#2a2c30]">Request sent</span><button onclick="profFriend('remove','${uid}')" ${xbtn}>Cancel</button>`;
-    else friendHtml=`<button onclick="profFriend('accept','${uid}')" ${gbtn}>Accept request</button><button onclick="profFriend('remove','${uid}')" ${xbtn}>Decline</button>`;
+    const green='background:#248046;color:#fff',soft='background:rgba(255,255,255,.08);color:#dbdee1';
+    if(!f)friendHtml=`<button onclick="profFriend('add','${uid}')" class="${pill}" style="${green}">Add Friend</button>`;
+    else if(f.status==='accepted')friendHtml=`<span class="${pill}" style="background:rgba(36,128,70,.2);color:#57d28a">✓ Friends</span><button onclick="if(confirm('Remove this friend?'))profFriend('remove','${uid}')" class="${pill}" style="${soft}">Remove</button>`;
+    else if(f.requester===me.id)friendHtml=`<span class="${pill}" style="${soft}">Request sent</span><button onclick="profFriend('remove','${uid}')" class="${pill}" style="${soft}">Cancel</button>`;
+    else friendHtml=`<button onclick="profFriend('accept','${uid}')" class="${pill}" style="${green}">Accept request</button><button onclick="profFriend('remove','${uid}')" class="${pill}" style="${soft}">Decline</button>`;
   }
   const mem=srvId&&!isMe?members.find(x=>x.user_id===uid):null;
   let roleHtml='';
   if(mem&&defRole==='owner'&&mem.role!=='owner'){
-    const chips=croles.map(r=>`<button onclick="profGiveRole('${uid}','${r.id}')" class="text-[10px] font-black uppercase px-2 py-1 rounded text-white ${mem.custom_role===r.id?'ring-2 ring-white':'opacity-70 hover:opacity-100'}" style="background:${esc(r.color)}">${esc(r.name)}</button>`).join('');
-    roleHtml=`<div class="mt-3 rounded-xl bg-[#232428] border-2 border-[#34363b] p-3"><div class="text-xs font-bold uppercase text-[#949ba4] mb-2">Roles</div><div class="flex items-center gap-2 text-sm text-[#b5bac1] mb-2"><span>Tier</span><select onchange="profSetRole('${uid}',this.value)" class="bg-[#1b1c1f] text-white rounded-lg border-2 border-[#4a4d55] px-2 py-1 text-sm">${['member','verified','mod','admin','manager','coowner'].map(r=>`<option value="${r}" ${r===mem.role?'selected':''}>${r}</option>`).join('')}</select></div><div class="flex flex-wrap gap-1.5">${chips||'<span class="text-xs text-[#80848e]">No custom roles yet. Make one with /newrole.</span>'}${mem.custom_role?`<button onclick="profGiveRole('${uid}',null)" class="text-[10px] font-bold uppercase px-2 py-1 rounded border-2 border-[#4a4d55] text-[#b5bac1] hover:text-white">Remove role</button>`:''}</div></div>`;
+    const chips=croles.map(r=>`<button onclick="profGiveRole('${uid}','${r.id}')" class="text-[11px] font-bold px-2.5 py-1 rounded-full text-white ${mem.custom_role===r.id?'ring-2 ring-white':'opacity-70 hover:opacity-100'}" style="background:${esc(r.color)}">${esc(r.name)}</button>`).join('');
+    roleHtml=`<div class="mt-3 rounded-xl bg-black/20 p-4"><div class="text-[11px] font-bold uppercase tracking-wide text-[#949ba4] mb-2">Roles</div><div class="flex items-center gap-2 text-sm text-[#b5bac1] mb-3"><span>Tier</span><select onchange="profSetRole('${uid}',this.value)" class="bg-[#1e1f22] text-white rounded-lg px-2 py-1 text-sm outline-none">${['member','verified','mod','admin','manager','coowner'].map(x=>`<option value="${x}" ${x===mem.role?'selected':''}>${x}</option>`).join('')}</select></div><div class="flex flex-wrap gap-1.5">${chips||'<span class="text-xs text-[#80848e]">No custom roles yet. Make one with /newrole.</span>'}${mem.custom_role?`<button onclick="profGiveRole('${uid}',null)" class="text-[11px] font-semibold px-2.5 py-1 rounded-full text-[#b5bac1] hover:text-white" style="background:rgba(255,255,255,.08)">Remove role</button>`:''}</div></div>`;
   }
-  $('vpc').innerHTML=`<div class="h-24" style="background:${banner}"></div>
-  <div class="px-5 -mt-10 relative"><div class="relative inline-block rounded-full" style="border:5px solid #1b1c1f">${av(p,20)}${dot}</div></div>
+  $('vpc').innerHTML=`<div class="h-28" style="${bgStyle}"></div>
+  <div class="px-5 -mt-10 relative"><div class="relative inline-block rounded-full" style="border:5px solid #2a2c30">${av(p,20)}${dot}</div></div>
   <div class="px-5 pt-3 pb-5">
-   <div class="flex items-center flex-wrap gap-x-2 gap-y-1"><span class="font-black text-2xl" style="color:${col(p)}">${esc(dn(p))}</span>${isBot(p)?BOTBADGE:''}${r?tag(p,r):''}${utag(p)}</div>
-   <div class="text-sm text-[#949ba4] mt-0.5">${esc(p.username)}${p.nickname?'':''}</div>
+   <div class="flex items-center flex-wrap gap-x-2 gap-y-1"><span class="font-bold text-xl" style="color:${col(p)}">${esc(dn(p))}</span>${isBot(p)?BOTBADGE:''}${r?tag(p,r):''}${utag(p)}</div>
+   <div class="text-sm text-[#949ba4] mt-0.5">${esc(p.username)}</div>
    ${p.bio?`<p class="mt-3 text-sm text-[#dbdee1] break-words whitespace-pre-wrap">${linkify(p.bio)}</p>`:''}
    ${friendHtml?`<div class="mt-4 flex flex-wrap gap-2">${friendHtml}</div>`:''}
-   <div class="mt-4 rounded-xl bg-[#232428] border-2 border-[#34363b] overflow-hidden">${rows}</div>
+   <div class="mt-4 rounded-xl bg-black/20 overflow-hidden divide-y divide-white/5">${rowsArr.join('')}</div>
    ${roleHtml}
   </div>`;
   $('vp').classList.remove('hidden')}
@@ -1414,6 +1447,85 @@ async function addUserToGroup(gid,uid){
   await loadGroups();if(cur.type==='group'&&cur.id===gid)openGroup(gid);toast('Added to the group');
 }
 async function newGroupWith(uid){const gname=prompt('Group name (optional)','')||'';const {data,error}=await sb.rpc('create_group_dm',{gname,member_ids:[uid]});if(error)return alert(error.message);await loadGroups();openGroup(data)}
+// ===== polls (made by BeanBot) =====
+let pollCache={},pollBusy=false;
+function pollCardHtml(c){
+  const mt=c.match(/^\[\[poll:(\d+)\]\]\n([\s\S]*)$/);if(!mt)return '';
+  const id=mt[1],lines=mt[2].split('\n'),q=lines[0],opts=lines.slice(1);
+  if(opts.length<2)return '';
+  const r=pollCache[id],total=r?r.counts.reduce((a,b)=>a+b,0):0;
+  setTimeout(pollTick,80);
+  return `<div data-poll="${id}" class="mt-1 max-w-sm rounded-xl border-2 border-[#34363b] bg-[#2b2d31] p-3" style="white-space:normal"><div class="font-bold text-sm text-white mb-2">📊 ${esc(q)}</div>`+
+    opts.map((o,i)=>{const n=r?(r.counts[i]||0):0,pct=total?Math.round(n*100/total):0,mine=r&&r.mine===i+1;
+      return `<button type="button" data-opt="${i+1}" onclick="pollVote(${id},${i+1})" class="relative block w-full text-left rounded-lg overflow-hidden mb-1.5 px-3 py-2 text-sm text-white bg-[#232428]" style="border:2px solid ${mine?'#6b78e8':'#4a4d55'}"><span class="bar absolute inset-y-0 left-0" style="width:${pct}%;background:rgba(88,101,242,.35)"></span><span class="relative flex justify-between gap-3"><span class="break-words">${esc(o)}</span><span class="pct flex-shrink-0 text-[#b5bac1]">${n} · ${pct}%</span></span></button>`}).join('')+
+    `<div data-meta class="text-[11px] text-[#949ba4] mt-1">${total} ${total===1?'vote':'votes'} · ${r&&r.closed?'Poll closed':'Click an option to vote'}</div></div>`;
+}
+function paintPoll(el){
+  const r=pollCache[el.dataset.poll];if(!r)return;
+  const total=r.counts.reduce((a,b)=>a+b,0);
+  el.querySelectorAll('[data-opt]').forEach(b=>{
+    const i=+b.dataset.opt,n=r.counts[i-1]||0,pct=total?Math.round(n*100/total):0;
+    b.querySelector('.bar').style.width=pct+'%';b.querySelector('.pct').textContent=n+' · '+pct+'%';
+    b.style.borderColor=r.mine===i?'#6b78e8':'#4a4d55';b.disabled=!!r.closed;b.style.cursor=r.closed?'default':'pointer';
+  });
+  el.querySelector('[data-meta]').textContent=total+(total===1?' vote':' votes')+' · '+(r.closed?'Poll closed':r.mine?'Click your choice again to remove your vote':'Click an option to vote');
+}
+async function pollTick(){
+  if(pollBusy)return;
+  const els=[...document.querySelectorAll('[data-poll]')];if(!els.length)return;
+  const ids=[...new Set(els.map(e=>Number(e.dataset.poll)))].slice(0,50);
+  pollBusy=true;
+  try{const {data,error}=await sb.rpc('poll_results',{pids:ids});if(!error&&data)Object.assign(pollCache,data)}catch(e){}
+  pollBusy=false;
+  document.querySelectorAll('[data-poll]').forEach(paintPoll);
+}
+async function pollVote(id,opt){
+  const {error}=await sb.rpc('poll_vote',{pid:id,opt});
+  if(error)return alert(error.message);
+  pollTick();
+}
+setInterval(()=>{if(!document.hidden)pollTick()},5000);
+
+// ===== offline notifications (Web Push) =====
+const pushOK=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;
+const b64uToBytes=str=>{const pad='='.repeat((4-str.length%4)%4),b=(str+pad).replace(/-/g,'+').replace(/_/g,'/'),r=atob(b);return Uint8Array.from([...r].map(c=>c.charCodeAt(0)))};
+async function pushSave(sub){const j=sub.toJSON();return sb.functions.invoke('push',{body:{action:'subscribe',sub:{endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth}}})}
+async function togglePush(){
+  if(!pushOK())return alert('This browser cannot show notifications. On an iPhone, tap Share, then Add to Home Screen, and open BEANCORD from your home screen first.');
+  try{
+    const reg=await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;
+    const existing=await reg.pushManager.getSubscription();
+    if(existing){
+      if(!confirm('Notifications are ON for this device. Turn them off?'))return;
+      await sb.functions.invoke('push',{body:{action:'unsubscribe',endpoint:existing.endpoint}});
+      await existing.unsubscribe();return alert('Notifications are off for this device.');
+    }
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted')return alert('Notifications are blocked. Allow them for this site in your browser settings, then try again.');
+    const {data:k,error:ke}=await sb.functions.invoke('push',{body:{action:'key'}});
+    if(ke||!k||!k.key)return alert('Notifications are not set up on the server yet.');
+    const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64uToBytes(k.key)});
+    const {error}=await pushSave(sub);
+    if(error){await sub.unsubscribe();return alert('Could not save this device. Try again.')}
+    alert('Done! You will get notifications for DMs and @mentions even when BEANCORD is closed.');
+  }catch(e){alert('Could not turn on notifications: '+(e.message||e))}
+}
+// a device that already allowed notifications gets attached to whoever logs in on it
+async function pushRebind(){
+  try{
+    if(!pushOK()||Notification.permission!=='granted')return;
+    const reg=await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;
+    const sub=await reg.pushManager.getSubscription();if(sub)await pushSave(sub);
+  }catch(e){}
+}
+async function pushDetach(){
+  try{
+    if(!pushOK())return;
+    const reg=await navigator.serviceWorker.getRegistration();const sub=reg&&await reg.pushManager.getSubscription();
+    if(sub)await sb.functions.invoke('push',{body:{action:'unsubscribe',endpoint:sub.endpoint}});
+  }catch(e){}
+}
+
 // ===== BeanBot =====
 const BOT_FN='beanbot'; // name of the Supabase edge function that runs BeanBot
 const STAFF_CMDS=new Set(['help','bold','newrole','delrole','banword','unbanword','banwords','delserver','auditlog','iplog','reports','ban','unban','mute','unmute','nick','giverole','deleteuser','banip','hwidban','unhwidban','unbanip','ips','gift','switch','unblock','kick','role']);
