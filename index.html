@@ -922,6 +922,7 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
   <button onclick="webExternal()" title="Open in a new tab" class="w-9 h-9 rounded-lg text-[#b5bac1] hover:bg-[#35373c] hover:text-white">↗</button>
   <button onclick="closeWeb()" title="Back to chat" class="w-9 h-9 rounded-lg text-[#b5bac1] hover:bg-[#35373c] hover:text-white">✕</button>
  </div>
+ <div id="qlinks" class="flex items-center gap-2 px-3 py-2 bg-[#232428] border-b border-white/5 overflow-x-auto flex-shrink-0"></div>
  <iframe id="webframe" class="flex-1 w-full border-0" style="background:#121212" allow="fullscreen"></iframe>
 </div>
 
@@ -2259,8 +2260,36 @@ async function botCall(cmd,line){
 // Paste the address of your deployed proxy server here, with https:// and no slash at the end.
 // Example: const PROXY_URL='https://beanchat-proxy.onrender.com';
 const PROXY_URL='https://beanchat-proxy.onrender.com';
+// Quick links open in a normal new tab (good for big sites the proxy cannot handle).
+// To add links for everyone, add lines to this list. People can also add their own with "+ Add link".
+const QUICK_LINKS=[
+  {n:'Google',u:'https://www.google.com'},
+  {n:'YouTube',u:'https://www.youtube.com'},
+  {n:'Wikipedia',u:'https://www.wikipedia.org'}
+];
+function qlMine(){try{return JSON.parse(localStorage.getItem('bc_quicklinks')||'[]').filter(x=>x&&x.n&&x.u)}catch(e){return[]}}
+function qlSave(a){try{localStorage.setItem('bc_quicklinks',JSON.stringify(a))}catch(e){}}
+function renderQuick(){
+  const mine=qlMine();
+  const pill='rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap text-[#dbdee1] bg-white/10 hover:bg-white/20';
+  $('qlinks').innerHTML=
+    QUICK_LINKS.map(l=>`<button onclick="qlOpen('${esc(l.u)}')" class="${pill}">${esc(l.n)}</button>`).join('')+
+    mine.map((l,i)=>`<span class="${pill} inline-flex items-center gap-2"><button onclick="qlOpen('${esc(l.u)}')">${esc(l.n)}</button><button onclick="qlRemove(${i})" title="Remove" class="text-[#949ba4] hover:text-[#f23f43]">✕</button></span>`).join('')+
+    `<button onclick="qlAdd()" class="rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap text-[#949ba4] hover:text-white" style="border:1px dashed rgba(255,255,255,.25)">+ Add link</button>`;
+}
+function qlOpen(u){if(/^https?:\/\//i.test(u))window.open(u,'_blank','noopener')}
+function qlAdd(){
+  let u=(prompt('Paste the website address')||'').trim();if(!u)return;
+  if(!/^https?:\/\//i.test(u))u='https://'+u;
+  let host;try{host=new URL(u).hostname.replace(/^www\./,'')}catch(e){return alert('That does not look like a web address.')}
+  const n=(prompt('Name for this button',host)||host).trim().slice(0,20)||host;
+  const a=qlMine();if(a.length>=12)return alert('You can save up to 12 links. Remove one first.');
+  a.push({n,u});qlSave(a);renderQuick();
+}
+function qlRemove(i){const a=qlMine();a.splice(i,1);qlSave(a);renderQuick()}
 function openWeb(){
   $('web').classList.remove('hidden');
+  renderQuick();
   const f=$('webframe');
   if(!PROXY_URL){
     f.removeAttribute('src');
