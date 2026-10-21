@@ -56,7 +56,9 @@ html[data-theme="default"] [class~="bg-[#111214]"]{background-color:#17181a !imp
 #vpc,#pm>div{border:1px solid rgba(255,255,255,.08);border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.55)}
 .pill{background:rgba(0,0,0,.55);color:#fff;font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;cursor:pointer;border:0}
 .pill:hover{background:rgba(0,0,0,.75)}
-#pm input[type=color]{width:30px;height:30px;border:0;border-radius:50%;padding:0;background:none;cursor:pointer}
+#pm input[type=color],#vpc input[type=color]{width:30px;height:30px;border:0;border-radius:50%;padding:0;background:none;cursor:pointer}
+#vpc input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+#vpc input[type=color]::-webkit-color-swatch{border:2px solid rgba(255,255,255,.25);border-radius:50%}
 #pm input[type=color]::-webkit-color-swatch-wrapper{padding:0}
 #pm input[type=color]::-webkit-color-swatch{border:2px solid rgba(255,255,255,.25);border-radius:50%}
 #pm input[type=color]::-moz-color-swatch{border:2px solid rgba(255,255,255,.25);border-radius:50%}
@@ -942,7 +944,9 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
  <div class="p-5 space-y-3">
   <div id="rmlist" class="space-y-2"></div>
   <button onclick="roleForm(null)" class="w-full bg-[#5865f2] text-white font-bold py-2 rounded-lg text-sm">+ New role</button>
+  <button onclick="roleTemplate('trialmod')" class="w-full text-[#f0a132] font-bold py-2 rounded-lg text-sm" style="border:1px dashed rgba(240,161,50,.5)">+ Trial Mod (ready-made)</button>
   <div id="rmform" class="hidden border-t border-black/30 pt-4 space-y-3">
+   <p id="rf_note" class="text-xs text-[#949ba4]"></p>
    <input id="rf_name" maxlength="16" placeholder="Role name" class="w-full bg-[#1e1f22] rounded px-3 py-2 text-white text-sm outline-none">
    <div class="flex items-center gap-3"><span class="text-xs text-[#949ba4]">Badge color</span><input id="rf_color" type="color" value="#5865f2" class="w-14 h-9 rounded cursor-pointer bg-transparent"><span id="rf_preview" class="text-[9px] font-black uppercase px-1.5 rounded"></span></div>
    <div><label class="block text-xs text-[#949ba4] mb-1">Hierarchy position <span class="text-[10px]">(who this role can act on, and who can act on it)</span></label>
@@ -1135,12 +1139,7 @@ function drawChannels(){
   const chanBtn=c=>`<button data-cid="${c.id}" onclick="openChannel('${c.id}')" class="w-full text-left px-2 py-1.5 rounded-md text-sm ${cur.id===c.id?'bg-[#404249] text-white':'text-[#949ba4] hover:bg-[#35373c]'}"> ${c.min_read_rank>1?'🔒 ':c.min_post_rank>1?'📢 ':'# '}${esc(c.name)}${c.slow_seconds>0?' 🐌':''}${unreadCh[c.id]&&!ment[c.id]?'<span class="float-right w-2 h-2 mt-1.5 rounded-full bg-white"></span>':''}${ment[c.id]?`<span class="float-right bg-[#f23f43] text-white text-[10px] font-black px-1.5 rounded-full">${ment[c.id]}</span>`:''}</button>`;
   $('sc').innerHTML=groups.map(k=>(k?`<div class="text-[10px] font-bold text-[#949ba4] uppercase px-2 pt-3 pb-1">${esc(k)}</div>`:'')+seen[k].map(chanBtn).join('')).join('');
 }
-async function newChannel(){
-  const n=prompt('Channel name?');if(!n)return;
-  const pos=channels.length?Math.max(...channels.map(c=>c.position||0))+1:1;
-  const {error}=await sb.from('channels').insert({server_id:srvId,name:clean(n.replace(/\s+/g,'-').replace(/-/g,'_'))||'channel',position:pos});
-  if(error)return alert(error.message);openServer(srvId);
-}
+function newChannel(){openChannelForm(null)}
 async function openChannel(id){
   cur={type:'ch',id};delete ment[id];delete unreadCh[id];drawChannels();
   const c=channels.find(x=>x.id===id);{const can=rank(myRole())>=c.min_post_rank;$('i').disabled=!can;$('i').placeholder=can?'Message...':'You do not have permission to type here'}$('chtitle').innerHTML='# '+esc(c.name)+(c.topic?`<span class="ml-3 text-xs font-normal text-[#949ba4] truncate">${esc(c.topic)}</span>`:'');
@@ -1389,11 +1388,36 @@ let ment={},sugList=[],sugIdx=0,sugStart=0,sugAt=false;
 const CMDS=['luck','balance','coinflip','slots','roulette','dice','welcome','goodbye','poll','polls','endpoll','warn','warnings','clearwarns','purge','slowmode','announce','seen','stats','mutes','automod','usercount','serverinfo','userinfo','topbeans','roll','flip','8ball','choose','rate','hug','beanfact','ping','cmds','addcmd','delcmd','botset','bold','ban','unban','mute','unmute','kick','nick','giverole','newrole','delrole','deleteuser','gift','switch','banip','unbanip','hwidban','unhwidban','ips','iplog','banword','unbanword','banwords','auditlog','unblock','reports','help'],ROLES=['manager','admin','goodgirl','mod','verified','member'];
 function roleSel(m,u,self){if(self||!canManage(m.role))return '';const o=ROLES.filter(r=>rank(r)<rank(myRole())).map(r=>`<option ${r===m.role?'selected':''}>${r}</option>`).join('');return `<select onchange="setRole('${u}',this.value)" class="mt-1 bg-[#1e1f22] text-[10px] text-[#949ba4] rounded px-1">${o}</select>`}
 const BOLDMARK='[[big]]';
+function plainText(c){
+  c=String(c||'');
+  if(c.startsWith('[[embed]]')){try{const o=JSON.parse(c.slice(9));return [o.t,o.d].filter(Boolean).join(' ')}catch(e){return 'BeanBot'}}
+  if(c.startsWith('[[poll:')){const l=c.split('\n');return '📊 '+(l[1]||'Poll')}
+  if(c.startsWith(BOLDMARK))return c.slice(BOLDMARK.length).trim();
+  return c;
+}
 const isBot=p=>!!p&&p.username==='beanbot';
 const BOTBADGE='<span class="text-[9px] font-black uppercase text-white px-1.5 rounded bg-[#5865f2]">BOT</span>';
+
+// ===== BeanBot messages drawn as boxes (like a Discord webhook embed) =====
+function embedBox(o){
+  const color=/^#[0-9a-fA-F]{6}$/.test(o.c||'')?o.c:'#5865f2';
+  const fields=(o.f||[]).map(f=>`<div style="${f.i?'':'grid-column:1/-1'}"><div class="text-xs font-bold text-white">${mention(esc(f.n||''))}</div><div class="text-sm text-[#dbdee1] break-words">${mention(esc(f.v||''))}</div></div>`).join('');
+  let thumb='';
+  if(typeof o.th==='string'&&o.th.startsWith('u:')){const p=profiles[o.th.slice(2)];if(p)thumb=`<div style="padding:10px 10px 0 0;flex-shrink:0">${av(p,16)}</div>`}
+  return `<div style="display:flex;max-width:30rem;margin-top:4px;background:#2b2d31;border-left:4px solid ${color};border-radius:6px;overflow:hidden;white-space:normal"><div style="padding:10px 12px;flex:1;min-width:0">${o.t?`<div class="font-bold text-sm text-white break-words">${mention(esc(o.t))}</div>`:''}${o.d?`<div class="text-sm text-[#dbdee1] mt-1 break-words" style="white-space:pre-wrap">${mention(esc(o.d))}</div>`:''}${fields?`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:8px">${fields}</div>`:''}${o.ft?`<div class="text-[11px] text-[#949ba4] mt-2">${esc(o.ft)}</div>`:''}</div>${thumb}</div>`;
+}
+function autoEmbed(c){
+  const lines=String(c).split('\n');const t=lines[0],d=lines.slice(1).join('\n');
+  const col=/^(🔇|🚫|❌|⛔)/u.test(t)?'#f23f43':/^(✅|🍀|🏆|🎉|👋)/u.test(t)?'#23a55a':/^(⚠️|🌑)/u.test(t)?'#f0b232':/^(📢)/u.test(t)?'#e67e22':/^(🎰|🎲|🪙|🎡|🫘|💰)/u.test(t)?'#eb459e':'#5865f2';
+  return embedBox({t,d,c:col,ft:'BeanBot'});
+}
 function fmt(m){
   const c=String(m.content||'');let h;
   if(c.startsWith('[[poll:')&&isBot(profiles[m.sender_id])){const ph=pollCardHtml(c);if(ph)return ph}
+  if(isBot(profiles[m.sender_id])){
+    if(c.startsWith('[[embed]]')){try{return embedBox(JSON.parse(c.slice(9)))}catch(e){}}
+    else return autoEmbed(c);
+  }
   if(c.startsWith(BOLDMARK)&&m.channel_id&&rank(roles[m.sender_id])>=4)h='<span style="display:block;font-size:1.875rem;line-height:1.15;font-weight:900">'+mention(esc(c.slice(BOLDMARK.length).trim()))+'</span>';
   else h=mention(esc(c.startsWith(BOLDMARK)?c.slice(BOLDMARK.length).trim():c));
   if(isBot(profiles[m.sender_id]))h='<span style="white-space:pre-wrap">'+h+'</span>';
@@ -1436,7 +1460,7 @@ $('i').addEventListener('keydown',e=>{
 let replyTo=null,rx={},blocked=new Set(),msgCache={};
 const QUICK=['👍','❤️','😂','🔥'],EMOJIS=['👍','❤️','😂','🔥','😮','😢','🎉','👀','🙏','💯','😡','🤔','✅','❌','👏','😎'];
 async function loadBlocks(){const {data}=await sb.from('blocks').select('*');blocked=new Set((data||[]).map(b=>b.blocked))}
-function replyLine(m){if(!m.reply_to)return '';const r=msgCache[m.reply_to],p=r&&profiles[r.sender_id];return `<div class="text-[11px] text-[#949ba4] truncate">↪ ${r?esc(dn(p))+': '+esc(r.content.slice(0,60)):'original message'}</div>`}
+function replyLine(m){if(!m.reply_to)return '';const r=msgCache[m.reply_to],p=r&&profiles[r.sender_id];return `<div class="text-[11px] text-[#949ba4] truncate">↪ ${r?esc(dn(p))+': '+esc(plainText(r.content).slice(0,60)):'original message'}</div>`}
 function drawRx(id){const e=$('rx_'+id);if(!e)return;const g={};(rx[id]||[]).forEach(x=>{(g[x.emoji]=g[x.emoji]||[]).push(x.user_id)});
   e.innerHTML=Object.entries(g).map(([em,u])=>`<button onclick="toggleRx('${id}','${em}')" class="px-2 py-0.5 rounded-full text-xs border ${u.includes(me.id)?'bg-[#5865f2]/30 border-[#5865f2]':'bg-[#2b2d31] border-[#3f4147]'}">${em} ${u.length}</button>`).join('')}
 async function toggleRx(id,emoji){const mine=(rx[id]||[]).find(x=>x.user_id===me.id&&x.emoji===emoji);
@@ -1462,7 +1486,7 @@ function msgMenu(id,x,y){const m=msgCache[id];if(!m)return;const ch=!!m.channel_
 function moreRx(id,x,y){showCtx(x,y,`<div class="grid grid-cols-4 gap-1 p-1">${EMOJIS.map(e=>emo(id,e)).join('')}</div>`)}
 function chanMenu(id,x,y){let h='';if(isStaff()||myPerm('manage_channels'))h+=mi('⬆','Move up',`moveChannel('${id}',-1)`)+mi('⬇','Move down',`moveChannel('${id}',1)`)+sep+mi('✎','Edit channel',`editChannel('${id}')`)+mi('🗑','Delete channel',`deleteChannel('${id}')`,1)+sep;showCtx(x,y,h+mi('ID','Copy channel ID',`navigator.clipboard.writeText('${id}')`))}
 async function moveChannel(id,delta){const {error}=await sb.rpc('set_channel_position',{cid:id,delta});if(error)return alert(error.message);await openServer(srvId)}
-function startReply(id){const m=msgCache[id];replyTo=id;$('rb').innerHTML=`<span class="truncate">Replying to <b>${esc(dn(profiles[m.sender_id]))}</b>: ${esc(m.content.slice(0,60))}</span><span onclick="replyTo=null;$('rb').classList.add('hidden')" class="cursor-pointer ml-3">✕</span>`;$('rb').classList.remove('hidden');$('i').focus()}
+function startReply(id){const m=msgCache[id];replyTo=id;$('rb').innerHTML=`<span class="truncate">Replying to <b>${esc(dn(profiles[m.sender_id]))}</b>: ${esc(plainText(m.content).slice(0,60))}</span><span onclick="replyTo=null;$('rb').classList.add('hidden')" class="cursor-pointer ml-3">✕</span>`;$('rb').classList.remove('hidden');$('i').focus()}
 function mentionUser(uid){const el=$('i');el.value+=(el.value&&!el.value.endsWith(' ')?' ':'')+'@'+profiles[uid].username+' ';el.focus()}
 
 async function profFriend(act,uid){
@@ -1534,12 +1558,41 @@ async function reportMsg(id){const r=prompt('Why are you reporting this message?
 async function showReports(){const {data:r,error}=await sb.from('reports').select('*').order('created_at',{ascending:false}).limit(15);if(error)return sys(error.message);if(!r.length)return sys('No reports.');
   const {data:ms}=await sb.from('messages').select('id,content,sender_id').in('id',r.map(x=>x.message_id));const mm={};(ms||[]).forEach(x=>mm[x.id]=x);
   r.forEach(x=>{const m=mm[x.message_id],a=profiles[x.reporter],b=m&&profiles[m.sender_id];sys((a?a.username:'?')+' reported '+(b?b.username:'?')+': "'+(m?m.content.slice(0,80):'(deleted)')+'"'+(x.reason?' — '+x.reason:''))})}
-async function editChannel(id){const c=channels.find(x=>x.id===id);if(!c)return;const n=prompt('Channel name',c.name);if(n===null)return;const t=prompt('Channel topic (optional)',c.topic||'');if(t===null)return;
-  const cat=prompt('Category header shown above this channel (blank for none)',c.category||'');if(cat===null)return;
-  const sl=prompt('Slow mode: seconds members must wait between messages (0 = off)',String(c.slow_seconds||0));if(sl===null)return;
-  const name=n.trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'')||c.name;
-  const rd=ask('Who can READ this channel?',c.min_read_rank);if(rd===null)return;const po=ask('Who can TYPE in this channel?',c.min_post_rank);if(po===null)return;
-  const {error}=await sb.from('channels').update({name,topic:t.trim(),category:cat.trim()||null,slow_seconds:Math.max(0,parseInt(sl,10)||0),min_read_rank:rd,min_post_rank:Math.max(po,rd)}).eq('id',id);if(error)return alert(error.message);await openServer(srvId)}
+let chEditing=null;
+function editChannel(id){openChannelForm(id)}
+function openChannelForm(id){
+  chEditing=id;const c=id?channels.find(x=>x.id===id):null;if(id&&!c)return;
+  const cats=[...new Set(channels.map(x=>x.category).filter(Boolean))];
+  const ranks='<option value="1">Everyone</option><option value="2">Verified and up</option><option value="3">Mods and up</option><option value="4">Admins and up</option><option value="5">Managers and up</option>';
+  $('vpc').innerHTML=`<div class="flex items-center justify-between mb-3"><h3 class="font-bold text-white">${c?'Edit channel':'New channel'}</h3><button onclick="closeVp()" class="text-[#949ba4] hover:text-white">✕</button></div>
+  <div class="space-y-3">
+   <label class="${FLD_LBL}">Channel name<input id="cf_name" maxlength="30" placeholder="general-chat" class="${FLD_INP}"><span class="block normal-case font-normal text-[#80848e] mt-1">Shown as #<span id="cf_shown"></span></span></label>
+   <label class="${FLD_LBL}">Topic (optional)<input id="cf_topic" maxlength="100" placeholder="What this channel is for" class="${FLD_INP}"></label>
+   <label class="${FLD_LBL}">Category header (optional)<input id="cf_cat" list="cf_cats" maxlength="24" placeholder="TEXT CHANNELS" class="${FLD_INP}"></label><datalist id="cf_cats">${cats.map(x=>`<option value="${esc(x)}"></option>`).join('')}</datalist>
+   <div class="flex gap-3"><label class="${FLD_LBL} flex-1">Who can read it<select id="cf_read" class="${FLD_INP}">${ranks}</select></label>
+   <label class="${FLD_LBL} flex-1">Who can type<select id="cf_post" class="${FLD_INP}">${ranks}</select></label></div>
+   <label class="${FLD_LBL}">Slow mode (seconds between messages, 0 = off)<input id="cf_slow" type="number" min="0" step="1" inputmode="numeric" class="${FLD_INP}"></label>
+  </div>
+  <div id="cf_msg" class="text-xs text-[#f23f43] mt-3 min-h-[1rem]"></div>
+  <div class="flex gap-2 mt-2"><button onclick="saveChannelForm()" class="flex-1 bg-[#23a55a] hover:bg-[#1a8044] text-white py-2 rounded-lg text-sm font-semibold">${c?'Save changes':'Create channel'}</button><button onclick="closeVp()" class="flex-1 bg-[#4e5058] hover:bg-[#5d6068] text-white py-2 rounded-lg text-sm">Cancel</button></div>`;
+  const nm=x=>String(x).trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+  $('cf_name').value=c?c.name:'';$('cf_topic').value=c?(c.topic||''):'';$('cf_cat').value=c?(c.category||''):'';
+  $('cf_read').value=String(c?c.min_read_rank||1:1);$('cf_post').value=String(c?c.min_post_rank||1:1);$('cf_slow').value=c?(c.slow_seconds||0):0;
+  const shown=()=>{$('cf_shown').textContent=nm($('cf_name').value)||'channel'};$('cf_name').addEventListener('input',shown);shown();
+  $('vp').classList.remove('hidden');setTimeout(()=>$('cf_name').focus(),50);
+}
+async function saveChannelForm(){
+  const msg=x=>{$('cf_msg').textContent=x};
+  const name=String($('cf_name').value).trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+  if(!name)return msg('Give the channel a name (letters and numbers).');
+  const rd=parseInt($('cf_read').value,10),po=Math.max(parseInt($('cf_post').value,10),rd);
+  const f={name,topic:$('cf_topic').value.trim(),category:$('cf_cat').value.trim()||null,slow_seconds:Math.max(0,parseInt($('cf_slow').value,10)||0),min_read_rank:rd,min_post_rank:po};
+  let error;
+  if(chEditing){({error}=await sb.from('channels').update(f).eq('id',chEditing))}
+  else{const pos=channels.length?Math.max(...channels.map(c=>c.position||0))+1:1;({error}=await sb.from('channels').insert({server_id:srvId,position:pos,...f}))}
+  if(error)return msg(error.message);
+  closeVp();await openServer(srvId);
+}
 async function deleteChannel(id){const c=channels.find(x=>x.id===id);if(!c)return;if(channels.length<=1)return alert('A server needs at least one channel.');
   if(!confirm('Delete #'+c.name+' and all its messages?'))return;const {error}=await sb.from('channels').delete().eq('id',id);if(error)return alert(error.message);await openServer(srvId)}
 $('msgs').addEventListener('contextmenu',e=>{const d=e.target.closest('[id^="m_"]');if(!d)return;e.preventDefault();msgMenu(d.id.slice(2),e.clientX,e.clientY)});
@@ -1983,19 +2036,46 @@ setInterval(()=>{if(!document.hidden&&me)syncCurrent(false)},15000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&me)syncCurrent(true)});
 sb.auth.onAuthStateChange(ev=>{if(ev==='SIGNED_OUT'){$('app').classList.add('hidden');$('auth').classList.remove('hidden')}});
 window.addEventListener('unhandledrejection',e=>console.error('Unhandled:',e.reason));
-function tagForm(t){
-  const label=prompt('Tag label (shown on the badge, e.g. VIP)',t?t.label:'');if(label===null)return null;
-  const color=prompt('Badge color, as a hex code (e.g. #ff00aa)',t?t.color:'#5865f2');if(color===null||!/^#[0-9a-fA-F]{6}$/.test(color))return label===null?null:(alert('Not a valid hex color, e.g. #ff00aa'),null);
-  const textc=prompt('Text color on the badge (#ffffff or #000000)',t?t.text_color:'#ffffff');if(textc===null||!/^#[0-9a-fA-F]{6}$/.test(textc))return (alert('Not a valid hex color'),null);
-  const desc=prompt('Short description',t?t.description||'':'')||'';
-  const price=parseInt(prompt('Price in beans',t?t.price:'300'),10);if(!price||price<1)return (alert('Price must be a positive number'),null);
-  const minr=parseInt(prompt('Minimum role to buy it: 1=member 2=verified 3=mod',t?String(t.min_rank):'1'),10);
-  return {label,color,text_color:textc,description:desc,price,min_rank:[1,2,3].includes(minr)?minr:1};
+let tagEditing=null;
+const FLD_LBL='block text-[11px] font-bold uppercase tracking-wide text-[#949ba4]';
+const FLD_INP='block mt-1.5 w-full bg-[#1e1f22] rounded-lg px-3 py-2 text-white text-sm font-normal normal-case outline-none focus:ring-2 focus:ring-[#5865f2]/60';
+function tagPreview(){
+  const e=$('tf_prev');if(!e)return;
+  e.innerHTML=chip({label:$('tf_label').value.trim()||'PREVIEW',color:$('tf_color').value,text_color:$('tf_text').value});
 }
-async function newTag(){const f=tagForm(null);if(!f)return;const id=prompt('Short id for this tag (letters/numbers only, e.g. vip)');if(!id||!/^[a-z0-9]+$/.test(id))return alert('Use lowercase letters and numbers only.');
-  const {error}=await sb.rpc('upsert_shop_tag',{tid:id,...f,t_old_price:null});if(error)return alert(error.message);await loadShopTags();drawShop()}
-async function editTag(id){const t=shopTags[id];const f=tagForm(t);if(!f)return;
-  const {error}=await sb.rpc('upsert_shop_tag',{tid:id,...f,t_old_price:t.old_price});if(error)return alert(error.message);await loadShopTags();drawShop()}
+function openTagForm(id){
+  tagEditing=id;const t=id?shopTags[id]:null;if(id&&!t)return;
+  $('vpc').innerHTML=`<div class="flex items-center justify-between mb-3"><h3 class="font-bold text-white">${t?'Edit tag':'New tag'}</h3><button onclick="closeVp()" class="text-[#949ba4] hover:text-white">✕</button></div>
+  <div class="rounded-xl bg-black/20 p-4 mb-4 text-center"><span id="tf_prev"></span><div class="text-[11px] text-[#949ba4] mt-2">How it looks next to a name</div></div>
+  <div class="space-y-3">
+   ${t?'':`<label class="${FLD_LBL}">Short id<input id="tf_id" maxlength="16" placeholder="vip" class="${FLD_INP}"><span class="block normal-case font-normal text-[#80848e] mt-1">Lowercase letters and numbers only. It can't be changed later.</span></label>`}
+   <label class="${FLD_LBL}">Label (shown on the badge)<input id="tf_label" maxlength="14" placeholder="VIP" class="${FLD_INP}"></label>
+   <div class="flex gap-6 text-[11px] font-bold uppercase tracking-wide text-[#949ba4]"><label class="flex items-center gap-2">Badge color<input id="tf_color" type="color"></label><label class="flex items-center gap-2">Text color<input id="tf_text" type="color"></label></div>
+   <label class="${FLD_LBL}">Description<input id="tf_desc" maxlength="80" placeholder="What this tag is for" class="${FLD_INP}"></label>
+   <div class="flex gap-3"><label class="${FLD_LBL} flex-1">Price (beans)<input id="tf_price" type="number" min="1" step="1" inputmode="numeric" class="${FLD_INP}"></label>
+   <label class="${FLD_LBL} flex-1">Who can buy it<select id="tf_min" class="${FLD_INP}"><option value="1">Everyone</option><option value="2">Verified and up</option><option value="3">Mods and up</option></select></label></div>
+  </div>
+  <div id="tf_msg" class="text-xs text-[#f23f43] mt-3 min-h-[1rem]"></div>
+  <div class="flex gap-2 mt-2"><button onclick="saveTagForm()" class="flex-1 bg-[#23a55a] hover:bg-[#1a8044] text-white py-2 rounded-lg text-sm font-semibold">${t?'Save changes':'Create tag'}</button><button onclick="closeVp()" class="flex-1 bg-[#4e5058] hover:bg-[#5d6068] text-white py-2 rounded-lg text-sm">Cancel</button></div>`;
+  $('tf_label').value=t?t.label:'';$('tf_color').value=t?t.color:'#5865f2';$('tf_text').value=t?t.text_color:'#ffffff';
+  $('tf_desc').value=t?(t.description||''):'';$('tf_price').value=t?t.price:300;$('tf_min').value=t?String(t.min_rank):'1';
+  ['tf_label','tf_color','tf_text'].forEach(k=>$(k).addEventListener('input',tagPreview));
+  tagPreview();$('vp').classList.remove('hidden');
+  setTimeout(()=>{const i=$(t?'tf_label':'tf_id');if(i)i.focus()},50);
+}
+async function saveTagForm(){
+  const msg=x=>{$('tf_msg').textContent=x};
+  const id=tagEditing||$('tf_id').value.trim().toLowerCase();
+  if(!tagEditing){if(!/^[a-z0-9]{1,16}$/.test(id))return msg('The id needs lowercase letters and numbers only.');if(shopTags[id])return msg('A tag with that id already exists.')}
+  const label=$('tf_label').value.trim();if(!label)return msg('Give the tag a label.');
+  const price=parseInt($('tf_price').value,10);if(!(price>=1))return msg('The price must be 1 bean or more.');
+  const f={label,color:$('tf_color').value,text_color:$('tf_text').value,description:$('tf_desc').value.trim(),price,min_rank:parseInt($('tf_min').value,10)};
+  const {error}=await sb.rpc('upsert_shop_tag',{tid:id,...f,t_old_price:tagEditing?shopTags[tagEditing].old_price:null});
+  if(error)return msg(error.message);
+  await loadShopTags();drawShop();closeVp();
+}
+function newTag(){openTagForm(null)}
+function editTag(id){openTagForm(id)}
 async function delTag(id){if(!confirm('Delete this tag? Anyone who owns or has equipped it will lose it.'))return;
   const {error}=await sb.rpc('delete_shop_tag',{tid:id});if(error)return alert(error.message);await loadShopTags();drawShop()}
 
@@ -2023,7 +2103,7 @@ async function togglePins(){
   if(error)return alert(error.message);
   const canMod=rank(myRole())>=4;
   const item=m=>{const p=profiles[m.sender_id]||{username:'?'};
-    return `<div class="rounded-xl bg-black/20 p-3 text-sm"><div class="flex items-center gap-2"><b style="color:${col(p)}">${esc(dn(p))}</b><span class="text-[10px] text-[#949ba4]">${new Date(m.created_at).toLocaleString()}</span></div><p class="mt-1 break-words whitespace-pre-wrap">${esc(m.content)}</p>${canMod?`<div class="mt-2 flex gap-2"><button onclick="pinAction('${m.id}','unpin')" class="pbtn">Unpin</button><button onclick="pinAction('${m.id}','delete')" class="pbtn danger">Delete message</button></div>`:''}</div>`};
+    return `<div class="rounded-xl bg-black/20 p-3 text-sm"><div class="flex items-center gap-2"><b style="color:${col(p)}">${esc(dn(p))}</b><span class="text-[10px] text-[#949ba4]">${new Date(m.created_at).toLocaleString()}</span></div><p class="mt-1 break-words whitespace-pre-wrap">${esc(plainText(m.content))}</p>${canMod?`<div class="mt-2 flex gap-2"><button onclick="pinAction('${m.id}','unpin')" class="pbtn">Unpin</button><button onclick="pinAction('${m.id}','delete')" class="pbtn danger">Delete message</button></div>`:''}</div>`};
   $('vpc').innerHTML=`<div class="flex items-center justify-between mb-3"><h3 class="font-bold text-white">📌 Pinned messages</h3><button onclick="closeVp()" class="text-[#949ba4] hover:text-white">✕</button></div><div class="text-left space-y-3 max-h-[60vh] overflow-y-auto">${data.length?data.map(item).join(''):'<p class="text-xs text-[#949ba4]">No pinned messages yet.</p>'}</div>`;
   $('vp').classList.remove('hidden');
 }
@@ -2047,7 +2127,7 @@ async function doSearch(){
   const q=$('sq').value.trim();if(q.length<2){$('sqres').innerHTML='<p class="text-xs text-[#949ba4]">Type at least 2 characters.</p>';return}
   const {data,error}=await sb.from('messages').select('*').eq('channel_id',cur.id).ilike('content','%'+q.replace(/[%_]/g,'\\\\$&')+'%').order('created_at',{ascending:false}).limit(30);
   if(error){$('sqres').innerHTML='<p class="text-xs text-[#f23f43]">'+esc(error.message)+'</p>';return}
-  $('sqres').innerHTML=data.length?data.map(m=>{const p=profiles[m.sender_id]||{username:'?'};return `<div class="p-2 rounded bg-[#2b2d31]"><b style="color:${col(p)}">${esc(dn(p))}</b> <span class="text-[10px] text-[#949ba4]">${new Date(m.created_at).toLocaleString()}</span><p>${esc(m.content)}</p></div>`}).join(''):'<p class="text-xs text-[#949ba4]">No matches.</p>';
+  $('sqres').innerHTML=data.length?data.map(m=>{const p=profiles[m.sender_id]||{username:'?'};return `<div class="p-2 rounded bg-[#2b2d31]"><b style="color:${col(p)}">${esc(dn(p))}</b> <span class="text-[10px] text-[#949ba4]">${new Date(m.created_at).toLocaleString()}</span><p>${esc(plainText(m.content))}</p></div>`}).join(''):'<p class="text-xs text-[#949ba4]">No matches.</p>';
 }
 
 // ===== emoji picker for composing =====
@@ -2077,10 +2157,19 @@ function roleForm(rid){
   rfEditing=rid;const r=rid?croles.find(x=>x.id===rid):null;
   $('rf_name').value=r?r.name:'';$('rf_color').value=r?r.color:'#5865f2';$('rf_base').value=r?r.base:'member';
   renderPermChecks(r?r.perms:null);
-  updateSwatch();$('rmform').classList.remove('hidden');$('rf_name').focus();
+  $('rf_note').textContent='';updateSwatch();$('rmform').classList.remove('hidden');$('rf_name').focus();
 }
 function updateSwatch(){const e=$('rf_preview');e.textContent=$('rf_name').value.trim()||'PREVIEW';e.style.background=$('rf_color').value}
 $('rf_name').addEventListener('input',updateSwatch);$('rf_color').addEventListener('input',updateSwatch);
+function roleTemplate(k){
+  roleForm(null);
+  if(k==='trialmod'){
+    $('rf_name').value='Trial Mod';$('rf_color').value='#f0a132';$('rf_base').value='verified';
+    renderPermChecks({manage_messages:true,timeout_members:true});
+    $('rf_note').textContent='Trial Mod: can delete messages, pin, and mute regular members. They cannot kick, ban, or change channels, and mods and up outrank them. Change anything below, then press Save.';
+    updateSwatch();
+  }
+}
 async function saveRole(){
   const name=$('rf_name').value.trim(),color=$('rf_color').value,base=$('rf_base').value,perms=readPermChecks();
   if(!name)return alert('Give the role a name.');
