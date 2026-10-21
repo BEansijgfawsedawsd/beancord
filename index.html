@@ -931,7 +931,7 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
 
 <div id="shop" class="hidden fixed inset-0 bg-[#313338] z-40 overflow-y-auto"><div class="max-w-5xl mx-auto p-4">
  <div class="flex items-center justify-between mb-2 sticky top-0 bg-[#313338] py-2 z-10"><h2 class="text-xl font-black text-white">Tag Shop</h2>
-  <div class="flex items-center gap-3 text-sm"><button id="newtagbtn" onclick="newTag()" class="hidden bg-pink-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs">+ New tag</button><span id="bal" class="font-bold text-white"></span><button onclick="claimDaily()" class="bg-[#23a55a] text-white font-bold px-3 py-1.5 rounded-lg text-xs">Claim daily beans</button><button onclick="$('shop').classList.add('hidden')" class="bg-[#4e5058] text-white px-3 py-1.5 rounded-lg text-xs">Close</button></div></div>
+  <div class="flex items-center gap-3 text-sm flex-wrap justify-end"><button id="newtagbtn" onclick="newTag()" class="hidden bg-pink-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs">+ New tag</button><span id="bal" class="font-bold text-white"></span><button onclick="claimDaily()" class="bg-[#23a55a] text-white font-bold px-3 py-1.5 rounded-lg text-xs">Claim daily beans</button><button onclick="openGift()" class="bg-[#5865f2] text-white font-bold px-3 py-1.5 rounded-lg text-xs">Gift beans</button><button onclick="$('shop').classList.add('hidden')" class="bg-[#4e5058] text-white px-3 py-1.5 rounded-lg text-xs">Close</button></div></div>
  <p class="text-xs text-[#949ba4] mb-3">Earn 🫘 by chatting (2 per message, at most every 30 seconds) and by claiming your daily bonus. Equipped tags show next to your name.</p>
  <div id="shopg" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div></div></div>
 <input id="sif" type="file" accept="image/*" class="hidden">
@@ -2235,6 +2235,37 @@ async function loadUnread(){
   updateTot();
 }
 window.addEventListener('focus',()=>{if(me&&(cur.type==='dm'||cur.type==='group')){unread[cur.id]=0;markRead(cur.id);updateTot()}});
+
+// ===== gift beans (from the Shop) =====
+function openGift(){
+  const names=Object.values(profiles).filter(p=>p.id!==me.id&&!isBot(p)).map(p=>p.username).sort();
+  const lbl='block text-[11px] font-bold uppercase tracking-wide text-[#949ba4]';
+  const inp='block mt-1.5 w-full bg-[#1e1f22] rounded-lg px-3 py-2 text-white text-sm font-normal normal-case outline-none focus:ring-2 focus:ring-[#5865f2]/60';
+  $('vpc').innerHTML=`<div class="flex items-center justify-between mb-3"><h3 class="font-bold text-white">🫘 Gift beans</h3><button onclick="closeVp()" class="text-[#949ba4] hover:text-white">✕</button></div>
+  <p class="text-xs text-[#949ba4] mb-3">The beans come out of your balance (${me.beans??0}) and go straight to them. A gift can't be undone.</p>
+  <label class="${lbl}">Send to (username)<input id="gto" list="gtolist" autocomplete="off" class="${inp}"></label><datalist id="gtolist">${names.map(n=>`<option value="${esc(n)}"></option>`).join('')}</datalist>
+  <label class="${lbl} mt-3">Amount<input id="gamt" type="number" min="1" step="1" inputmode="numeric" class="${inp}"></label>
+  <div id="gmsg" class="text-xs text-[#f23f43] mt-2 min-h-[1rem]"></div>
+  <div class="flex gap-2 mt-3"><button onclick="sendGift()" class="flex-1 bg-[#5865f2] hover:bg-[#4752c4] text-white py-2 rounded-lg text-sm font-semibold">Send gift</button><button onclick="closeVp()" class="flex-1 bg-[#4e5058] hover:bg-[#5d6068] text-white py-2 rounded-lg text-sm">Cancel</button></div>`;
+  $('vp').classList.remove('hidden');
+  setTimeout(()=>{const i=$('gto');if(i)i.focus()},50);
+}
+async function sendGift(){
+  const msg=t=>{$('gmsg').textContent=t};
+  const name=$('gto').value.trim().toLowerCase().replace(/^@/,'');
+  const amt=parseInt($('gamt').value,10);
+  let target=Object.values(profiles).find(p=>p.username===name);
+  if(!target){const m=Object.values(profiles).filter(p=>p.nickname&&p.nickname.toLowerCase()===name);if(m.length===1)target=m[0]}
+  if(!target||target.id===me.id)return msg('Pick someone else. Type their username.');
+  if(isBot(target))return msg('Pick a person, not BeanBot.');
+  if(!Number.isInteger(amt)||amt<1)return msg('Enter a whole number of beans, 1 or more.');
+  if(amt>(me.beans??0))return msg('You only have '+(me.beans??0)+' beans.');
+  if(!confirm('Send '+amt+' beans to '+dn(target)+'? This cannot be undone.'))return;
+  const {error}=await sb.rpc('gift_beans',{to_user:target.id,amt});
+  if(error)return msg(String(error.message).includes('gift_beans')?'Gifting is not set up yet. The site owner needs to run bean_gifts.sql in Supabase.':error.message);
+  await loadProfiles();me=profiles[me.id];drawShop();closeVp();
+  alert('Sent '+amt+' beans to '+dn(target)+'!');
+}
 
 // ===== BeanBot =====
 const BOT_FN='beanbot'; // name of the Supabase edge function that runs BeanBot
