@@ -1142,7 +1142,7 @@ function drawChannels(){
 function newChannel(){openChannelForm(null)}
 async function openChannel(id){
   cur={type:'ch',id};delete ment[id];delete unreadCh[id];drawChannels();
-  const c=channels.find(x=>x.id===id);{const can=rank(myRole())>=c.min_post_rank;$('i').disabled=!can;$('i').placeholder=can?'Message...':'You do not have permission to type here'}$('chtitle').innerHTML='# '+esc(c.name)+(c.topic?`<span class="ml-3 text-xs font-normal text-[#949ba4] truncate">${esc(c.topic)}</span>`:'');
+  const c=channels.find(x=>x.id===id);replyTo=null;$('rb').classList.add('hidden');setComposer(rank(myRole())>=(c.min_post_rank||1));$('chtitle').innerHTML='# '+esc(c.name)+(c.topic?`<span class="ml-3 text-xs font-normal text-[#949ba4] truncate">${esc(c.topic)}</span>`:'');
   $('pinbtn').classList.remove('hidden');$('searchbtn').classList.remove('hidden');$('searchbar').classList.add('hidden');$('msgs').classList.remove('hidden');$('callbtn').classList.add('hidden');$('groupcallbtn').classList.add('hidden');$('groupsettingsbtn').classList.add('hidden');closeLeftMobile();subscribeTyping();
   const {data:dd}=await sb.from('messages').select('*').eq('channel_id',id).order('created_at',{ascending:false}).limit(100);const data=(dd||[]).reverse();
   rx={};const ids=(data||[]).map(x=>x.id);if(ids.length){const {data:r}=await sb.from('reactions').select('*').in('message_id',ids);(r||[]).forEach(x=>(rx[x.message_id]=rx[x.message_id]||[]).push(x))}
@@ -1175,7 +1175,7 @@ function drawPeople(){
   updateTot();
 }
 async function openGroup(id){
-  cur={type:'group',id};unread[id]=0;markRead(id);$('i').disabled=false;$('i').placeholder='Message...';drawPeople();
+  cur={type:'group',id};unread[id]=0;markRead(id);setComposer(true);drawPeople();
   const g=groups.find(x=>x.id===id);
   const mnames=g?g.members.filter(m=>m!==me.id).map(m=>dn(profiles[m]||{username:'?'})).join(', '):'';
   $('chtitle').textContent='👥 '+(g?g.name:'Group')+(mnames?' — '+mnames:'');
@@ -1190,7 +1190,7 @@ async function openGroup(id){
   draw((dd||[]).reverse());
 }
 async function openDM(id){
-  cur={type:'dm',id};unread[id]=0;markRead(id);$('i').disabled=false;$('i').placeholder='Message...';drawPeople();
+  cur={type:'dm',id};unread[id]=0;markRead(id);setComposer(true);drawPeople();
   $('chtitle').textContent='@ '+dn(profiles[id]);$('pinbtn').classList.add('hidden');$('searchbtn').classList.add('hidden');$('searchbar').classList.add('hidden');$('callbtn').classList.toggle('hidden',!!activeCallWith||groupCallActive);$('groupcallbtn').classList.add('hidden');$('groupsettingsbtn').classList.add('hidden');closeLeftMobile();subscribeTyping();
   const {data:dd}=await sb.from('dm_messages').select('*').or(`sender_id.eq.${id},recipient_id.eq.${id}`).order('created_at',{ascending:false}).limit(100);const data=(dd||[]).reverse();
   draw(data||[]);
@@ -1267,7 +1267,7 @@ function listen(){
    .subscribe(st=>{if(st==='SUBSCRIBED'){if(everUp)syncCurrent(true);everUp=true}else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){setTimeout(()=>{if(rt){sb.removeChannel(rt);listen()}},3000)}});
 }
 $('f').onsubmit=async e=>{
-  e.preventDefault();const t=$('i').value.trim();if(t.startsWith('/')){$('i').value='';return runCmd(t)}if(!t||!cur.type)return;if(cur.type==='ch'&&/@(everyone|here)\b/i.test(t)&&myRole()!=='owner')return alert('Only the owner can use @everyone and @here.');{const mu=until(me,'muted_until');if(mu)return alert('You are muted until '+mu.toLocaleString())}$('i').value='';
+  e.preventDefault();const t=$('i').value.trim();if(t.startsWith('/')){$('i').value='';return runCmd(t)}if(!t||!cur.type)return;if(!canPostHere())return alert('You do not have permission to type in this channel.');if(cur.type==='ch'&&/@(everyone|here)\b/i.test(t)&&myRole()!=='owner')return alert('Only the owner can use @everyone and @here.');{const mu=until(me,'muted_until');if(mu)return alert('You are muted until '+mu.toLocaleString())}$('i').value='';
   const r=cur.type==='ch'?await sb.from('messages').insert({channel_id:cur.id,content:t,reply_to:replyTo})
     :cur.type==='group'?await sb.from('group_dm_messages').insert({group_id:cur.id,content:t,reply_to:replyTo})
     :await sb.from('dm_messages').insert({recipient_id:cur.id,content:t});
@@ -1278,6 +1278,18 @@ function dmWhy(err){
   if(!f)return 'Could not send. You and '+who+' are not friends yet. Send a friend request from their profile first.';
   if(f.status!=='accepted')return 'Could not send. Your friend request with '+who+' is still pending, so DMs are blocked until it is accepted.';
   return 'Could not send, even though the site shows you and '+who+' as friends. The database refused it: '+(err.message||'no details')+(err.code?' (code '+err.code+')':'')+'\nTell the site owner this exact message.';
+}
+// Can I type in the channel that is open right now? (the database enforces this too, see enforce_post_rank.sql)
+function canPostHere(){
+  if(cur.type!=='ch')return true;
+  const c=channels.find(x=>x.id===cur.id);
+  return !!c&&rank(myRole())>=(c.min_post_rank||1);
+}
+function setComposer(can){
+  $('i').disabled=!can;
+  $('i').placeholder=can?'Message...':'You do not have permission to type here';
+  [...$('f').querySelectorAll('button')].forEach(b=>{b.disabled=!can;b.style.opacity=can?'':'.4'});
+  if(!can){$('i').value='';replyTo=null;$('rb').classList.add('hidden')}
 }
 const col=p=>/^#[0-9a-fA-F]{6}$/.test((p||{}).color||'')?p.color:'#ffffff';
 function av(p,n){p=p||{username:'?'};const z=n===20?'w-20 h-20':n===16?'w-16 h-16':n===6?'w-6 h-6':n===9?'w-9 h-9':'w-8 h-8';
@@ -1338,6 +1350,7 @@ async function runCmd(line){
   if(!STAFF_CMDS.has(cmd))return botCall(cmd,line);
   if(cmd==='bold'){
     if(cur.type!=='ch')return sys('/bold only works in server channels.');
+    if(!canPostHere())return sys('You do not have permission to type in this channel.');
     if(!isStaff())return sys('Only admins and up can use /bold.');
     const txt=line.slice(1).trim().replace(/^\S+\s*/,'').trim();
     if(!txt)return sys('Usage: /bold your text');
@@ -1408,7 +1421,7 @@ function embedBox(o){
 }
 function autoEmbed(c){
   const lines=String(c).split('\n');const t=lines[0],d=lines.slice(1).join('\n');
-  const col=/^(🔇|🚫|❌|⛔)/u.test(t)?'#f23f43':/^(✅|🍀|🏆|🎉|👋)/u.test(t)?'#23a55a':/^(⚠️|🌑)/u.test(t)?'#f0b232':/^(📢)/u.test(t)?'#e67e22':/^(🎰|🎲|🪙|🎡|🫘|💰)/u.test(t)?'#eb459e':'#5865f2';
+  const col=/^(🔇|🚫|❌|⛔)/u.test(t)?'#f23f43':/^(✅|🍀|🏆|🎉|🎁|👋)/u.test(t)?'#23a55a':/^(⚠️|🌑)/u.test(t)?'#f0b232':/^(📢)/u.test(t)?'#e67e22':/^(🎰|🎲|🪙|🎡|🫘|💰)/u.test(t)?'#eb459e':'#5865f2';
   return embedBox({t,d,c:col,ft:'BeanBot'});
 }
 function fmt(m){
@@ -1609,6 +1622,7 @@ const canImg=()=>cur.type==='ch'?rank(myRole())>=2:(defRole?rank(defRole)>=2:tru
 function shrink(f){return new Promise(res=>{if(f.type==='image/gif'||f.size<400000)return res(f);const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const k=Math.min(1,1600/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);c.toBlob(b=>res(b),'image/jpeg',0.85)};i.src=r.result};r.readAsDataURL(f)})}
 async function sendImage(f){
   if(!f||!cur.type)return;
+  if(!canPostHere())return alert('You do not have permission to send files in this channel.');
   {const mu=until(me,'muted_until');if(mu)return alert('You are muted until '+mu.toLocaleString())}
   if(!canImg())return alert('Only verified members and above can send files and images.');
   const isImg=f.type.startsWith('image/');let base;
@@ -2362,6 +2376,7 @@ const STAFF_CMDS=new Set(['help','bold','newrole','delrole','banword','unbanword
 async function botCall(cmd,line){
   if(!cmd)return sys('Type /help to see the commands.');
   if(cur.type!=='ch')return sys('BeanBot commands only work in server channels.');
+  if(!canPostHere())return sys('You do not have permission to use BeanBot commands in this channel.');
   const mu=until(me,'muted_until');if(mu)return alert('You are muted until '+mu.toLocaleString());
   const args=line.slice(1).trim().replace(/^\S+\s*/,'').trim();
   try{
