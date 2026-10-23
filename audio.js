@@ -934,7 +934,7 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
 <div id="shop" class="hidden fixed inset-0 bg-[#313338] z-40 overflow-y-auto"><div class="max-w-5xl mx-auto p-4">
  <div class="flex items-center justify-between mb-2 sticky top-0 bg-[#313338] py-2 z-10"><h2 class="text-xl font-black text-white">Tag Shop</h2>
   <div class="flex items-center gap-3 text-sm flex-wrap justify-end"><button id="newtagbtn" onclick="newTag()" class="hidden bg-pink-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs">+ New tag</button><span id="bal" class="font-bold text-white"></span><button onclick="claimDaily()" class="bg-[#23a55a] text-white font-bold px-3 py-1.5 rounded-lg text-xs">Claim daily beans</button><button onclick="openGift()" class="bg-[#5865f2] text-white font-bold px-3 py-1.5 rounded-lg text-xs">Gift beans</button><button onclick="$('shop').classList.add('hidden')" class="bg-[#4e5058] text-white px-3 py-1.5 rounded-lg text-xs">Close</button></div></div>
- <p class="text-xs text-[#949ba4] mb-3">Earn 🫘 by chatting (2 per message, at most every 30 seconds) and by claiming your daily bonus. Equipped tags show next to your name.</p>
+ <p class="text-xs text-[#949ba4] mb-3">Earn 🫘 by chatting (2 per message, at most every 30 seconds, up to 300 a day) and by claiming your daily bonus. Equipped tags show next to your name.</p>
  <div id="shopg" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div></div></div>
 <input id="sif" type="file" accept="image/*" class="hidden">
 <div id="ctx" class="hidden fixed z-50 w-56 bg-[#111214] border border-black/40 rounded-lg shadow-2xl p-1 text-sm"></div>
