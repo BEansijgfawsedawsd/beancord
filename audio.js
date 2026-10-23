@@ -1551,6 +1551,7 @@ function showProfile(uid){
   const row=(icon,label,extra,click)=>`<${click?'button onclick="'+click+'"':'div'} class="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-[#b5bac1] ${click?'hover:bg-white/5 hover:text-white':''}"><span class="w-5 text-center">${icon}</span><span class="flex-1">${label}</span>${extra||''}</${click?'button':'div'}>`;
   const rowsArr=[];
   if(isMe)rowsArr.push(row('✎','Edit profile','',"closeVp();openProfile()"));
+  if(isMe)rowsArr.push(row('🔑','Change password / username','',"closeVp();openProfile();setTimeout(()=>{const e=$('acc_old');if(e){e.scrollIntoView({block:'center'});e.focus()}},80)"));
   rowsArr.push(row(`<span class="inline-block w-2.5 h-2.5 rounded-full" style="background:${dotc}"></span>`,status));
   if(isMe)rowsArr.push(row('🫘',(me.beans??0)+' Beans','<span class="text-[#80848e]">›</span>',"closeVp();openShop()"));
   const f=isMe?null:fr(uid);
