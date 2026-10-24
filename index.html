@@ -902,6 +902,7 @@ html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a
    <div class="flex items-center justify-center gap-2 bg-[#1e1f22] rounded-full px-3 py-2 mx-auto w-fit">
     <span id="calltext" class="text-xs text-[#949ba4] px-1 hidden sm:inline">Calling...</span>
     <button id="mutebtn" onclick="toggleMute()" title="Mute" class="w-9 h-9 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white flex items-center justify-center">🎤</button>
+    <button id="deafenbtn" onclick="toggleDeafen()" title="Deafen" class="w-9 h-9 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white flex items-center justify-center">🎧</button>
     <button id="camerabtn" onclick="toggleCamera()" title="Camera" class="w-9 h-9 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white flex items-center justify-center">📷</button>
     <button id="sharebtn" onclick="toggleScreenShare()" title="Share screen" class="w-9 h-9 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white flex items-center justify-center">🖥️</button>
     <button onclick="hangupCall()" title="Hang up" class="w-9 h-9 rounded-full bg-[#f23f43] hover:bg-[#d7373b] text-white flex items-center justify-center"><span style="display:inline-block;transform:rotate(135deg)">📞</span></button>
@@ -1734,7 +1735,7 @@ function createGroupPeer(peerId,initiator){
   groupPeers[peerId]=pcx;
   groupLocalStream.getTracks().forEach(t=>pcx.addTrack(t,groupLocalStream));
   if(myVideoTrack)groupVideoSenders[peerId]=pcx.addTrack(myVideoTrack,groupLocalStream);
-  ensureTile('me',dn(me));ensureTile(peerId,dn(profiles[peerId]||{username:'?'}));
+  ensureTile('me',dn(me));ensureTile(peerId,dn(profiles[peerId]||{username:'?'}));watchSpeaking('me',groupLocalStream);
   pcx.onicecandidate=e=>{if(e.candidate)groupCallCh.send({type:'broadcast',event:'signal',payload:{type:'ice',candidate:e.candidate,from:me.id,to:peerId}})};
   pcx.ontrack=e=>{
     if(e.track.kind==='video'){
@@ -1742,7 +1743,7 @@ function createGroupPeer(peerId,initiator){
       e.track.onended=()=>clearTileVideo(peerId);
     }else{
       let a=document.getElementById('ga_'+peerId);if(!a){a=document.createElement('audio');a.id='ga_'+peerId;a.autoplay=true;document.body.appendChild(a)}
-      a.srcObject=e.streams[0];
+      a.srcObject=e.streams[0];applyVol(peerId);applyDeafen();watchSpeaking(peerId,e.streams[0]);
     }
   };
   pcx.onconnectionstatechange=()=>{
@@ -1787,7 +1788,7 @@ function closeGroupPeer(peerId){
 }
 
 function leaveGroupCall(){
-  releaseAwake();callSound('leave');groupLeaving=true;
+  releaseAwake();stopAllWatching();resetDeafen();callSound('leave');groupLeaving=true;
   Object.keys(groupPeers).forEach(closeGroupPeer);groupLeaving=false;
   if(groupLocalStream){groupLocalStream.getTracks().forEach(t=>t.stop());groupLocalStream=null}
   if(groupCallCh){sb.removeChannel(groupCallCh);groupCallCh=null}
@@ -1808,6 +1809,14 @@ function ensureTile(id,label){
     avwrap.innerHTML=av(id==='me'?me:(profiles[id]||{username:'?'}),9);
     const tag=document.createElement('span');tag.className='absolute bottom-1 left-1 text-[10px] text-white bg-black/50 px-1 rounded';tag.textContent=label;
     t.appendChild(avwrap);t.appendChild(tag);
+    if(id!=='me'){
+      const vol=document.createElement('input');vol.type='range';vol.min=0;vol.max=100;vol.value=getVol(id);vol.title='Volume';
+      vol.className='tvol absolute left-1 right-1 bottom-6 h-1 cursor-pointer';vol.style.accentColor='#5865f2';
+      vol.oninput=()=>{try{localStorage.setItem(volKey(id),vol.value)}catch(e){}applyVol(id)};
+      vol.onclick=e=>e.stopPropagation();
+      t.appendChild(vol);
+      t.onclick=()=>t.classList.toggle('showvol'); // tap a tile to show its volume slider on phones
+    }
     $('calltiles').appendChild(t);
   }
   return t;
@@ -1817,7 +1826,7 @@ function setTileVideo(id,stream){
   const t=ensureTile(id,label);
   let v=t.querySelector('video');
   if(!v){
-    v=document.createElement('video');v.autoplay=true;v.playsInline=true;v.muted=(id==='me');
+    v=document.createElement('video');v.autoplay=true;v.playsInline=true;v.muted=true;
     v.className='absolute inset-0 w-full h-full object-cover';
     t.insertBefore(v,t.firstChild);
   }
@@ -1849,8 +1858,8 @@ function clearTileVideo(id){
   const tb=t.querySelector('.tbtns');if(tb)tb.remove();t.classList.remove('tile-big');
   const aw=t.querySelector('.av-wrap');if(aw)aw.classList.remove('hidden');
 }
-function removeTile(id){const t=document.getElementById('tile_'+id);if(t)t.remove()}
-function clearAllTiles(){$('calltiles').innerHTML=''}
+function removeTile(id){stopWatching(id);const t=document.getElementById('tile_'+id);if(t)t.remove()}
+function clearAllTiles(){stopAllWatching();$('calltiles').innerHTML=''}
 
 async function renegotiate(pcx,channel,toId){
   const offer=await pcx.createOffer();await pcx.setLocalDescription(offer);
@@ -1927,6 +1936,63 @@ const TURN_SERVERS=[];
 const RTC_CONFIG={iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun2.l.google.com:19302']},...TURN_SERVERS],iceCandidatePoolSize:4};
 let ringCh=null,callCh=null,pc=null,localStream=null,activeCallWith=null,callState='idle',incomingFrom=null,muted=false;
 let callIsCaller=false,dropTimer=null,wakeLockObj=null,groupLeaving=false,sfxCtx=null;
+let deafened=false,mutedBeforeDeafen=false;
+(function(){const st=document.createElement('style');
+  st.textContent='#calltiles>div.speaking{box-shadow:0 0 0 3px #23a55a,0 0 12px rgba(35,165,90,.7)}#calltiles .tvol{opacity:0;pointer-events:none;transition:opacity .15s}#calltiles>div:hover .tvol,#calltiles>div.showvol .tvol{opacity:1;pointer-events:auto}';
+  document.head.appendChild(st)})();
+
+// ----- speaking indicator: a green ring around the tile of whoever is talking -----
+const speakWatch={};let vadCtx=null;
+function watchSpeaking(id,stream){
+  if(!stream)return;
+  if(speakWatch[id]&&speakWatch[id].stream===stream)return;
+  stopWatching(id);
+  try{
+    vadCtx=vadCtx||new (window.AudioContext||window.webkitAudioContext)();
+    if(vadCtx.state==='suspended')vadCtx.resume();
+    const src=vadCtx.createMediaStreamSource(stream);
+    const an=vadCtx.createAnalyser();an.fftSize=512;src.connect(an); // not connected to the speakers, so no echo
+    const buf=new Uint8Array(an.fftSize);let on=false,quiet=0;
+    const iv=setInterval(()=>{
+      an.getByteTimeDomainData(buf);
+      let sum=0;for(let i=0;i<buf.length;i++){const v=(buf[i]-128)/128;sum+=v*v}
+      const rms=Math.sqrt(sum/buf.length);
+      if(rms>0.025){on=true;quiet=0}else if(on&&++quiet>4)on=false; // stays lit about half a second so it does not flicker
+      const t=document.getElementById('tile_'+id);if(t)t.classList.toggle('speaking',on);
+    },100);
+    speakWatch[id]={iv,src,an,stream};
+  }catch(e){}
+}
+function stopWatching(id){
+  const w=speakWatch[id];if(!w)return;
+  clearInterval(w.iv);try{w.src.disconnect()}catch(e){}
+  delete speakWatch[id];
+  const t=document.getElementById('tile_'+id);if(t)t.classList.remove('speaking');
+}
+function stopAllWatching(){Object.keys(speakWatch).forEach(stopWatching)}
+
+// ----- per-person volume (remembered in this browser) -----
+const volKey=id=>'bc_vol_'+id;
+function getVol(id){try{const v=parseInt(localStorage.getItem(volKey(id)),10);return Number.isFinite(v)?Math.min(100,Math.max(0,v)):100}catch(e){return 100}}
+function applyVol(id){const a=document.getElementById('ga_'+id)||$('remoteAudio');if(a)a.volume=getVol(id)/100}
+
+// ----- deafen: silences everyone and mutes your mic (like Discord) -----
+function applyDeafen(){document.querySelectorAll('#remoteAudio,audio[id^="ga_"]').forEach(a=>{a.muted=deafened})}
+function paintDeafen(){const b=$('deafenbtn');if(!b)return;b.textContent=deafened?'🙉':'🎧';b.classList.toggle('bg-[#f23f43]',deafened);b.title=deafened?'Undeafen':'Deafen'}
+function paintMute(){$('mutebtn').textContent=muted?'🔇':'🎤';$('mutebtn').classList.toggle('bg-[#f23f43]',muted)}
+function toggleDeafen(){
+  if(callState==='idle'&&!groupCallActive)return;
+  const stream=localStream||groupLocalStream;
+  deafened=!deafened;
+  if(deafened){
+    mutedBeforeDeafen=muted;
+    if(!muted){muted=true;if(stream)stream.getAudioTracks().forEach(t=>t.enabled=false)}
+  }else if(!mutedBeforeDeafen){
+    muted=false;if(stream)stream.getAudioTracks().forEach(t=>t.enabled=true);
+  }
+  applyDeafen();paintDeafen();paintMute();
+}
+function resetDeafen(){deafened=false;mutedBeforeDeafen=false;paintDeafen()}
 // Discord-style call sounds made in the browser (no audio files needed): 'join' goes up, 'leave' goes down
 function callSound(kind){
   try{
@@ -2020,7 +2086,7 @@ function setupPeerConnection(peerId){
   pc=new RTCPeerConnection(RTC_CONFIG);
   videoSender=null;
   localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
-  ensureTile('me',dn(me));ensureTile(peerId,dn(profiles[peerId]||{username:'?'}));
+  ensureTile('me',dn(me));ensureTile(peerId,dn(profiles[peerId]||{username:'?'}));watchSpeaking('me',localStream);
   pc.onicecandidate=e=>{if(e.candidate&&callCh)callCh.send({type:'broadcast',event:'signal',payload:{type:'ice',candidate:e.candidate,from:me.id}})};
   pc.ontrack=e=>{
     if(e.track.kind==='video'){
@@ -2028,7 +2094,7 @@ function setupPeerConnection(peerId){
       e.track.onended=()=>clearTileVideo(peerId);
     }else{
       let a=$('remoteAudio');if(!a){a=document.createElement('audio');a.id='remoteAudio';a.autoplay=true;document.body.appendChild(a)}
-      a.srcObject=e.streams[0];
+      a.srcObject=e.streams[0];applyVol(peerId);applyDeafen();watchSpeaking(peerId,e.streams[0]);
     }
   };
   pc.onconnectionstatechange=()=>{
@@ -2068,6 +2134,7 @@ async function handleCallSignal(msg){
 }
 
 function toggleMute(){
+  if(deafened){mutedBeforeDeafen=false;return toggleDeafen()}
   const stream=localStream||groupLocalStream;if(!stream)return;
   muted=!muted;stream.getAudioTracks().forEach(t=>t.enabled=!muted);
   $('mutebtn').textContent=muted?'🔇':'🎤';$('mutebtn').classList.toggle('bg-[#f23f43]',muted);
@@ -2077,7 +2144,7 @@ function hangupCall(){if(groupCallActive)return leaveGroupCall();if(callCh)callC
 
 function endCall(reason){
   const wasOn=callState!=='idle'&&callState!=='ringing-in';
-  clearTimeout(dropTimer);releaseAwake();if(wasOn)callSound('leave');
+  clearTimeout(dropTimer);releaseAwake();stopAllWatching();resetDeafen();if(wasOn)callSound('leave');
   if(pc){pc.close();pc=null}
   if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null}
   if(callCh){sb.removeChannel(callCh);callCh=null}
