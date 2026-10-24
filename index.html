@@ -1319,13 +1319,13 @@ function pickAvatar(f){return new Promise(res=>{const r=new FileReader();r.onloa
     $('pavwrap').innerHTML=av({...me,avatar:newAvatar||me.avatar},20);
     $('pprev').innerHTML=`<div class="font-bold text-xl" style="color:${$('pc').value}">${esc($('pn').value.trim()||me.username)}</div><div class="text-sm text-[#949ba4]">${esc(me.username)}</div>`;
   }
-  function openProfile(){newAvatar=null;newBannerBlob=null;bannerCleared=false;$('pc').value=col(me);$('pn').value=me.nickname||'';$('pb').value=me.bio||'';$('pbn').value=/^#[0-9a-fA-F]{6}$/.test(me.banner||'')?me.banner:'#5865f2';$('pt').value=theme;drawBlocked();$('pf').value='';prev();accInit();$('pm').classList.remove('hidden')}
+  function openProfile(){newAvatar=null;newBannerBlob=null;bannerCleared=false;$('pc').value=col(me);$('pn').value=me.nickname||'';$('pn').disabled=!canNickname();$('pn').placeholder=canNickname()?'Shown instead of your username':'Only the owner and co-owners can change nicknames';$('pb').value=me.bio||'';$('pbn').value=/^#[0-9a-fA-F]{6}$/.test(me.banner||'')?me.banner:'#5865f2';$('pt').value=theme;drawBlocked();$('pf').value='';prev();accInit();$('pm').classList.remove('hidden')}
   $('pf').onchange=async e=>{if(e.target.files[0]){newAvatar=await pickAvatar(e.target.files[0]);prev()}};
   $('pbi').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const b=await shrinkBanner(f);if(newBannerUrl)URL.revokeObjectURL(newBannerUrl);newBannerBlob=b;newBannerUrl=URL.createObjectURL(b);bannerCleared=false;prev()}catch(_){alert('Could not read that image.')}e.target.value=''};
   function clearBannerImg(){newBannerBlob=null;bannerCleared=true;prev()}
   $('pc').oninput=prev;$('pn').oninput=prev;$('pbn').oninput=prev;
   async function saveProfile(){
-    const u={color:$('pc').value,nickname:$('pn').value.trim()||null,bio:$('pb').value.trim()||null,banner:$('pbn').value};
+    const u={color:$('pc').value,bio:$('pb').value.trim()||null,banner:$('pbn').value};if(canNickname())u.nickname=$('pn').value.trim()||null;
     if(newAvatar)u.avatar=newAvatar;
     if(newBannerBlob){
       const path=me.id+'/banner-'+crypto.randomUUID()+'.jpg';
@@ -1391,7 +1391,7 @@ async function runCmd(line){
     await loadProfiles();if(srvId)drawMembers();
     return sys(undo?cmd+' '+u.username+': done':u.username+(kind==='ban'?' banned for '+arg+' hours':' muted for '+arg+' minutes'));
   }
-  if(cmd==='nick'){const nk=P.slice(2).join(' ').trim();return rpc('force_nick',{uid:u.id,nick:nk||null},nk?u.username+' is now called '+nk:'Nickname of '+u.username+' was reset')}
+  if(cmd==='nick'){if(!canNickname())return sys('Only the owner and co-owners can change nicknames.');const nk=P.slice(2).join(' ').trim();return rpc('force_nick',{uid:u.id,nick:nk||null},nk?u.username+' is now called '+nk:'Nickname of '+u.username+' was reset')}
   if(cmd==='giverole'){if(!srvId)return sys('Open a server first.');const rn=(P[2]||'').toLowerCase(),r=croles.find(x=>x.name.toLowerCase()===rn);if(!r&&rn!=='none')return sys('No custom role "'+(P[2]||'')+'". Make one with /newrole, or use /giverole user none');return rpc('give_role',{sid:srvId,uid:u.id,rid:r?r.id:null},'Updated '+u.username)}
   if(cmd==='deleteuser'){if(!confirm('Permanently delete the account '+u.username+'?'))return;return rpc('admin_delete_account',{uid:u.id},u.username+' was deleted')}
   if(cmd==='banip'){const {data,error}=await sb.rpc('ban_ip',{target_uid:u.id});if(error)return sys(error.message);return sys('Banned the address on record for '+u.username+' ('+data+'). This does not remove their account access on its own — pair it with /ban if needed.')}
@@ -1676,6 +1676,7 @@ function applyTheme(n){document.documentElement.dataset.theme=n;try{localStorage
 applyTheme(theme);$('pt').onchange=e=>{theme=e.target.value;applyTheme(theme)};
 const chip=t=>`<span class="text-[9px] font-black uppercase px-1.5 rounded" style="background:${esc(t.color)};color:${esc(t.text_color)}">${esc(t.label)}</span>`;
 const MAX_TAGS=2;
+const canNickname=()=>rank(defRole)>=6; // owner and co-owner only
 const equippedIds=p=>(!p?[]:(Array.isArray(p.equipped_tags)&&p.equipped_tags.length?p.equipped_tags:(p.equipped_tag?[p.equipped_tag]:[]))).slice(0,MAX_TAGS);
 const utag=p=>equippedIds(p).map(i=>shopTags[i]).filter(Boolean).map(t=>' '+chip(t)).join('');
 async function loadShopTags(){const {data}=await sb.from('shop_tags').select('*');shopTags={};(data||[]).forEach(t=>shopTags[t.id]=t)}
@@ -2034,7 +2035,7 @@ async function renameSrv(id){const s=servers.find(x=>x.id===id),n=prompt('Server
 async function editMsg(id){const m=msgCache[id],t=prompt('Edit message',m.content);if(t===null||!t.trim()||t.trim()===m.content)return;const {error}=await sb.from('messages').update({content:t.trim(),edited_at:new Date().toISOString()}).eq('id',id);if(error)alert(error.message.includes('auto-mod')?'That edit was blocked by auto-mod.':error.message)}
 async function deleteMe(){const n=prompt('This permanently deletes your account. Type your username ('+me.username+') to confirm:');if(n!==me.username)return;const {error}=await sb.rpc('delete_my_account');if(error)return alert(error.message);await sb.auth.signOut();location.reload()}
 $('mem').addEventListener('contextmenu',e=>{const d=e.target.closest('[data-uid]');if(!d)return;e.preventDefault();const u=d.dataset.uid;let h=mi('◉','View profile',`showProfile('${u}')`);if(u!==me.id)h+=mi('@','Mention',`mentionUser('${u}')`);
-  if(rank(myRole())>=4&&u!==me.id&&rank(roles[u])<rank(myRole()))h+=mi('✎','Change nickname',`promptNick('${u}')`);
+  if(canNickname()&&u!==me.id&&rank(roles[u])<rank(myRole()))h+=mi('✎','Change nickname',`promptNick('${u}')`);
   if(canChangeRole(u))h+=mi('🎖','Change role',`openRoleDialog('${u}')`);
   if(canResetPw(u))h+=mi('🔑','RESET PASSWORD',`resetPw('${u}')`,1);
   if(defRole==='owner'&&u!==me.id)h+=sep+mi('⇄','Switch to this account',`switchTo('${u}')`,1);
