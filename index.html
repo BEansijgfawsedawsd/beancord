@@ -1675,7 +1675,8 @@ try{theme=localStorage.getItem('theme')||'default'}catch(e){}
 function applyTheme(n){document.documentElement.dataset.theme=n;try{localStorage.setItem('theme',n)}catch(e){}}
 applyTheme(theme);$('pt').onchange=e=>{theme=e.target.value;applyTheme(theme)};
 const chip=t=>`<span class="text-[9px] font-black uppercase px-1.5 rounded" style="background:${esc(t.color)};color:${esc(t.text_color)}">${esc(t.label)}</span>`;
-const equippedIds=p=>!p?[]:(Array.isArray(p.equipped_tags)&&p.equipped_tags.length?p.equipped_tags:(p.equipped_tag?[p.equipped_tag]:[]));
+const MAX_TAGS=2;
+const equippedIds=p=>(!p?[]:(Array.isArray(p.equipped_tags)&&p.equipped_tags.length?p.equipped_tags:(p.equipped_tag?[p.equipped_tag]:[]))).slice(0,MAX_TAGS);
 const utag=p=>equippedIds(p).map(i=>shopTags[i]).filter(Boolean).map(t=>' '+chip(t)).join('');
 async function loadShopTags(){const {data}=await sb.from('shop_tags').select('*');shopTags={};(data||[]).forEach(t=>shopTags[t.id]=t)}
 async function openShop(){await loadProfiles();await loadShopTags();const {data}=await sb.from('user_tags').select('tag_id');owned=new Set((data||[]).map(x=>x.tag_id));drawShop();$('shop').classList.remove('hidden')}
