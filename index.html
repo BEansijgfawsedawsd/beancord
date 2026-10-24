@@ -1153,7 +1153,25 @@ function drawChannels(){
   channels.forEach(c=>{const k=c.category||'';if(!(k in seen)){seen[k]=[];groups.push(k)}seen[k].push(c)});
   const chanBtn=c=>c.is_voice?voiceBtn(c):chanBtnText(c);
   const chanBtnText=c=>`<button data-cid="${c.id}" onclick="openChannel('${c.id}')" class="w-full text-left px-2 py-1.5 rounded-md text-sm ${cur.id===c.id?'bg-[#404249] text-white':'text-[#949ba4] hover:bg-[#35373c]'}"> ${c.min_read_rank>1?'🔒 ':c.min_post_rank>1?'📢 ':'# '}${esc(c.name)}${c.slow_seconds>0?' 🐌':''}${unreadCh[c.id]&&!ment[c.id]?'<span class="float-right w-2 h-2 mt-1.5 rounded-full bg-white"></span>':''}${ment[c.id]?`<span class="float-right bg-[#f23f43] text-white text-[10px] font-black px-1.5 rounded-full">${ment[c.id]}</span>`:''}</button>`;
-  $('sc').innerHTML=groups.map(k=>(k?`<div class="text-[10px] font-bold text-[#949ba4] uppercase px-2 pt-3 pb-1">${esc(k)}</div>`:'')+seen[k].map(chanBtn).join('')).join('');
+  window._cats=groups;const col=getCollapsed();
+  $('sc').innerHTML=groups.map((k,i)=>{
+    if(!k)return seen[k].map(chanBtn).join('');
+    const closed=col.includes(k);
+    // a collapsed category still shows the channel you're in (or the voice channel you're connected to)
+    const shown=closed?seen[k].filter(c=>cur.id===c.id||(groupCallActive&&groupCallId===c.id)):seen[k];
+    const hidden=closed?seen[k].filter(c=>!shown.includes(c)):[];
+    const mentions=hidden.reduce((a,c)=>a+(ment[c.id]||0),0),unread=hidden.some(c=>unreadCh[c.id]);
+    const badge=mentions?`<span class="ml-auto bg-[#f23f43] text-white text-[10px] font-black px-1.5 rounded-full normal-case">${mentions}</span>`:(unread?'<span class="ml-auto w-2 h-2 rounded-full bg-white"></span>':'');
+    return `<button onclick="toggleCat(${i})" class="w-full flex items-center gap-1 text-[10px] font-bold text-[#949ba4] hover:text-white uppercase px-1 pt-3 pb-1 text-left"><span class="inline-block w-3 text-center">${closed?'▸':'▾'}</span><span class="truncate">${esc(k)}</span>${badge}</button>`+shown.map(chanBtn).join('');
+  }).join('');
+}
+function catKey(){return 'bc_cats_'+srvId}
+function getCollapsed(){try{return JSON.parse(localStorage.getItem(catKey())||'[]')}catch(e){return[]}}
+function toggleCat(i){
+  const k=(window._cats||[])[i];if(!k)return;
+  let col=getCollapsed();col=col.includes(k)?col.filter(x=>x!==k):[...col,k];
+  try{localStorage.setItem(catKey(),JSON.stringify(col))}catch(e){}
+  drawChannels();
 }
 function newChannel(){openChannelForm(null)}
 async function openChannel(id){
