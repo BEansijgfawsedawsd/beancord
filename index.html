@@ -1301,7 +1301,7 @@ function listen(){
    .subscribe(st=>{if(st==='SUBSCRIBED'){if(everUp)syncCurrent(true);everUp=true}else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){setTimeout(()=>{if(rt){sb.removeChannel(rt);listen()}},3000)}});
 }
 $('f').onsubmit=async e=>{
-  e.preventDefault();if(editingId){const id=editingId,t0=$('i').value.trim(),m0=msgCache[id];endEdit();if(!t0||!m0||t0===m0.content)return;const {error}=await sb.from('messages').update({content:t0,edited_at:new Date().toISOString()}).eq('id',id);if(error)alert(error.message.includes('auto-mod')?'That edit was blocked by auto-mod.':error.message);return}const t=$('i').value.trim();if(t.startsWith('/')){$('i').value='';return runCmd(t)}if(!t||!cur.type)return;if(!canPostHere())return alert('You do not have permission to type in this channel.');if(cur.type==='ch'&&/@(everyone|here)\b/i.test(t)&&myRole()!=='owner')return alert('Only the owner can use @everyone and @here.');{const mu=until(me,'muted_until');if(mu)return alert('You are muted until '+mu.toLocaleString())}$('i').value='';
+  e.preventDefault();$('i').value=emojify($('i').value);if(editingId){const id=editingId,t0=$('i').value.trim(),m0=msgCache[id];endEdit();if(!t0||!m0||t0===m0.content)return;const {error}=await sb.from('messages').update({content:t0,edited_at:new Date().toISOString()}).eq('id',id);if(error)alert(error.message.includes('auto-mod')?'That edit was blocked by auto-mod.':error.message);return}const t=$('i').value.trim();if(t.startsWith('/')){$('i').value='';return runCmd(t)}if(!t||!cur.type)return;if(!canPostHere())return alert('You do not have permission to type in this channel.');if(cur.type==='ch'&&/@(everyone|here)\b/i.test(t)&&myRole()!=='owner')return alert('Only the owner can use @everyone and @here.');{const mu=until(me,'muted_until');if(mu)return alert('You are muted until '+mu.toLocaleString())}$('i').value='';
   const r=cur.type==='ch'?await sb.from('messages').insert({channel_id:cur.id,content:t,reply_to:replyTo})
     :cur.type==='group'?await sb.from('group_dm_messages').insert({group_id:cur.id,content:t,reply_to:replyTo})
     :await sb.from('dm_messages').insert({recipient_id:cur.id,content:t});
@@ -1477,8 +1477,26 @@ function mentionsMe(m){if(m.sender_id===me.id)return false;
 }
 function toast(t){const d=document.createElement('div');d.className='fixed bottom-24 right-4 bg-[#2b2d31] border-l-4 border-yellow-500 text-sm text-white px-3 py-2 rounded shadow-lg z-50';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),4000)}
 function names(){return Object.values(profiles).map(p=>p.username).sort()}
+// ===== :shortcode: emojis (type :sob: and it becomes the emoji) =====
+const EMOJI_DATA='https://cdn.jsdelivr.net/npm/emojibase-data@15/en';
+const EMOJI_FALLBACK={sob:'😭',joy:'😂',smile:'😄',grin:'😁',laughing:'😆',wink:'😉',heart:'❤️',fire:'🔥',skull:'💀',eyes:'👀',thumbsup:'👍','+1':'👍',thumbsdown:'👎','-1':'👎',clap:'👏',pray:'🙏',cry:'😢',angry:'😠',rage:'😡',thinking:'🤔',sunglasses:'😎',tada:'🎉',100:'💯',white_check_mark:'✅',x:'❌',star:'⭐',sparkles:'✨',rocket:'🚀',pensive:'😔',sweat_smile:'😅',rofl:'🤣',blush:'😊',heart_eyes:'😍',kissing_heart:'😘',sleeping:'😴',scream:'😱',skull_and_crossbones:'☠️',poop:'💩',ok_hand:'👌',wave:'👋',muscle:'💪',raised_hands:'🙌',point_right:'👉',point_left:'👈',broken_heart:'💔',coffee:'☕',pizza:'🍕',beer:'🍺',cake:'🎂',dog:'🐶',cat:'🐱',moon:'🌙',sun:'☀️',zzz:'💤',bean:'🫘',salute:'🫡',melting_face:'🫠',pleading_face:'🥹',smiling_face_with_tear:'🥲'};
+let emojiMap=Object.assign({},EMOJI_FALLBACK),sugEmoji=false;
+async function loadEmojiMap(){
+  try{const c=localStorage.getItem('bc_emoji_v1');if(c){const o=JSON.parse(c);if(o&&o.n>1000){emojiMap=Object.assign({},EMOJI_FALLBACK,o.m);return}}}catch(e){}
+  try{
+    const [cr,sr]=await Promise.all([fetch(EMOJI_DATA+'/compact.json'),fetch(EMOJI_DATA+'/shortcodes/github.json')]);
+    const compact=await cr.json(),sc=await sr.json(),byHex={};
+    compact.forEach(e=>{const u=e.unicode||e.emoji;if(u)byHex[e.hexcode]=u;(e.skins||[]).forEach(k=>{const uu=k.unicode||k.emoji;if(uu)byHex[k.hexcode]=uu})});
+    const m={};
+    Object.keys(sc).forEach(hex=>{const ch=byHex[hex];if(!ch)return;[].concat(sc[hex]).forEach(n=>{m[String(n).toLowerCase()]=ch})});
+    const n=Object.keys(m).length;
+    if(n>1000){emojiMap=Object.assign({},EMOJI_FALLBACK,m);try{localStorage.setItem('bc_emoji_v1',JSON.stringify({n,m}))}catch(e){}}
+  }catch(e){console.warn('Full emoji list could not load, using the small built-in list.',e)}
+}
+const emojify=t=>String(t).replace(/:([a-z0-9_+-]{1,32}):/gi,(m,n)=>emojiMap[n.toLowerCase()]||m);
+loadEmojiMap();
 function suggest(){
-  const el=$('i'),v=el.value.slice(0,el.selectionStart);let m,list=[],start=0;sugAt=false;
+  const el=$('i'),v=el.value.slice(0,el.selectionStart);let m,list=[],start=0;sugAt=false;sugEmoji=false;
   if(m=v.match(/^\/(\w*)$/)){start=1;list=CMDS.filter(c=>c.startsWith(m[1].toLowerCase()))}
   else if(m=v.match(/^\/(ban|unban|mute|unmute|kick|unblock|nick|giverole|deleteuser|gift|switch|banip|unbanip|hwidban|unhwidban|ips)\s+@?(\w*)$/i)){start=v.length-m[2].length;list=names().filter(n=>n.startsWith(m[2].toLowerCase()))}
   else if(m=v.match(/^\/role\s+\S+\s+(\w*)$/i)){start=v.length-m[1].length;list=ROLES.filter(r=>r.startsWith(m[1].toLowerCase()))}
@@ -1489,14 +1507,25 @@ function suggest(){
     const peeps=Object.values(profiles).filter(p=>p.username.startsWith(q)||(p.nickname&&p.nickname.toLowerCase().startsWith(q))).map(p=>p.username);
     list=[...special,...roleNames,...new Set(peeps)];
   }
+  else if(m=v.match(/(?:^|\s):([a-z0-9_+-]{2,})$/i)){
+    const q=m[1].toLowerCase(),keys=Object.keys(emojiMap);
+    list=[...keys.filter(k=>k.startsWith(q)).sort((a,b)=>a.length-b.length||a.localeCompare(b)),...keys.filter(k=>!k.startsWith(q)&&k.includes(q)).sort((a,b)=>a.length-b.length||a.localeCompare(b))].slice(0,12);
+    if(list.length){sugEmoji=true;start=v.length-m[1].length-1}
+  }
   sugList=list.slice(0,40);sugStart=start;if(sugIdx>=sugList.length)sugIdx=0;drawSug();
 }
 function drawSug(){const e=$('sug');if(!sugList.length){e.classList.add('hidden');return}
-  e.classList.remove('hidden');e.innerHTML=sugList.map((x,i)=>`<div onmousedown="pickSug(${i});return false" class="px-2 py-1 rounded cursor-pointer ${i===sugIdx?'bg-[#404249] text-white':'text-[#b5bac1]'}">${sugAt?'@':''}${esc(x)}</div>`).join('');
+  e.classList.remove('hidden');e.innerHTML=sugList.map((x,i)=>`<div onmousedown="pickSug(${i});return false" class="px-2 py-1 rounded cursor-pointer ${i===sugIdx?'bg-[#404249] text-white':'text-[#b5bac1]'}">${sugEmoji?`<span class="inline-block w-6">${emojiMap[x]}</span> :${esc(x)}:`:(sugAt?'@':'')+esc(x)}</div>`).join('');
   const a=e.children[sugIdx];if(a)a.scrollIntoView({block:'nearest'})}
-function pickSug(i){const el=$('i'),b=el.value.slice(0,sugStart),a=el.value.slice(el.selectionStart).trimStart(),w=sugList[i];
+function pickSug(i){const el=$('i'),b=el.value.slice(0,sugStart),a=el.value.slice(el.selectionStart).trimStart(),w=sugEmoji?emojiMap[sugList[i]]:sugList[i];
   el.value=b+w+' '+a;el.focus();const pos=(b+w+' ').length;el.setSelectionRange(pos,pos);sugIdx=0;suggest()}
-$('i').addEventListener('input',()=>{sugIdx=0;suggest()});
+$('i').addEventListener('input',()=>{
+  const el=$('i'),pos=el.selectionStart,v=el.value.slice(0,pos),m=v.match(/(?:^|[^\w:]):([a-z0-9_+-]{1,32}):$/i);
+  if(m&&emojiMap[m[1].toLowerCase()]){
+    const em=emojiMap[m[1].toLowerCase()],b=v.slice(0,v.length-m[1].length-2),rest=el.value.slice(pos);
+    el.value=b+em+rest;const np=(b+em).length;el.setSelectionRange(np,np);
+  }
+  sugIdx=0;suggest()});
 $('i').addEventListener('blur',()=>setTimeout(()=>$('sug').classList.add('hidden'),150));
 $('i').addEventListener('keydown',e=>{
   if(!sugList.length||$('sug').classList.contains('hidden'))return;
