@@ -1747,7 +1747,7 @@ function createGroupPeer(peerId,initiator){
   };
   pcx.onconnectionstatechange=()=>{
     const st=pcx.connectionState;
-    if(st==='connected')keepAwake();
+    if(st==='connected'){keepAwake();if(!pcx._joined){pcx._joined=1;callSound('join')}}
     if(st==='closed'){if(groupPeers[peerId]===pcx)closeGroupPeer(peerId)}
     else if(st==='disconnected'||st==='failed'){
       [0,6000,12000].forEach(ms=>setTimeout(async()=>{
@@ -1780,15 +1780,15 @@ async function handleGroupSignal(msg){
 }
 
 function closeGroupPeer(peerId){
-  const pcx=groupPeers[peerId];if(pcx){pcx.close();delete groupPeers[peerId]}
+  const pcx=groupPeers[peerId];if(pcx){if(!groupLeaving)callSound('leave');pcx.close();delete groupPeers[peerId]}
   delete groupVideoSenders[peerId];
   const a=document.getElementById('ga_'+peerId);if(a){a.srcObject=null;a.remove()}
   removeTile(peerId);
 }
 
 function leaveGroupCall(){
-  releaseAwake();
-  Object.keys(groupPeers).forEach(closeGroupPeer);
+  releaseAwake();callSound('leave');groupLeaving=true;
+  Object.keys(groupPeers).forEach(closeGroupPeer);groupLeaving=false;
   if(groupLocalStream){groupLocalStream.getTracks().forEach(t=>t.stop());groupLocalStream=null}
   if(groupCallCh){sb.removeChannel(groupCallCh);groupCallCh=null}
   resetVideoState();clearAllTiles();
@@ -1926,7 +1926,25 @@ function resetVideoState(){
 const TURN_SERVERS=[];
 const RTC_CONFIG={iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun2.l.google.com:19302']},...TURN_SERVERS],iceCandidatePoolSize:4};
 let ringCh=null,callCh=null,pc=null,localStream=null,activeCallWith=null,callState='idle',incomingFrom=null,muted=false;
-let callIsCaller=false,dropTimer=null,wakeLockObj=null;
+let callIsCaller=false,dropTimer=null,wakeLockObj=null,groupLeaving=false,sfxCtx=null;
+// Discord-style call sounds made in the browser (no audio files needed): 'join' goes up, 'leave' goes down
+function callSound(kind){
+  try{
+    sfxCtx=sfxCtx||new (window.AudioContext||window.webkitAudioContext)();
+    if(sfxCtx.state==='suspended')sfxCtx.resume();
+    const notes=kind==='join'?[[480,0],[660,0.11]]:[[540,0],[360,0.11]];
+    const t0=sfxCtx.currentTime+0.01;
+    notes.forEach(([f,dt])=>{
+      const o=sfxCtx.createOscillator(),g=sfxCtx.createGain();
+      o.type='sine';o.frequency.value=f;
+      g.gain.setValueAtTime(0.0001,t0+dt);
+      g.gain.exponentialRampToValueAtTime(0.2,t0+dt+0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001,t0+dt+0.15);
+      o.connect(g);g.connect(sfxCtx.destination);
+      o.start(t0+dt);o.stop(t0+dt+0.17);
+    });
+  }catch(e){}
+}
 async function keepAwake(){try{if('wakeLock' in navigator&&!wakeLockObj){wakeLockObj=await navigator.wakeLock.request('screen');wakeLockObj.addEventListener('release',()=>{wakeLockObj=null})}}catch(e){}}
 function releaseAwake(){try{if(wakeLockObj)wakeLockObj.release()}catch(e){}wakeLockObj=null}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&(callState==='connected'||groupCallActive))keepAwake()});
@@ -2016,8 +2034,10 @@ function setupPeerConnection(peerId){
   pc.onconnectionstatechange=()=>{
     const st=pc.connectionState,mine=pc;
     if(st==='connected'){
+      const firstTime=callState!=='connected';
       callState='connected';clearTimeout(dropTimer);
       $('calltext').textContent='In call with '+dn(profiles[peerId]);keepAwake();
+      if(firstTime)callSound('join');
     }else if((st==='disconnected'||st==='failed')&&callState!=='idle'){
       // a short drop is normal (wifi blip, network switch). Try to reconnect for 30s before giving up.
       $('calltext').textContent='Connection unstable, reconnecting...';
@@ -2056,7 +2076,8 @@ function toggleMute(){
 function hangupCall(){if(groupCallActive)return leaveGroupCall();if(callCh)callCh.send({type:'broadcast',event:'signal',payload:{type:'hangup',from:me.id}});endCall('Call ended.')}
 
 function endCall(reason){
-  clearTimeout(dropTimer);releaseAwake();
+  const wasOn=callState!=='idle'&&callState!=='ringing-in';
+  clearTimeout(dropTimer);releaseAwake();if(wasOn)callSound('leave');
   if(pc){pc.close();pc=null}
   if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null}
   if(callCh){sb.removeChannel(callCh);callCh=null}
