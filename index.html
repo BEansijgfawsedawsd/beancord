@@ -1983,9 +1983,16 @@ async function toggleCamera(){
     await setLocalVideo(vs.getVideoTracks()[0],'camera');
   }catch(e){alert('Could not access your camera. Check your browser\'s permission settings for this site.')}
 }
+const SCREENSHARE_MIN_RANK=2; // 2 = verified and up. Use 3 for mods and up, 1 to let everyone share.
+async function canScreenShare(){
+  let r=defRole;
+  if(!r){try{const ds=(servers||[]).find(x=>x.is_default);if(ds){const {data}=await sb.from('server_members').select('role').eq('server_id',ds.id).eq('user_id',me.id).maybeSingle();r=data&&data.role}}catch(e){}}
+  return rank(r)>=SCREENSHARE_MIN_RANK;
+}
 async function toggleScreenShare(){
   if(callState==='idle'&&!groupCallActive)return;
   if(videoKind==='screen')return stopLocalVideo();
+  if(!(await canScreenShare()))return alert('Only verified members can share their screen.');
   try{
     const ds=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:{ideal:60,max:60},width:{ideal:1920},height:{ideal:1080}},audio:false});
     const track=ds.getVideoTracks()[0];
