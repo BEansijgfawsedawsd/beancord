@@ -1873,11 +1873,22 @@ async function toggleScreenShare(){
   if(callState==='idle'&&!groupCallActive)return;
   if(videoKind==='screen')return stopLocalVideo();
   try{
-    const ds=await navigator.mediaDevices.getDisplayMedia({video:true});
+    const ds=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:{ideal:60,max:60},width:{ideal:1920},height:{ideal:1080}},audio:false});
     const track=ds.getVideoTracks()[0];
+    try{track.contentHint='motion'}catch(e){} // tells the browser to keep the frame rate smooth instead of shrinking the picture
     track.onended=()=>{if(videoKind==='screen')stopLocalVideo()};
     await setLocalVideo(track,'screen');
   }catch(e){/* person cancelled the share picker */}
+}
+// raise the sending quality: screen shares get up to 60fps / 8 Mbps, camera stays at 30fps
+async function tuneSender(sender,kind){
+  try{
+    const p=sender.getParameters();
+    if(!p.encodings||!p.encodings.length)p.encodings=[{}];
+    if(kind==='screen'){p.encodings[0].maxBitrate=8000000;p.encodings[0].maxFramerate=60;p.degradationPreference='maintain-framerate'}
+    else{p.encodings[0].maxBitrate=2500000;p.encodings[0].maxFramerate=30}
+    await sender.setParameters(p);
+  }catch(e){}
 }
 async function setLocalVideo(track,kind){
   if(myVideoTrack)myVideoTrack.stop();
@@ -1886,13 +1897,13 @@ async function setLocalVideo(track,kind){
   $('camerabtn').classList.toggle('bg-[#5865f2]',kind==='camera');
   $('sharebtn').classList.toggle('bg-[#5865f2]',kind==='screen');
   if(activeCallWith&&pc){
-    if(!videoSender){videoSender=pc.addTrack(track,localStream);await renegotiate(pc,callCh)}
-    else await videoSender.replaceTrack(track);
+    if(!videoSender){videoSender=pc.addTrack(track,localStream);await renegotiate(pc,callCh);const vs0=videoSender;setTimeout(()=>tuneSender(vs0,kind),1500);setTimeout(()=>tuneSender(vs0,kind),5000)}
+    else{await videoSender.replaceTrack(track);tuneSender(videoSender,kind)}
   }else if(groupCallActive){
     for(const pid of Object.keys(groupPeers)){
       const pcx=groupPeers[pid];
-      if(!groupVideoSenders[pid]){groupVideoSenders[pid]=pcx.addTrack(track,groupLocalStream);await renegotiate(pcx,groupCallCh,pid)}
-      else await groupVideoSenders[pid].replaceTrack(track);
+      if(!groupVideoSenders[pid]){groupVideoSenders[pid]=pcx.addTrack(track,groupLocalStream);await renegotiate(pcx,groupCallCh,pid);const gs0=groupVideoSenders[pid];setTimeout(()=>tuneSender(gs0,kind),1500);setTimeout(()=>tuneSender(gs0,kind),5000)}
+      else{await groupVideoSenders[pid].replaceTrack(track);tuneSender(groupVideoSenders[pid],kind)}
     }
   }
 }
