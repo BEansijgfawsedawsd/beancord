@@ -1611,7 +1611,7 @@ function editChannel(id){openChannelForm(id)}
 function openChannelForm(id){
   chEditing=id;const c=id?channels.find(x=>x.id===id):null;if(id&&!c)return;
   const cats=[...new Set(channels.map(x=>x.category).filter(Boolean))];
-  const ranks='<option value="1">Everyone</option><option value="2">Verified and up</option><option value="3">Mods and up</option><option value="4">Admins and up</option><option value="5">Managers and up</option>';
+  const ranks='<option value="1">Everyone</option><option value="2">Verified and up</option><option value="3">Mods and up</option><option value="4">Admins and up</option><option value="5">Managers and up</option><option value="6">Co-owners and up</option><option value="7">Owner only</option>';
   $('vpc').innerHTML=`<div class="flex items-center justify-between mb-3"><h3 class="font-bold text-white">${c?'Edit channel':'New channel'}</h3><button onclick="closeVp()" class="text-[#949ba4] hover:text-white">✕</button></div>
   <div class="space-y-3">
    <label class="${FLD_LBL}">Channel name<input id="cf_name" maxlength="30" placeholder="general-chat" class="${FLD_INP}"><span class="block normal-case font-normal text-[#80848e] mt-1">Shown as #<span id="cf_shown"></span></span></label>
@@ -1634,9 +1634,12 @@ async function saveChannelForm(){
   const msg=x=>{$('cf_msg').textContent=x};
   const name=String($('cf_name').value).trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
   if(!name)return msg('Give the channel a name (letters and numbers).');
-  const rd=parseInt($('cf_read').value,10),po=Math.max(parseInt($('cf_post').value,10),rd);
+  const ec=chEditing?channels.find(x=>x.id===chEditing):null;
+  const rdRaw=parseInt($('cf_read').value,10),poRaw=parseInt($('cf_post').value,10);
+  const rd=Number.isNaN(rdRaw)?((ec&&ec.min_read_rank)||1):rdRaw; // a blank box keeps the channel's old setting instead of saving nothing
+  const po=Math.max(Number.isNaN(poRaw)?((ec&&ec.min_post_rank)||1):poRaw,rd);
   const f={name,topic:$('cf_topic').value.trim(),category:$('cf_cat').value.trim()||null,slow_seconds:Math.max(0,parseInt($('cf_slow').value,10)||0),min_read_rank:rd,min_post_rank:po};
-  const isVoice=$('cf_voice').checked;const ec=chEditing?channels.find(x=>x.id===chEditing):null;
+  const isVoice=$('cf_voice').checked;
   if(isVoice||(ec&&ec.is_voice!==undefined))f.is_voice=isVoice; // only sent once the voice_channels.sql column exists
   let error;
   if(chEditing){({error}=await sb.from('channels').update(f).eq('id',chEditing))}
