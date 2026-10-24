@@ -1745,7 +1745,19 @@ function createGroupPeer(peerId,initiator){
       a.srcObject=e.streams[0];
     }
   };
-  pcx.onconnectionstatechange=()=>{if(['failed','disconnected','closed'].includes(pcx.connectionState))closeGroupPeer(peerId)};
+  pcx.onconnectionstatechange=()=>{
+    const st=pcx.connectionState;
+    if(st==='connected')keepAwake();
+    if(st==='closed'){if(groupPeers[peerId]===pcx)closeGroupPeer(peerId)}
+    else if(st==='disconnected'||st==='failed'){
+      [0,6000,12000].forEach(ms=>setTimeout(async()=>{
+        if(groupPeers[peerId]!==pcx||pcx.connectionState==='connected'||!initiator||pcx.signalingState!=='stable')return;
+        try{const o=await pcx.createOffer({iceRestart:true});await pcx.setLocalDescription(o);
+          groupCallCh.send({type:'broadcast',event:'signal',payload:{type:'offer',sdp:o,from:me.id,to:peerId}})}catch(e){}
+      },ms));
+      setTimeout(()=>{if(groupPeers[peerId]===pcx&&pcx.connectionState!=='connected')closeGroupPeer(peerId)},30000);
+    }
+  };
   if(initiator){
     pcx.createOffer().then(o=>pcx.setLocalDescription(o).then(()=>
       groupCallCh.send({type:'broadcast',event:'signal',payload:{type:'offer',sdp:o,from:me.id,to:peerId}})
@@ -1775,6 +1787,7 @@ function closeGroupPeer(peerId){
 }
 
 function leaveGroupCall(){
+  releaseAwake();
   Object.keys(groupPeers).forEach(closeGroupPeer);
   if(groupLocalStream){groupLocalStream.getTracks().forEach(t=>t.stop());groupLocalStream=null}
   if(groupCallCh){sb.removeChannel(groupCallCh);groupCallCh=null}
@@ -1897,8 +1910,20 @@ function resetVideoState(){
 }
 
 // ===== DM voice calls (phase 1: one-to-one only) =====
-const RTC_CONFIG={iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']}]};
+// TURN relay: paste yours here to stop long calls dropping on tricky networks (see notes). Example:
+// const TURN_SERVERS=[{urls:'turn:YOUR-TURN-HOST:443?transport=tcp',username:'USER',credential:'PASSWORD'}];
+const TURN_SERVERS=[];
+const RTC_CONFIG={iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun2.l.google.com:19302']},...TURN_SERVERS],iceCandidatePoolSize:4};
 let ringCh=null,callCh=null,pc=null,localStream=null,activeCallWith=null,callState='idle',incomingFrom=null,muted=false;
+let callIsCaller=false,dropTimer=null,wakeLockObj=null;
+async function keepAwake(){try{if('wakeLock' in navigator&&!wakeLockObj){wakeLockObj=await navigator.wakeLock.request('screen');wakeLockObj.addEventListener('release',()=>{wakeLockObj=null})}}catch(e){}}
+function releaseAwake(){try{if(wakeLockObj)wakeLockObj.release()}catch(e){}wakeLockObj=null}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&(callState==='connected'||groupCallActive))keepAwake()});
+async function iceRestart(){
+  if(!pc||!callCh||callState==='idle'||pc.signalingState!=='stable')return;
+  try{const offer=await pc.createOffer({iceRestart:true});await pc.setLocalDescription(offer);
+    callCh.send({type:'broadcast',event:'signal',payload:{type:'offer',sdp:offer,from:me.id}})}catch(e){console.error('ICE restart failed',e)}
+}
 
 function ringChannel(){return sb.channel('ring-'+me.id).on('broadcast',{event:'signal'},p=>handleRingSignal(p.payload)).subscribe()}
 function pairKey(a,b){return 'call-'+[a,b].sort().join('-')}
@@ -1922,7 +1947,7 @@ async function startCall(){
   const target=cur.id;
   try{localStream=await navigator.mediaDevices.getUserMedia({audio:true})}
   catch(e){return alert('Could not access your microphone. Check your browser\'s permission settings for this site.')}
-  activeCallWith=target;callState='calling';
+  activeCallWith=target;callState='calling';callIsCaller=true;
   $('callbtn').classList.add('hidden');
   $('calltext').textContent='Calling '+dn(profiles[target])+'...';$('callbar').classList.remove('hidden');
   setupPeerConnection(target);
@@ -1949,7 +1974,7 @@ async function acceptCall(){
   const target=incomingFrom;$('ringbanner').classList.add('hidden');
   try{localStream=await navigator.mediaDevices.getUserMedia({audio:true})}
   catch(e){alert('Could not access your microphone.');declineCall();return}
-  activeCallWith=target;callState='connecting';
+  activeCallWith=target;callState='connecting';callIsCaller=false;
   $('calltext').textContent='Connecting to '+dn(profiles[target])+'...';$('callbar').classList.remove('hidden');
   setupPeerConnection(target);
   callCh=sb.channel(pairKey(me.id,target),{config:{presence:{key:me.id}}});
@@ -1978,14 +2003,27 @@ function setupPeerConnection(peerId){
     }
   };
   pc.onconnectionstatechange=()=>{
-    if(pc.connectionState==='connected'){callState='connected';$('calltext').textContent='In call with '+dn(profiles[peerId]);}
-    else if(['failed','disconnected','closed'].includes(pc.connectionState)&&callState!=='idle'){endCall('Call ended.')}
+    const st=pc.connectionState,mine=pc;
+    if(st==='connected'){
+      callState='connected';clearTimeout(dropTimer);
+      $('calltext').textContent='In call with '+dn(profiles[peerId]);keepAwake();
+    }else if((st==='disconnected'||st==='failed')&&callState!=='idle'){
+      // a short drop is normal (wifi blip, network switch). Try to reconnect for 30s before giving up.
+      $('calltext').textContent='Connection unstable, reconnecting...';
+      clearTimeout(dropTimer);
+      [0,6000,12000,18000].forEach(ms=>setTimeout(()=>{if(pc===mine&&mine.connectionState!=='connected')iceRestart()},ms));
+      dropTimer=setTimeout(()=>{if(pc===mine&&callState!=='idle'&&mine.connectionState!=='connected')endCall('Call ended: connection lost.')},30000);
+    }else if(st==='closed'&&callState!=='idle'&&pc===mine){endCall('Call ended.')}
   };
 }
 
 async function handleCallSignal(msg){
   if(!pc)return;
   if(msg.type==='offer'){
+    if(pc.signalingState!=='stable'){
+      if(callIsCaller)return; // both sent an offer at once: the caller's wins
+      try{await pc.setLocalDescription({type:'rollback'})}catch(e){}
+    }
     await pc.setRemoteDescription(msg.sdp);
     const answer=await pc.createAnswer();await pc.setLocalDescription(answer);
     callCh.send({type:'broadcast',event:'signal',payload:{type:'answer',sdp:answer,from:me.id}});
@@ -2007,6 +2045,7 @@ function toggleMute(){
 function hangupCall(){if(groupCallActive)return leaveGroupCall();if(callCh)callCh.send({type:'broadcast',event:'signal',payload:{type:'hangup',from:me.id}});endCall('Call ended.')}
 
 function endCall(reason){
+  clearTimeout(dropTimer);releaseAwake();
   if(pc){pc.close();pc=null}
   if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null}
   if(callCh){sb.removeChannel(callCh);callCh=null}
