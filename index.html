@@ -1004,7 +1004,7 @@ function closeLeftMobile(){$('leftcol').classList.remove('open');$('backdrop').c
   function closeMem(){$('mem').classList.remove('mopen');$('backdrop2').classList.add('hidden')}
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clean=u=>u.toLowerCase().replace(/[^a-z0-9_]/g,'');
-const RANK={owner:8,alter:7,coowner:6,manager:5,admin:4,goodgirl:4,mod:3,verified:2,member:1},BADGE={owner:'bg-[#8b5a2b]',coowner:'bg-amber-500 !text-black',alter:'bg-fuchsia-500',manager:'bg-lime-400 !text-black',admin:'bg-red-600',goodgirl:'bg-pink-500',mod:'bg-green-600',verified:'bg-sky-500',member:'bg-[#4e5058]'};
+const RANK={owner:7,coowner:6,alter:6,manager:5,admin:4,goodgirl:4,mod:3,verified:2,member:1},BADGE={owner:'bg-[#8b5a2b]',coowner:'bg-amber-500 !text-black',alter:'bg-fuchsia-500',manager:'bg-lime-400 !text-black',admin:'bg-red-600',goodgirl:'bg-pink-500',mod:'bg-green-600',verified:'bg-sky-500',member:'bg-[#4e5058]'};
 const rank=r=>RANK[r]||1;
 const dn=p=>(p&&p.nickname)||(p&&p.username)||'unknown';
 let friends=[];
@@ -1125,7 +1125,7 @@ function drawMembers(){
   members.forEach(m=>{
     const custom=m.custom_role?croles.find(r=>r.id===m.custom_role):null;
     const key=custom?('c_'+custom.id):('b_'+m.role);
-    if(!groupsMap[key])groupsMap[key]={key,label:custom?custom.name:m.role.charAt(0).toUpperCase()+m.role.slice(1),color:custom?custom.color:null,rankVal:(!custom&&m.role==='alter')?5.9:rank(custom?custom.base:m.role),pos:custom?(custom.position||0):0,items:[]};
+    if(!groupsMap[key])groupsMap[key]={key,label:custom?custom.name:m.role.charAt(0).toUpperCase()+m.role.slice(1),color:custom?custom.color:null,rankVal:rank(custom?custom.base:m.role),pos:custom?(custom.position||0):0,items:[]};
     groupsMap[key].items.push(m);
   });
   const groups=Object.values(groupsMap).sort((ga,gb)=>gb.rankVal-ga.rankVal||gb.pos-ga.pos||ga.label.localeCompare(gb.label));
@@ -1650,7 +1650,7 @@ function editChannel(id){openChannelForm(id)}
 function openChannelForm(id){
   chEditing=id;const c=id?channels.find(x=>x.id===id):null;if(id&&!c)return;
   const cats=[...new Set(channels.map(x=>x.category).filter(Boolean))];
-  const ranks='<option value="1">Everyone</option><option value="2">Verified and up</option><option value="3">Mods and up</option><option value="4">Admins and up</option><option value="5">Managers and up</option><option value="6">Co-owners and up</option><option value="7">Alter and up</option><option value="8">Owner only</option>';
+  const ranks='<option value="1">Everyone</option><option value="2">Verified and up</option><option value="3">Mods and up</option><option value="4">Admins and up</option><option value="5">Managers and up</option><option value="6">Co-owners and up</option><option value="7">Owner only</option>';
   $('vpc').innerHTML=`<div class="flex items-center justify-between mb-3"><h3 class="font-bold text-white">${c?'Edit channel':'New channel'}</h3><button onclick="closeVp()" class="text-[#949ba4] hover:text-white">✕</button></div>
   <div class="space-y-3">
    <label class="${FLD_LBL}">Channel name<input id="cf_name" maxlength="30" placeholder="general-chat" class="${FLD_INP}"><span class="block normal-case font-normal text-[#80848e] mt-1">Shown as #<span id="cf_shown"></span></span></label>
@@ -2801,7 +2801,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('web').classList
 start();
 
 // ===== staff role changing, username/password changer, reset password =====
-const RESET_MIN_RANK=8; // 8 = owner only. Must match RESET_MIN_RANK in the account-tools edge function.
+const RESET_MIN_RANK=7; // 7 = owner only. Must match RESET_MIN_RANK in the account-tools edge function.
 const USERNAME_COOLDOWN_DAYS=7;
 const canChangeRole=u=>!!srvId&&u!==me.id&&rank(myRole())>=4&&rank(roles[u])<rank(myRole())&&roles[u]!=='owner';
 const canResetPw=u=>u!==me.id&&rank(myRole())>=RESET_MIN_RANK&&rank(roles[u])<rank(myRole());
