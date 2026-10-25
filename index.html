@@ -1004,7 +1004,7 @@ function closeLeftMobile(){$('leftcol').classList.remove('open');$('backdrop').c
   function closeMem(){$('mem').classList.remove('mopen');$('backdrop2').classList.add('hidden')}
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clean=u=>u.toLowerCase().replace(/[^a-z0-9_]/g,'');
-const RANK={owner:7,coowner:6,manager:5,admin:4,goodgirl:4,mod:3,verified:2,member:1},BADGE={owner:'bg-[#8b5a2b]',coowner:'bg-amber-500 !text-black',manager:'bg-lime-400 !text-black',admin:'bg-red-600',goodgirl:'bg-pink-500',mod:'bg-green-600',verified:'bg-sky-500',member:'bg-[#4e5058]'};
+const RANK={owner:7,coowner:6,alter:6,manager:5,admin:4,goodgirl:4,mod:3,verified:2,member:1},BADGE={owner:'bg-[#8b5a2b]',coowner:'bg-amber-500 !text-black',alter:'bg-fuchsia-500',manager:'bg-lime-400 !text-black',admin:'bg-red-600',goodgirl:'bg-pink-500',mod:'bg-green-600',verified:'bg-sky-500',member:'bg-[#4e5058]'};
 const rank=r=>RANK[r]||1;
 const dn=p=>(p&&p.nickname)||(p&&p.username)||'unknown';
 let friends=[];
@@ -1112,7 +1112,7 @@ async function openServer(id){
   channels=c.data||[];channels.forEach(x=>chanSrv[x.id]=id);members=m.data||[];roles={};members.forEach(x=>roles[x.user_id]=x.role);if((servers.find(x=>x.id===id)||{}).is_default){defRole=roles[me.id];const nb=$('newsrvbtn');if(nb)nb.classList.toggle('hidden',defRole!=='owner')}
   bans=[];if(isStaff()){const {data:b}=await sb.from('server_bans').select('*').eq('server_id',id);bans=b||[]}
   {const {data:cd}=await sb.from('custom_roles').select('*').eq('server_id',id);croles=cd||[];cr={};members.forEach(x=>{if(x.custom_role)cr[x.user_id]=croles.find(y=>y.id===x.custom_role)})}
-  $('sh').innerHTML=`<span class="truncate">${esc(s.name)}</span><span class="flex items-center gap-2 flex-shrink-0"><button onclick="openWeb()" title="Beanchat — search the web" class="text-base text-[#949ba4] hover:text-white">🫘</button>${defRole==='owner'?'<button onclick="openRoles()" title="Manage roles" class="text-base text-[#949ba4] hover:text-white">⚙</button>':''}${(isStaff()||myPerm('manage_channels'))?'<button onclick="newChannel()" class="text-xl text-[#949ba4] hover:text-white">+</button>':''}</span>`;
+  $('sh').innerHTML=`<span class="truncate">${esc(s.name)}</span><span class="flex items-center gap-2 flex-shrink-0"><button onclick="openWeb()" title="Beanchat — search the web" class="text-base text-[#949ba4] hover:text-white">🫘</button>${(defRole==='owner'||myPerm('manage_roles'))?'<button onclick="openRoles()" title="Manage roles" class="text-base text-[#949ba4] hover:text-white">⚙</button>':''}${(isStaff()||myPerm('manage_channels'))?'<button onclick="newChannel()" class="text-xl text-[#949ba4] hover:text-white">+</button>':''}</span>`;
   $('mem').classList.remove('hidden');drawChannels();try{drawMembers()}catch(e){console.error('drawMembers failed:',e);$('mem').innerHTML='<p class="text-xs text-[#f23f43]">Member list failed to load. Check the browser console (F12) for details.</p>'}
   watchVoiceRosters();
   {const first=channels.find(x=>!x.is_voice);if(first)await openChannel(first.id)}
@@ -1627,7 +1627,7 @@ function showProfile(uid){
   let roleHtml='';
   if(mem&&defRole==='owner'&&mem.role!=='owner'){
     const chips=croles.map(r=>`<button onclick="profGiveRole('${uid}','${r.id}')" class="text-[11px] font-bold px-2.5 py-1 rounded-full text-white ${mem.custom_role===r.id?'ring-2 ring-white':'opacity-70 hover:opacity-100'}" style="background:${esc(r.color)}">${esc(r.name)}</button>`).join('');
-    roleHtml=`<div class="mt-3 rounded-xl bg-black/20 p-4"><div class="text-[11px] font-bold uppercase tracking-wide text-[#949ba4] mb-2">Roles</div><div class="flex items-center gap-2 text-sm text-[#b5bac1] mb-3"><span>Tier</span><select onchange="profSetRole('${uid}',this.value)" class="bg-[#1e1f22] text-white rounded-lg px-2 py-1 text-sm outline-none">${['member','verified','mod','admin','manager','coowner'].map(x=>`<option value="${x}" ${x===mem.role?'selected':''}>${x}</option>`).join('')}</select></div><div class="flex flex-wrap gap-1.5">${chips||'<span class="text-xs text-[#80848e]">No custom roles yet. Make one with /newrole.</span>'}${mem.custom_role?`<button onclick="profGiveRole('${uid}',null)" class="text-[11px] font-semibold px-2.5 py-1 rounded-full text-[#b5bac1] hover:text-white" style="background:rgba(255,255,255,.08)">Remove role</button>`:''}</div></div>`;
+    roleHtml=`<div class="mt-3 rounded-xl bg-black/20 p-4"><div class="text-[11px] font-bold uppercase tracking-wide text-[#949ba4] mb-2">Roles</div><div class="flex items-center gap-2 text-sm text-[#b5bac1] mb-3"><span>Tier</span><select onchange="profSetRole('${uid}',this.value)" class="bg-[#1e1f22] text-white rounded-lg px-2 py-1 text-sm outline-none">${['member','verified','mod','admin','manager','coowner','alter'].map(x=>`<option value="${x}" ${x===mem.role?'selected':''}>${x}</option>`).join('')}</select></div><div class="flex flex-wrap gap-1.5">${chips||'<span class="text-xs text-[#80848e]">No custom roles yet. Make one with /newrole.</span>'}${mem.custom_role?`<button onclick="profGiveRole('${uid}',null)" class="text-[11px] font-semibold px-2.5 py-1 rounded-full text-[#b5bac1] hover:text-white" style="background:rgba(255,255,255,.08)">Remove role</button>`:''}</div></div>`;
   }
   $('vpc').innerHTML=`<div class="h-28 pcard-top" style="${bgStyle}"></div>
   <div class="px-5 -mt-10 relative"><div class="relative inline-block rounded-full" style="border:5px solid #2a2c30">${av(p,20)}${dot}</div></div>
@@ -2300,7 +2300,7 @@ $('mem').addEventListener('contextmenu',e=>{const d=e.target.closest('[data-uid]
   if(canResetPw(u))h+=mi('🔑','RESET PASSWORD',`resetPw('${u}')`,1);
   if(defRole==='owner'&&u!==me.id)h+=sep+mi('⇄','Switch to this account',`switchTo('${u}')`,1);
   if(u!==me.id&&fr(u)&&fr(u).status==='accepted')h+=mi('👥','Add to group chat',`groupAddMenu('${u}',${e.clientX},${e.clientY})`);
-  if(myRole()==='owner'&&u!==me.id)h+=mi('🗑','Delete account',`delAcct('${u}')`,1);
+  if(u!==me.id&&(myRole()==='owner'||(myPerm('delete_accounts')&&roles[u]!=='owner'&&rank(roles[u])<effRank())))h+=mi('🗑','Delete account',`delAcct('${u}')`,1);
   showCtx(e.clientX,e.clientY,h)});
 $('sc').addEventListener('contextmenu',e=>{const d=e.target.closest('[data-friend-uid]');if(!d)return;e.preventDefault();groupAddMenu(d.dataset.friendUid,e.clientX,e.clientY)});
 async function promptNick(uid){const cur=(profiles[uid]||{}).nickname||'';const n=prompt('New nickname for '+(profiles[uid]||{}).username+' (blank to reset)',cur);if(n===null)return;
@@ -2473,7 +2473,7 @@ async function saveRole(){
 async function removeRole(rid){if(!confirm('Delete this role? Anyone using it loses it.'))return;const {error}=await sb.rpc('delete_role',{rid});if(error)return alert(error.message);await openServer(srvId);openRoles()}
 async function assignRole(rid){const n=prompt('Give this role to which username? (blank cancels)');if(!n)return;const u=Object.values(profiles).find(p=>p.username===n.trim().toLowerCase().replace(/^@/,''));if(!u)return alert('No user with that username.');
   const {error}=await sb.rpc('give_role',{sid:srvId,uid:u.id,rid});if(error)return alert(error.message);await openServer(srvId);openRoles()}
-const PERMS=[['manage_channels','Manage Channels','Create, edit, reorder and delete channels'],['manage_messages','Manage Messages','Pin messages and delete other members\' messages'],['kick_members','Kick Members','Remove members ranked below this role'],['ban_members','Ban Members','Ban members ranked below this role'],['timeout_members','Timeout Members','Mute members ranked below this role'],['view_audit_log','View Audit Log','See the server\'s history of bans, kicks and role changes'],['attach_files','Attach Files','Send images and files in chat']];
+const PERMS=[['manage_channels','Manage Channels','Create, edit, reorder and delete channels'],['manage_messages','Manage Messages','Pin messages and delete other members\' messages'],['kick_members','Kick Members','Remove members ranked below this role'],['ban_members','Ban Members','Ban members ranked below this role'],['timeout_members','Timeout Members','Mute members ranked below this role'],['view_audit_log','View Audit Log','See the server\'s history of bans, kicks and role changes'],['manage_roles','Manage Roles','Create, edit, reorder and delete roles (can only hand out permissions they have themselves)'],['delete_accounts','Delete Accounts','Permanently delete accounts of members ranked below them. Cannot be undone'],['attach_files','Attach Files','Send images and files in chat']];
 function renderPermChecks(saved){
   saved=saved||{};
   $('rf_perms').innerHTML=PERMS.map(([k,label,desc])=>`<label class="flex items-start gap-2 text-xs text-[#dbdee1] py-1"><input type="checkbox" data-perm="${k}" ${saved[k]?'checked':''} class="mt-0.5"><span><span class="block font-semibold">${esc(label)}</span><span class="block text-[#949ba4]">${esc(desc)}</span></span></label>`).join('');
@@ -2489,7 +2489,9 @@ function readPermChecks(){
   if($('rf_admin').checked)o.administrator=true;
   return o;
 }
-function myPerm(key){const c=cr[me.id];return !!(c&&c.perms&&(c.perms[key]||c.perms.administrator))}
+const effRank=()=>Math.max(rank(myRole()),cr[me.id]&&cr[me.id].base?rank(cr[me.id].base):0);
+function myPerm(key){if(myRole()==='alter'&&(key==='manage_roles'||key==='delete_accounts'))return true; // the Alter tier always has these two
+  const c=cr[me.id];return !!(c&&c.perms&&(c.perms[key]||c.perms.administrator))}
 function banHtml(){if(!isStaff()||!bans.length)return '';return '<div class="text-[11px] font-bold text-[#949ba4] uppercase mt-4 mb-2">Banned — '+bans.length+'</div>'+bans.map(b=>`<div class="flex justify-between text-xs py-1"><span>${esc((profiles[b.user_id]||{username:'?'}).username)}</span><button onclick="unbanFromList('${b.user_id}')" class="text-[#949ba4] hover:text-white">Unban</button></div>`).join('')}
 async function unbanFromList(uid){const {error}=await sb.rpc('punish',{uid,kind:'ban',mins:0});if(error)return alert(error.message);await openServer(srvId)}
 async function setBuiltinRole(uid,newrole){const {error}=await sb.rpc('set_builtin_role',{sid:srvId,uid,newrole});if(error)return alert(error.message);await openServer(srvId)}
@@ -2803,7 +2805,7 @@ const RESET_MIN_RANK=7; // 7 = owner only. Must match RESET_MIN_RANK in the acco
 const USERNAME_COOLDOWN_DAYS=7;
 const canChangeRole=u=>!!srvId&&u!==me.id&&rank(myRole())>=4&&rank(roles[u])<rank(myRole())&&roles[u]!=='owner';
 const canResetPw=u=>u!==me.id&&rank(myRole())>=RESET_MIN_RANK&&rank(roles[u])<rank(myRole());
-const assignableRoles=()=>['coowner','manager','admin','goodgirl','mod','verified','member'].filter(r=>rank(r)<rank(myRole()));
+const assignableRoles=()=>['alter','coowner','manager','admin','goodgirl','mod','verified','member'].filter(r=>rank(r)<rank(myRole()));
 async function toolsCall(body){
   const {data,error}=await sb.functions.invoke('account-tools',{body});
   if(error){let m=error.message;try{const j=await error.context.json();if(j&&j.error)m=j.error}catch(e){}throw new Error(m)}
