@@ -1174,10 +1174,14 @@ function resetVideoState(){
 // ===== DM voice calls (phase 1: one-to-one only) =====
 // TURN relay: paste yours here to stop long calls dropping on tricky networks (see notes). Example:
 // const TURN_SERVERS=[{urls:'turn:YOUR-TURN-HOST:443?transport=tcp',username:'USER',credential:'PASSWORD'}];
-const TURN_SERVERS=[];
-// Paste a credentials URL here to enable calls across strict NATs / mobile data. Metered's looks like
+const TURN_SERVERS=[
+  {urls:'turn:global.relay.metered.ca:80',username:'4e236e760e5e1ac9bb788c35',credential:'fdMQsvk2hFyLbOdg'},
+  {urls:'turn:global.relay.metered.ca:80?transport=tcp',username:'4e236e760e5e1ac9bb788c35',credential:'fdMQsvk2hFyLbOdg'},
+  {urls:'turn:global.relay.metered.ca:443',username:'4e236e760e5e1ac9bb788c35',credential:'fdMQsvk2hFyLbOdg'},
+  {urls:'turns:global.relay.metered.ca:443?transport=tcp',username:'4e236e760e5e1ac9bb788c35',credential:'fdMQsvk2hFyLbOdg'},
+];// Paste a credentials URL here to enable calls across strict NATs / mobile data. Metered's looks like
 // https://YOURAPP.metered.live/api/v1/turn/credentials?apiKey=KEY  (returns a JSON array of iceServers).
-const TURN_CRED_URL='';
+const TURN_CRED_URL='https://beanchat.metered.live/api/v1/turn/credentials?apiKey=c7db76cda60c1d9bbd59ca69d7dc5b3b0ebf';
 async function loadTurn(){if(!TURN_CRED_URL)return;try{const r=await fetch(TURN_CRED_URL);const a=await r.json();if(Array.isArray(a))RTC_CONFIG.iceServers.push(...a)}catch(e){console.warn('TURN credentials not loaded',e)}}
 const RTC_CONFIG={iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun2.l.google.com:19302']},...TURN_SERVERS],iceCandidatePoolSize:4};
 let ringCh=null,callCh=null,pc=null,localStream=null,activeCallWith=null,callState='idle',incomingFrom=null,muted=false;
