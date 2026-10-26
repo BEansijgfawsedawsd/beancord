@@ -403,6 +403,7 @@ setInterval(()=>{try{if(callState==='ringing-in')buzz(0.5);else if(callState==='
 setInterval(async()=>{if(!me||$('app').classList.contains('hidden'))return;try{const {data}=await sb.from('profiles').select('banned_until,muted_until').eq('id',me.id).single();if(!data)return;const wasB=until(me,'banned_until'),wasM=until(me,'muted_until');me={...me,...data};profiles[me.id]=me;if((until(me,'banned_until')&&!wasB)||(until(me,'muted_until')&&!wasM))location.reload()}catch(e){}},30000);
 function listen(){
   rt=sb.channel('live')
+   .on('postgres_changes',{event:'INSERT',schema:'public',table:'app_signals'},p=>{if(p.new&&p.new.kind==='reload'&&Date.now()-new Date(p.new.created_at)<120000)setTimeout(()=>location.reload(),400+Math.random()*2500)})
    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'profiles',filter:'id=eq.'+me.id},p=>{
      const wasB=until(me,'banned_until'),wasM=until(me,'muted_until');
      me={...me,...p.new};profiles[me.id]=me;
@@ -542,6 +543,7 @@ async function runCmd(line){
   if(cmd==='delserver')return sys('/delserver has been retired. Right-click a server icon and choose Delete server instead.');
   if(cmd==='auditlog'){if(!srvId)return sys('Open a server first.');const {data,error}=await sb.from('audit_log').select('*').eq('server_id',srvId).order('created_at',{ascending:false}).limit(20);if(error)return sys(error.message);if(!data.length)return sys('No audit log entries yet.');data.forEach(e=>{const a=profiles[e.actor],t=profiles[e.target];sys((a?a.username:'someone')+' '+e.action+(t?' '+t.username:'')+(e.detail?' ('+e.detail+')':'')+' — '+new Date(e.created_at).toLocaleString())});return;}
   if(cmd==='iplog'){const {data,error}=await sb.rpc('get_ip_log_all',{lim:30});if(error)return sys(error.message);if(!data.length)return sys('No log entries yet.');data.forEach(r=>sys((r.success?'✓':'✗')+' '+r.action+' "'+r.username_tried+'" from '+r.ip+' — '+new Date(r.created_at).toLocaleString()));return;}
+  if(cmd==='reload'){if(!(await askConfirm('Reload the page for everyone online right now?')))return;const {error}=await sb.from('app_signals').insert({kind:'reload'});return sys(error?(/app_signals|permission|policy/i.test(error.message)?'Only owners and co-owners can do this (and setup/punishments.sql must be run).':error.message):'Reload sent.')}
   if(cmd==='reports')return showReports();const u=Object.values(profiles).find(p=>p.username===(name||'').toLowerCase().replace(/^@/,''));
   if(!u)return sys('No user named "'+(name||'')+'". Usage: /'+cmd+' username');
   if(['ban','unban','mute','unmute'].includes(cmd)){
@@ -1801,7 +1803,7 @@ async function sendGift(){
 
 // ===== BeanBot =====
 const BOT_FN='beanbot'; // name of the Supabase edge function that runs BeanBot
-const STAFF_CMDS=new Set(['help','bold','newrole','delrole','banword','unbanword','banwords','delserver','auditlog','iplog','reports','ban','unban','mute','unmute','nick','giverole','deleteuser','banip','hwidban','unhwidban','unbanip','ips','alts','gift','switch','unblock','kick','role']);
+const STAFF_CMDS=new Set(['help','bold','newrole','delrole','banword','unbanword','banwords','delserver','auditlog','iplog','reports','reload','ban','unban','mute','unmute','nick','giverole','deleteuser','banip','hwidban','unhwidban','unbanip','ips','alts','gift','switch','unblock','kick','role']);
 async function botCall(cmd,line){
   if(!cmd)return sys('Type /help to see the commands.');
   if(cur.type!=='ch')return sys('BeanBot commands only work in server channels.');
