@@ -10,6 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="tailwind.css">
+<style>.spoiler{background:#1e1f22;color:transparent;border-radius:4px;padding:0 3px;cursor:pointer;user-select:none}.spoiler.shown{background:#3f4147;color:inherit;user-select:auto;cursor:text}.bq{display:block;border-left:4px solid #4e5058;padding-left:10px;margin:2px 0}</style>
 </head>
 <body class="bg-[#313338] text-[#dbdee1] h-screen overflow-hidden">
 
@@ -43,7 +44,7 @@
   <div id="sc" class="flex-1 overflow-y-auto p-2 space-y-0.5"></div>
   <div class="bg-[#232428] px-3 py-2.5 flex flex-col gap-1.5">
    <span id="me" class="font-bold text-white text-sm truncate"></span>
-   <span class="flex justify-between"><button onclick="openShop()" class="text-xs text-[#949ba4] hover:text-white">Shop</button><button onclick="openProfile()" class="text-xs text-[#949ba4] hover:text-white">Profile</button><button onclick="togglePush()" title="Notifications when BEANCORD is closed" class="text-xs text-[#949ba4] hover:text-white">Alerts</button><button onclick="logout()" class="text-xs text-[#949ba4] hover:text-[#f23f43]">Log out</button></span>
+   <span class="flex justify-between"><button onclick="openSwitcher()" title="Quick switcher (Ctrl+K)" class="text-xs text-[#949ba4] hover:text-white">Jump</button><button onclick="openShop()" class="text-xs text-[#949ba4] hover:text-white">Shop</button><button onclick="openProfile()" class="text-xs text-[#949ba4] hover:text-white">Profile</button><button onclick="togglePush()" title="Notifications when BEANCORD is closed" class="text-xs text-[#949ba4] hover:text-white">Alerts</button><button onclick="logout()" class="text-xs text-[#949ba4] hover:text-[#f23f43]">Log out</button></span>
   </div>
  </div>
  </div>
@@ -69,6 +70,7 @@
    <div class="flex items-center justify-center gap-2 bg-[#1e1f22] rounded-full px-3 py-2 mx-auto w-fit">
     <span id="calltext" class="text-xs text-[#949ba4] px-1 hidden sm:inline">Calling...</span>
     <button id="mutebtn" onclick="toggleMute()" title="Mute" class="w-9 h-9 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white flex items-center justify-center">🎤</button>
+    <button id="pttbtn" onclick="togglePtt()" oncontextmenu="pttSetKey(event)" title="Push to talk (right-click to choose the key)" class="w-9 h-9 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white flex items-center justify-center">🗣️</button>
     <button id="deafenbtn" onclick="toggleDeafen()" title="Deafen" class="w-9 h-9 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white flex items-center justify-center">🎧</button>
     <button id="camerabtn" onclick="toggleCamera()" title="Camera" class="w-9 h-9 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white flex items-center justify-center">📷</button>
     <button id="sharebtn" onclick="toggleScreenShare()" title="Share screen" class="w-9 h-9 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white flex items-center justify-center">🖥️</button>
@@ -163,4 +165,6 @@
 </div></div>
 
 <script src="app.js"></script>
+<script src="automod.js"></script>
+<script src="features.js"></script>
 </body></html>
