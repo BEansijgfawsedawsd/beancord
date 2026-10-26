@@ -1,6 +1,6 @@
 // ===== BEANCORD feature pack: loaded after app.js, uses its globals =====
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-const GIPHY_KEY='WBTOtCOWBWZnT0OEYbeXXXqXNLvcQKBj';        // free key from developers.giphy.com; leave empty to hide the GIF button
+const GIPHY_KEY='';        // free key from developers.giphy.com; leave empty to hide the GIF button
 const LINK_PREVIEWS=true;  // needs the link-preview edge function (setup/link-preview/index.ts); silently off if it is missing
 const LP_IMAGES=false;     // true = previews also show the page's image (the viewer's browser then contacts that site)
 
@@ -205,12 +205,12 @@ async function forwardMsg(id){
     :await sb.from('dm_messages').insert({recipient_id:to.id,content,...extra});
   if(r.error)alert('Could not forward: '+r.error.message);else toast('Forwarded to '+to.label);
 }
-const msgExtraMenu=id=>{const m=msgCache[id];if(!m)return '';return sep+(m.channel_id?mi('🧵',(replyCount[id]?'Open thread':'Start thread'),`openThread('${id}')`):'')+mi('➡','Forward',`forwardMsg('${id}')`)};
+let msgExtraMenu=id=>{const m=msgCache[id];if(!m)return '';return sep+(m.channel_id?mi('🧵',(replyCount[id]?'Open thread':'Start thread'),`openThread('${id}')`):'')+mi('➡','Forward',`forwardMsg('${id}')`)};
 
 // ---------- link previews (needs the link-preview edge function) ----------
 const LP={};let lpOff=false;
 async function linkPreview(m){
-  if(!LINK_PREVIEWS||lpOff||isBot(profiles[m.sender_id])||!m.content)return;
+  if(!LINK_PREVIEWS||prefs_.linkPrev===false||lpOff||isBot(profiles[m.sender_id])||!m.content)return;
   const mt=String(m.content).match(/https?:\/\/[^\s<>"']+/);if(!mt)return;
   let url=mt[0].replace(/[.,!?;:)\]]+$/,'');
   if(/\.(png|jpe?g|gif|webp|mp4|webm)(\?|$)/i.test(url)||/giphy\.com/i.test(url))return;

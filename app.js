@@ -70,7 +70,7 @@ async function migrateImages(){
 // ===== message text: links, `code`, ```blocks```, **bold**, *italic*, ~~strike~~ (input is already HTML-escaped) =====
 function md(s){
   const st=[],keep=h=>'\u0001'+(st.push(h)-1)+'\u0001';
-  s=s.replace(/```\n?([\s\S]*?)```/g,(_,c)=>keep(`<code class="block bg-[#1e1f22] rounded p-2 my-1 text-xs overflow-x-auto" style="white-space:pre">${c.replace(/\n$/,'')}</code>`));
+  s=s.replace(/```\n?([\s\S]*?)```/g,(_,c)=>keep(codeBlock(c)));
   s=s.replace(/`([^`\n]+)`/g,(_,c)=>keep(`<code class="bg-[#1e1f22] rounded px-1 text-[0.85em]">${c}</code>`));
   s=s.replace(/https?:\/\/[^\s<\u0001]+/g,u=>{let t='';const m=u.match(/[.,!?;:)\]]+$/);if(m){t=m[0];u=u.slice(0,-t.length)}return keep(`<a href="${u}" target="_blank" rel="noopener noreferrer" class="text-[#00a8fc] hover:underline">${u}</a>`)+t});
   s=mention(s);s=emojiHtml(s);
@@ -172,7 +172,7 @@ async function start(){
   try{const dv=await getDeviceIds();const {data:devBanned,error:devErr}=await sb.rpc('register_device',{h:dv.h,d:dv.d});if(!devErr&&devBanned===true)return kickDevice()}catch(e){}
   pushRebind();
   await loadFriends();await loadBlocks();await loadShopTags();await loadChanMap();drawMeBox();
-  await loadGroups();await loadUnread();await loadServers();await redeemInvite();loadCustomEmoji();const d=servers.find(x=>x.is_default);if(_inviteOpen)openServer(_inviteOpen);else if(d)openServer(d.id);else showDMs();listen();track();loadTurn();
+  await loadGroups();await loadUnread();await loadServers();await redeemInvite();loadCustomEmoji();const d=servers.find(x=>x.is_default);if(_inviteOpen)openServer(_inviteOpen);else if(d)openServer(d.id);else showDMs();listen();track();loadTurn();initExtras();
 }
 async function loadServers(){const {data}=await sb.from('servers').select('*').order('created_at');servers=data||[];drawServerNav()}
 async function newServer(){
@@ -189,7 +189,7 @@ async function openServer(id){
   channels=c.data||[];channels.forEach(x=>chanSrv[x.id]=id);members=m.data||[];roles={};members.forEach(x=>roles[x.user_id]=x.role);if((servers.find(x=>x.id===id)||{}).is_default){defRole=roles[me.id];const nb=$('newsrvbtn');if(nb)nb.classList.toggle('hidden',defRole!=='owner')}
   if(!_migrated&&(servers.find(x=>x.id===id)||{}).is_default){_migrated=true;migrateImages()}bans=[];if(isStaff()){const {data:b}=await sb.from('server_bans').select('*').eq('server_id',id);bans=b||[]}
   {const {data:cd}=await sb.from('custom_roles').select('*').eq('server_id',id);croles=cd||[];cr={};members.forEach(x=>{if(x.custom_role)cr[x.user_id]=croles.find(y=>y.id===x.custom_role)})}
-  $('sh').innerHTML=`<span class="truncate">${esc(s.name)}</span><span class="flex items-center gap-2 flex-shrink-0"><button onclick="openWeb()" title="Beanchat — search the web" class="text-base text-[#949ba4] hover:text-white">🫘</button>${(defRole==='owner'||myPerm('manage_roles'))?'<button onclick="openRoles()" title="Manage roles" class="text-base text-[#949ba4] hover:text-white">⚙</button>':''}${(isStaff()||myPerm('manage_channels'))?'<button onclick="newChannel()" class="text-xl text-[#949ba4] hover:text-white">+</button>':''}</span>`;
+  $('sh').innerHTML=`<span class="truncate">${esc(s.name)}</span><span class="flex items-center gap-2 flex-shrink-0"><button onclick="openWeb()" title="Beanchat — search the web" class="text-base text-[#949ba4] hover:text-white">🫘</button>${(defRole==='owner'||myPerm('manage_roles'))?'<button onclick="openRoles()" title="Manage roles" class="text-base text-[#949ba4] hover:text-white">⚙</button>':''}${isStaff()?'<button onclick="openServerTools()" title="Server tools: auto-mod, rules, webhooks" class="text-base text-[#949ba4] hover:text-white">🛡</button>':''}${(isStaff()||myPerm('manage_channels'))?'<button onclick="newChannel()" class="text-xl text-[#949ba4] hover:text-white">+</button>':''}</span>`;
   $('mem').classList.remove('hidden');drawChannels();try{drawMembers()}catch(e){console.error('drawMembers failed:',e);$('mem').innerHTML='<p class="text-xs text-[#f23f43]">Member list failed to load. Check the browser console (F12) for details.</p>'}
   watchVoiceRosters();
   {const first=channels.find(x=>!x.is_voice);if(first)await openChannel(first.id)}
@@ -234,12 +234,12 @@ function toggleRoleGroup(k){
 }
 async function setRole(uid,role){return staffSetRole(uid,role)}
 async function kick(uid){if(!(await askConfirm('Kick this member?')))return;const {error}=await sb.from('server_members').delete().eq('server_id',srvId).eq('user_id',uid);if(error)alert(error.message);openServer(srvId)}
-async function delMsg(id){const {error}=await sb.from('messages').delete().eq('id',id);if(error)return alert(error.message);const e=$('m_'+id);if(e)e.remove()}
+async function delMsg(id){const {error}=await sb.from(tblOf(msgCache[id])).delete().eq('id',id);if(error)return alert(error.message);const e=$('m_'+id);if(e)e.remove()}
 function drawChannels(){
   const groups=[],seen={};
   channels.forEach(c=>{const k=c.category||'';if(!(k in seen)){seen[k]=[];groups.push(k)}seen[k].push(c)});
   const chanBtn=c=>c.is_voice?voiceBtn(c):chanBtnText(c);
-  const chanBtnText=c=>`<button data-cid="${c.id}" onclick="openChannel('${c.id}')" class="w-full text-left px-2 py-1.5 rounded-md text-sm ${isMutedCh(c.id)?'opacity-50 ':''}${cur.id===c.id?'bg-[#404249] text-white':'text-[#949ba4] hover:bg-[#35373c]'}"> ${c.min_read_rank>1?'🔒 ':c.min_post_rank>1?'📢 ':'# '}${esc(c.name)}${c.slow_seconds>0?' 🐌':''}${unreadCh[c.id]&&!ment[c.id]?'<span class="float-right w-2 h-2 mt-1.5 rounded-full bg-white"></span>':''}${ment[c.id]?`<span class="float-right bg-[#f23f43] text-white text-[10px] font-black px-1.5 rounded-full">${ment[c.id]}</span>`:''}</button>`;
+  const chanBtnText=c=>`<button data-cid="${c.id}" onclick="openChannel('${c.id}')" class="w-full text-left px-2 py-1.5 rounded-md text-sm ${isMutedCh(c.id)?'opacity-50 ':''}${cur.id===c.id?'bg-[#404249] text-white':'text-[#949ba4] hover:bg-[#35373c]'}"> ${c.is_forum?'💬 ':c.min_read_rank>1?'🔒 ':c.min_post_rank>1?'📢 ':'# '}${esc(c.name)}${c.slow_seconds>0?' 🐌':''}${unreadCh[c.id]&&!ment[c.id]?'<span class="float-right w-2 h-2 mt-1.5 rounded-full bg-white"></span>':''}${ment[c.id]?`<span class="float-right bg-[#f23f43] text-white text-[10px] font-black px-1.5 rounded-full">${ment[c.id]}</span>`:''}</button>`;
   window._cats=groups;const col=getCollapsed();
   $('sc').innerHTML=groups.map((k,i)=>{
     if(!k)return seen[k].map(chanBtn).join('');
@@ -310,23 +310,23 @@ async function openGroup(id){
   $('groupcallbtn').title=inThisCall?'Leave voice call':'Join voice call';
   closeLeftMobile();subscribeTyping();
   const {data:dd}=await sb.from('group_dm_messages').select('*').eq('group_id',id).order('created_at',{ascending:false}).limit(PAGE);
-  draw((dd||[]).reverse(),since);
+  {const gl=(dd||[]).reverse();rx={};await loadDmRx(gl,'group');draw(gl,since)}
 }
 async function openDM(id){
   const since=lastRead[id]||lastRead._init;cur={type:'dm',id};unread[id]=0;markRead(id);setComposer(true);drawPeople();
   $('chtitle').textContent='@ '+dn(profiles[id]);$('pinbtn').classList.add('hidden');$('searchbtn').classList.add('hidden');$('searchbar').classList.add('hidden');$('callbtn').classList.toggle('hidden',!!activeCallWith||groupCallActive);$('groupcallbtn').classList.add('hidden');$('groupsettingsbtn').classList.add('hidden');closeLeftMobile();subscribeTyping();
   const {data:dd}=await sb.from('dm_messages').select('*').or(`sender_id.eq.${id},recipient_id.eq.${id}`).order('created_at',{ascending:false}).limit(PAGE);const data=(dd||[]).reverse();
-  draw(data||[],since);
+  rx={};await loadDmRx(data,'dm');draw(data||[],since);
 }
 function row(m,pm){
   msgCache[m.id]=m;if(blocked.has(m.sender_id))return '';
   const p=profiles[m.sender_id]||{username:'unknown'};
   const r=cur.type==='ch'?roles[m.sender_id]:null;
   const t=new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  const del=cur.type==='ch'&&(m.sender_id===me.id||rank(myRole())>=3);
+  const del=m.sender_id===me.id||(cur.type==='ch'&&rank(myRole())>=3);
   const compact=!!pm&&pm.sender_id===m.sender_id&&!m.reply_to&&!isBot(p)&&dayKey(pm.created_at)===dayKey(m.created_at)&&(new Date(m.created_at)-new Date(pm.created_at))<300000;
   const t2=new Date(m.created_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
-  return `<div id="m_${m.id}" class="group flex gap-3 ${compact?'!mt-0.5 ':''}${mentionsMe(m)?'bg-yellow-500/10 border-l-2 border-yellow-500 pl-2':''}">${compact?`<span class="w-9 flex-shrink-0 text-[9px] leading-5 text-center text-[#949ba4] opacity-0 group-hover:opacity-100 select-none whitespace-nowrap">${t2}</span>`:`<span onclick="showProfile('${m.sender_id}')" class="cursor-pointer flex-shrink-0">${av(p,9)}</span>`}<div class="min-w-0">${compact?`${m.pinned?'📌 ':''}${del?`<button onclick="delMsg('${m.id}')" class="hidden group-hover:inline float-right text-[10px] text-[#949ba4] hover:text-[#f23f43]">delete</button>`:''}`:`<span onclick="showProfile('${m.sender_id}')" class="font-bold text-sm cursor-pointer hover:underline" style="color:${col(p)}">${esc(dn(p))}</span>${isBot(p)?' '+BOTBADGE:''}${utag(p)}${r&&r!=='member'?` ${tag(p,r)}`:''} <span class="text-[10px] text-[#949ba4]">${t}</span>${m.pinned?' 📌':''}${del?` <button onclick="delMsg('${m.id}')" class="hidden group-hover:inline text-[10px] text-[#949ba4] hover:text-[#f23f43]">delete</button>`:''}`}${replyLine(m)}${m.file_url&&m.file_url.startsWith(FILEBASE)?`<a href="${esc(m.file_url)}" target="_blank" class="mt-1 flex items-center gap-2 bg-[#2b2d31] border border-[#3f4147] rounded-lg px-3 py-2 w-fit text-xs text-[#5865f2] hover:underline">📄 ${esc(m.file_name||'file')}</a>`:''}${m.image_url&&m.image_url.startsWith(IMGBASE)?`<img src="${esc(m.image_url)}" loading="lazy" onclick="lightbox(this.src)" class="mt-1 max-h-64 max-w-xs rounded-lg cursor-pointer">`:''}<p class="text-sm" data-t>${fmt(m)}${m.edited_at?' <span class="text-[10px] text-[#949ba4]">(edited)</span>':''}</p>${m.channel_id?`<div id="rx_${m.id}" class="flex flex-wrap gap-1 mt-1"></div>`:''}<div id="lp_${m.id}"></div>${m.channel_id?`<button id="thr_${m.id}" onclick="openThread('${m.id}')" class="hidden mt-1 text-xs text-[#00a8fc] hover:underline"></button>`:''}</div></div>`;
+  return `<div id="m_${m.id}" class="group flex gap-3 ${compact?'!mt-0.5 ':''}${mentionsMe(m)?'bg-yellow-500/10 border-l-2 border-yellow-500 pl-2':''}">${compact?`<span class="w-9 flex-shrink-0 text-[9px] leading-5 text-center text-[#949ba4] opacity-0 group-hover:opacity-100 select-none whitespace-nowrap">${t2}</span>`:`<span onclick="showProfile('${m.sender_id}')" class="cursor-pointer flex-shrink-0">${av(p,9)}</span>`}<div class="min-w-0">${compact?`${m.pinned?'📌 ':''}${del?`<button onclick="delMsg('${m.id}')" class="hidden group-hover:inline float-right text-[10px] text-[#949ba4] hover:text-[#f23f43]">delete</button>`:''}`:`<span onclick="showProfile('${m.sender_id}')" class="font-bold text-sm cursor-pointer hover:underline" style="color:${col(p)}">${esc(dn(p))}</span>${isBot(p)?' '+BOTBADGE:''}${utag(p)}${r&&r!=='member'?` ${tag(p,r)}`:''} <span class="text-[10px] text-[#949ba4]">${t}</span>${m.pinned?' 📌':''}${del?` <button onclick="delMsg('${m.id}')" class="hidden group-hover:inline text-[10px] text-[#949ba4] hover:text-[#f23f43]">delete</button>`:''}`}${replyLine(m)}${m.file_url&&m.file_url.startsWith(FILEBASE)?`<a href="${esc(m.file_url)}" target="_blank" class="mt-1 flex items-center gap-2 bg-[#2b2d31] border border-[#3f4147] rounded-lg px-3 py-2 w-fit text-xs text-[#5865f2] hover:underline">📄 ${esc(m.file_name||'file')}</a>`:''}${m.image_url&&m.image_url.startsWith(IMGBASE)?`<img src="${esc(m.image_url)}" loading="lazy" onclick="lightbox(this.src)" class="mt-1 max-h-64 max-w-xs rounded-lg cursor-pointer">`:''}<p class="text-sm" data-t>${fmt(m)}${m.edited_at?' <span class="text-[10px] text-[#949ba4]">(edited)</span>':''}</p><div id="rx_${m.id}" class="flex flex-wrap gap-1 mt-1"></div><div id="lp_${m.id}"></div>${m.channel_id?`<button id="thr_${m.id}" onclick="openThread('${m.id}')" class="hidden mt-1 text-xs text-[#00a8fc] hover:underline"></button>`:''}</div></div>`;
 }
 const PAGE=100;
 let msgOldest=null,msgMore=false,msgLast=null,loadingOlder=false;
@@ -351,6 +351,7 @@ async function loadOlder(){
     const list=(data||[]).reverse();
     msgMore=list.length>=PAGE;if(list.length)msgOldest=list[0].created_at;
     if(type==='ch'&&list.length){const {data:r}=await sb.from('reactions').select('*').in('message_id',list.map(x=>x.id));(r||[]).forEach(x=>(rx[x.message_id]=rx[x.message_id]||[]).push(x))}
+    if(type!=='ch'&&list.length)await loadDmRx(list,type);
     const k=$('msgs'),oh=k.scrollHeight,ot=k.scrollTop,b=$('olderbtn');if(b)b.remove();
     const {h}=rowsHtml(list,null);
     const first=k.querySelector('.dsep');if(first&&list.length&&first.dataset.day===dayKey(list[list.length-1].created_at))first.remove();
@@ -372,7 +373,7 @@ function _unlockAudio(){try{if(!_ac)_ac=new (window.AudioContext||window.webkitA
 ['pointerdown','keydown','touchstart'].forEach(ev=>window.addEventListener(ev,_unlockAudio,{passive:true}));
 let _lastPing=0;
 function ping(){
-  if(myStatus==='dnd')return;
+  if(myStatus==='dnd'||prefs_.sound===false)return;
   const now=Date.now();if(now-_lastPing<400)return;_lastPing=now;
   try{
     _unlockAudio();if(!_ac||_ac.state!=='running')return;
@@ -425,14 +426,19 @@ function listen(){
      if(!profiles[m.sender_id])await loadProfiles();
      if(cur.type==='group'&&cur.id===m.group_id){add(m);if(m.sender_id!==me.id){if(_watching())markRead(m.group_id);else ping()}}
      else if(m.sender_id!==me.id){unread[m.group_id]=(unread[m.group_id]||0)+1;ping();updateTot();if(!srvId)drawPeople()}})
+   .on('postgres_changes',{event:'UPDATE',schema:'public',table:'dm_messages'},p=>dmUpd(p.new))
+   .on('postgres_changes',{event:'UPDATE',schema:'public',table:'group_dm_messages'},p=>dmUpd(p.new))
+   .on('postgres_changes',{event:'DELETE',schema:'public',table:'dm_messages'},p=>dmDel(p.old))
+   .on('postgres_changes',{event:'DELETE',schema:'public',table:'group_dm_messages'},p=>dmDel(p.old))
+   .on('postgres_changes',{event:'*',schema:'public',table:'dm_reactions'},p=>dmRxEvt(p))
    .subscribe(st=>{rtUp=(st==='SUBSCRIBED');if(st==='SUBSCRIBED'){if(everUp)syncCurrent(true);everUp=true}else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){setTimeout(()=>{if(rt){sb.removeChannel(rt);listen()}},3000)}});
 }
 $('f').onsubmit=async e=>{
-  e.preventDefault();$('i').value=emojify($('i').value);if(editingId){const id=editingId,t0=$('i').value.trim(),m0=msgCache[id];endEdit();if(!t0||!m0||t0===m0.content)return;if(slurBlock(t0,'That edit'))return;const {error}=await sb.from('messages').update({content:t0,edited_at:new Date().toISOString()}).eq('id',id);if(error)alert(error.message.includes('auto-mod')?'That edit was blocked by auto-mod.':error.message);return}const t=$('i').value.trim();if(t&&slurBlock(t))return;if(t.startsWith('/')){$('i').value='';return runCmd(t)}if(!t||!cur.type)return;if(!canPostHere())return alert('You do not have permission to type in this channel.');if(cur.type==='ch'&&/@(everyone|here)\b/i.test(t)&&myRole()!=='owner')return alert('Only the owner can use @everyone and @here.');{const mu=until(me,'muted_until');if(mu)return alert('You are muted until '+mu.toLocaleString())}$('i').value='';
+  e.preventDefault();$('i').value=emojify($('i').value);if(editingId){const id=editingId,t0=$('i').value.trim(),m0=msgCache[id];endEdit();if(!t0||!m0||t0===m0.content)return;if(slurBlock(t0,'That edit'))return;const {error}=await sb.from(tblOf(m0)).update({content:t0,edited_at:new Date().toISOString()}).eq('id',id);if(error)alert(error.message.includes('auto-mod')?'That edit was blocked by auto-mod.':error.message);return}const t=$('i').value.trim();if(t&&slurBlock(t))return;if(t.startsWith('/')){$('i').value='';return runCmd(t)}if(!t||!cur.type)return;if(!canPostHere())return alert('You do not have permission to type in this channel.');if(cur.type==='ch'&&/@(everyone|here)\b/i.test(t)&&myRole()!=='owner')return alert('Only the owner can use @everyone and @here.');{const mu=until(me,'muted_until');if(mu)return alert('You are muted until '+mu.toLocaleString())}$('i').value='';
   const r=cur.type==='ch'?await sb.from('messages').insert({channel_id:cur.id,content:t,reply_to:replyTo})
     :cur.type==='group'?await sb.from('group_dm_messages').insert({group_id:cur.id,content:t,reply_to:replyTo})
     :await sb.from('dm_messages').insert({recipient_id:cur.id,content:t});
-  if(!r.error){replyTo=null;$('rb').classList.add('hidden')}if(r.error)$('i').value=t;if(r.error&&cur.type==='ch')sb.rpc('automod_word_strike',{chan:String(cur.id),txt:t}).then(()=>{},()=>{});if(r.error)alert(cur.type==='dm'?dmWhy(r.error):cur.type==='group'?'Could not send: '+r.error.message:'Could not send: '+r.error.message);
+  if(!r.error){replyTo=null;$('rb').classList.add('hidden')}if(r.error)$('i').value=t;if(r.error&&/accept the server rules/.test(r.error.message||''))serverGate(srvId,true);if(r.error&&cur.type==='ch')sb.rpc('automod_word_strike',{chan:String(cur.id),txt:t}).then(()=>{},()=>{});if(r.error)alert(cur.type==='dm'?dmWhy(r.error):cur.type==='group'?'Could not send: '+r.error.message:'Could not send: '+r.error.message);
 };
 function dmWhy(err){
   const f=fr(cur.id),who=dn(profiles[cur.id]);
@@ -668,9 +674,11 @@ async function loadBlocks(){const {data}=await sb.from('blocks').select('*');blo
 function replyLine(m){if(!m.reply_to)return '';const r=msgCache[m.reply_to],p=r&&profiles[r.sender_id];return `<div class="text-[11px] text-[#949ba4] truncate">↪ ${r?esc(dn(p))+': '+esc(plainText(r.content).slice(0,60)):'original message'}</div>`}
 function drawRx(id){const e=$('rx_'+id);if(!e)return;const g={};(rx[id]||[]).forEach(x=>{(g[x.emoji]=g[x.emoji]||[]).push(x.user_id)});
   e.innerHTML=Object.entries(g).map(([em,u])=>`<button onclick="toggleRx('${id}','${em}')" class="px-2 py-0.5 rounded-full text-xs border ${u.includes(me.id)?'bg-[#5865f2]/30 border-[#5865f2]':'bg-[#2b2d31] border-[#3f4147]'}">${em} ${u.length}</button>`).join('')}
-async function toggleRx(id,emoji){const mine=(rx[id]||[]).find(x=>x.user_id===me.id&&x.emoji===emoji);
-  if(mine){const {error}=await sb.from('reactions').delete().eq('message_id',id).eq('user_id',me.id).eq('emoji',emoji);if(error)return alert(error.message);rx[id]=rx[id].filter(x=>x!==mine)}
-  else{const {error}=await sb.from('reactions').insert({message_id:id,emoji});if(error)return alert(error.message.includes('row-level')?'You cannot react right now.':error.message);(rx[id]=rx[id]||[]).push({message_id:id,user_id:me.id,emoji})}
+async function toggleRx(id,emoji){
+  const m=msgCache[id],dm=!!m&&!m.channel_id,kind=m&&m.group_id?'group':'dm',T=dm?'dm_reactions':'reactions';
+  const mine=(rx[id]||[]).find(x=>x.user_id===me.id&&x.emoji===emoji);
+  if(mine){let q=sb.from(T).delete().eq('message_id',id).eq('user_id',me.id).eq('emoji',emoji);if(dm)q=q.eq('kind',kind);const {error}=await q;if(error)return alert(error.message);rx[id]=rx[id].filter(x=>x!==mine)}
+  else{const row={message_id:id,emoji};if(dm)row.kind=kind;const {error}=await sb.from(T).insert(row);if(error)return alert(error.message.includes('row-level')?'You cannot react right now.':/relation|schema cache|does not exist/i.test(error.message)?'Run setup/dm_and_saved.sql in Supabase to enable reactions in DMs.':error.message);(rx[id]=rx[id]||[]).push({message_id:id,user_id:me.id,emoji})}
   drawRx(id)}
 function hideCtx(){$('ctx').classList.add('hidden')}
 function showCtx(x,y,h){const c=$('ctx');c.innerHTML=h;c.classList.remove('hidden');c.style.left=Math.max(4,Math.min(x,innerWidth-c.offsetWidth-8))+'px';c.style.top=Math.max(4,Math.min(y,innerHeight-c.offsetHeight-8))+'px'}
@@ -678,15 +686,15 @@ const sep='<div class="h-px bg-[#35373c] my-1"></div>';
 const mi=(ic,t,fn,red,keep)=>`<div onclick="${keep?'event.stopPropagation();':''}${fn}" class="flex items-center gap-3 px-3 py-1.5 rounded cursor-pointer hover:bg-[#35373c] ${red?'text-[#f23f43]':'text-[#dbdee1]'}"><span class="w-5 text-center text-xs">${ic}</span>${t}</div>`;
 const emo=(id,e)=>`<span onclick="toggleRx('${id}','${e}')" class="w-9 h-9 flex items-center justify-center text-xl rounded-full hover:bg-[#35373c] cursor-pointer">${e}</span>`;
 function msgMenu(id,x,y){const m=msgCache[id];if(!m)return;const ch=!!m.channel_id,self=m.sender_id===me.id;let h='';
-  if(ch)h+=`<div class="flex justify-between px-1 py-1">${QUICK.map(e=>emo(id,e)).join('')}</div>`+sep+mi('☺','Add reaction',`moreRx('${id}',${x},${y})`,0,1)+sep+mi('↩','Reply',`startReply('${id}')`);
+  h+=`<div class="flex justify-between px-1 py-1">${QUICK.map(e=>emo(id,e)).join('')}</div>`+sep+mi('☺','Add reaction',`moreRx('${id}',${x},${y})`,0,1)+sep;if(ch||m.group_id)h+=mi('↩','Reply',`startReply('${id}')`);
   h+=mi('⧉','Copy text',`navigator.clipboard.writeText(msgCache['${id}'].content)`);
   if(ch)h+=mi('@','Mention',`mentionUser('${m.sender_id}')`);
   h+=mi('◉','View profile',`showProfile('${m.sender_id}')`)+sep;
   if(!self)h+=mi('⊘','Block user',`blockUser('${m.sender_id}')`);
   if(ch&&!self)h+=mi('⚑','Report message',`reportMsg('${id}')`,1);
-  if(ch&&self)h+=mi('✎','Edit message',`editMsg('${id}')`);
+  if(self&&!isBot(profiles[m.sender_id]))h+=mi('✎','Edit message',`editMsg('${id}')`);
   if(ch&&(rank(myRole())>=3||myPerm('manage_messages')))h+=(m.pinned?mi('📌','Unpin message',`setPinned('${id}',false)`):mi('📌','Pin message',`setPinned('${id}',true)`));
-  if(ch&&(self||rank(myRole())>=3||myPerm('manage_messages')))h+=mi('🗑','Delete message',`delMsg('${id}')`,1);
+  if(self||(ch&&(rank(myRole())>=3||myPerm('manage_messages'))))h+=mi('🗑','Delete message',`delMsg('${id}')`,1);
   h+=msgExtraMenu(id)+sep+mi('ID','Copy message ID',`navigator.clipboard.writeText('${id}')`);showCtx(x,y,h)}
 function moreRx(id,x,y){showCtx(x,y,`<div class="grid grid-cols-4 gap-1 p-1">${EMOJIS.map(e=>emo(id,e)).join('')}</div>`)}
 function chanMenu(id,x,y){let h='';if(isStaff()||myPerm('manage_channels'))h+=mi('⬆','Move up',`moveChannel('${id}',-1)`)+mi('⬇','Move down',`moveChannel('${id}',1)`)+sep+mi('✎','Edit channel',`editChannel('${id}')`)+mi('🗑','Delete channel',`deleteChannel('${id}')`,1)+sep;showCtx(x,y,h+chanExtraMenu(id)+mi('ID','Copy channel ID',`navigator.clipboard.writeText('${id}')`))}
@@ -778,13 +786,14 @@ function openChannelForm(id){
    <div class="flex gap-3"><label class="${FLD_LBL} flex-1">Who can read it<select id="cf_read" class="${FLD_INP}">${ranks}</select></label>
    <label class="${FLD_LBL} flex-1">Who can type<select id="cf_post" class="${FLD_INP}">${ranks}</select></label></div>
    <label class="flex items-center gap-2 text-xs text-[#b5bac1]"><input id="cf_voice" type="checkbox"> 🔊 Voice channel (people join a call here instead of chatting)</label>
+   <label class="flex items-center gap-2 text-xs text-[#b5bac1]"><input id="cf_forum" type="checkbox"> 💬 Forum channel (every post is its own discussion)</label>
    <label class="${FLD_LBL}">Slow mode (seconds between messages, 0 = off)<input id="cf_slow" type="number" min="0" step="1" inputmode="numeric" class="${FLD_INP}"></label>
   </div>
   <div id="cf_msg" class="text-xs text-[#f23f43] mt-3 min-h-[1rem]"></div>
   <div class="flex gap-2 mt-2"><button onclick="saveChannelForm()" class="flex-1 bg-[#23a55a] hover:bg-[#1a8044] text-white py-2 rounded-lg text-sm font-semibold">${c?'Save changes':'Create channel'}</button><button onclick="closeVp()" class="flex-1 bg-[#4e5058] hover:bg-[#5d6068] text-white py-2 rounded-lg text-sm">Cancel</button></div>`;
   const nm=x=>String(x).trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
   $('cf_name').value=c?c.name:'';$('cf_topic').value=c?(c.topic||''):'';$('cf_cat').value=c?(c.category||''):'';
-  $('cf_voice').checked=!!(c&&c.is_voice);$('cf_read').value=String(c?c.min_read_rank||1:1);$('cf_post').value=String(c?c.min_post_rank||1:1);$('cf_slow').value=c?(c.slow_seconds||0):0;
+  $('cf_voice').checked=!!(c&&c.is_voice);$('cf_forum').checked=!!(c&&c.is_forum);$('cf_read').value=String(c?c.min_read_rank||1:1);$('cf_post').value=String(c?c.min_post_rank||1:1);$('cf_slow').value=c?(c.slow_seconds||0):0;
   const shown=()=>{$('cf_shown').textContent=nm($('cf_name').value)||'channel'};$('cf_name').addEventListener('input',shown);shown();
   $('vp').classList.remove('hidden');setTimeout(()=>$('cf_name').focus(),50);
 }
@@ -797,7 +806,9 @@ async function saveChannelForm(){
   const rd=Number.isNaN(rdRaw)?((ec&&ec.min_read_rank)||1):rdRaw; // a blank box keeps the channel's old setting instead of saving nothing
   const po=Math.max(Number.isNaN(poRaw)?((ec&&ec.min_post_rank)||1):poRaw,rd);
   const f={name,topic:$('cf_topic').value.trim(),category:$('cf_cat').value.trim()||null,slow_seconds:Math.max(0,parseInt($('cf_slow').value,10)||0),min_read_rank:rd,min_post_rank:po};
-  const isVoice=$('cf_voice').checked;
+  const isVoice=$('cf_voice').checked,isForum=$('cf_forum').checked;
+  if(isVoice&&isForum)return msg("A channel can't be both voice and forum.");
+  if(isForum||(ec&&ec.is_forum!==undefined))f.is_forum=isForum; // only sent once moderation_and_servers.sql added the column
   if(isVoice||(ec&&ec.is_voice!==undefined))f.is_voice=isVoice; // only sent once the voice_channels.sql column exists
   let error;
   if(chEditing){({error}=await sb.from('channels').update(f).eq('id',chEditing))}
@@ -1174,14 +1185,10 @@ function resetVideoState(){
 // ===== DM voice calls (phase 1: one-to-one only) =====
 // TURN relay: paste yours here to stop long calls dropping on tricky networks (see notes). Example:
 // const TURN_SERVERS=[{urls:'turn:YOUR-TURN-HOST:443?transport=tcp',username:'USER',credential:'PASSWORD'}];
-const TURN_SERVERS=[
-  {urls:'turn:global.relay.metered.ca:80',username:'4e236e760e5e1ac9bb788c35',credential:'fdMQsvk2hFyLbOdg'},
-  {urls:'turn:global.relay.metered.ca:80?transport=tcp',username:'4e236e760e5e1ac9bb788c35',credential:'fdMQsvk2hFyLbOdg'},
-  {urls:'turn:global.relay.metered.ca:443',username:'4e236e760e5e1ac9bb788c35',credential:'fdMQsvk2hFyLbOdg'},
-  {urls:'turns:global.relay.metered.ca:443?transport=tcp',username:'4e236e760e5e1ac9bb788c35',credential:'fdMQsvk2hFyLbOdg'},
-];// Paste a credentials URL here to enable calls across strict NATs / mobile data. Metered's looks like
+const TURN_SERVERS=[];
+// Paste a credentials URL here to enable calls across strict NATs / mobile data. Metered's looks like
 // https://YOURAPP.metered.live/api/v1/turn/credentials?apiKey=KEY  (returns a JSON array of iceServers).
-const TURN_CRED_URL='https://beanchat.metered.live/api/v1/turn/credentials?apiKey=c7db76cda60c1d9bbd59ca69d7dc5b3b0ebf';
+const TURN_CRED_URL='';
 async function loadTurn(){if(!TURN_CRED_URL)return;try{const r=await fetch(TURN_CRED_URL);const a=await r.json();if(Array.isArray(a))RTC_CONFIG.iceServers.push(...a)}catch(e){console.warn('TURN credentials not loaded',e)}}
 const RTC_CONFIG={iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun2.l.google.com:19302']},...TURN_SERVERS],iceCandidatePoolSize:4};
 let ringCh=null,callCh=null,pc=null,localStream=null,activeCallWith=null,callState='idle',incomingFrom=null,muted=false;
@@ -1420,7 +1427,7 @@ async function delServer(id){const s=servers.find(x=>x.id===id);if(!s)return;if(
 function srvImg(id){srvImgFor=id;$('sif').click()}
 $('sif').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f||!srvImgFor)return;let d;try{d=await uploadImg(await pickAvatar(f),'server')}catch(err){return alert('Upload failed: '+err.message)}const {error}=await sb.from('servers').update({image:d}).eq('id',srvImgFor);if(error)alert(error.message);await loadServers()};
 async function renameSrv(id){const s=servers.find(x=>x.id===id),n=(await askText('Server name',s.name));if(!n||!n.trim())return;const {error}=await sb.from('servers').update({name:n.trim()}).eq('id',id);if(error)alert(error.message);await loadServers();if(srvId===id)openServer(id)}
-async function editMsg(id){const m=msgCache[id],t=(await askText('Edit message',m.content));if(t===null||!t.trim()||t.trim()===m.content)return;if(slurBlock(t,'That edit'))return;const {error}=await sb.from('messages').update({content:t.trim(),edited_at:new Date().toISOString()}).eq('id',id);if(error)alert(error.message.includes('auto-mod')?'That edit was blocked by auto-mod.':error.message)}
+async function editMsg(id){const m=msgCache[id],t=(await askText('Edit message',m.content));if(t===null||!t.trim()||t.trim()===m.content)return;if(slurBlock(t,'That edit'))return;const {error}=await sb.from(tblOf(m)).update({content:t.trim(),edited_at:new Date().toISOString()}).eq('id',id);if(error)alert(error.message.includes('auto-mod')?'That edit was blocked by auto-mod.':error.message)}
 async function deleteMe(){const n=(await askText('This permanently deletes your account. Type your username ('+me.username+') to confirm:'));if(n!==me.username)return;const {error}=await sb.rpc('delete_my_account');if(error)return alert(error.message);await sb.auth.signOut();location.reload()}
 $('mem').addEventListener('contextmenu',e=>{const d=e.target.closest('[data-uid]');if(!d)return;e.preventDefault();const u=d.dataset.uid;let h=mi('◉','View profile',`showProfile('${u}')`);if(u!==me.id)h+=mi('@','Mention',`mentionUser('${u}')`);
   if(canNickname()&&u!==me.id&&rank(roles[u])<rank(myRole()))h+=mi('✎','Change nickname',`promptNick('${u}')`);
@@ -2004,8 +2011,9 @@ async function resetPw(uid){
 let editingId=null;
 function endEdit(){editingId=null;$('i').value='';if(!replyTo)$('rb').classList.add('hidden')}
 function startEditLast(){
-  if(cur.type!=='ch')return false;
-  const mine=Object.values(msgCache).filter(m=>m.channel_id===cur.id&&m.sender_id===me.id&&$('m_'+m.id)).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  if(!cur.type)return false;
+  const inCur=m=>cur.type==='ch'?m.channel_id===cur.id:cur.type==='group'?m.group_id===cur.id:(cur.type==='dm'&&!m.channel_id&&!m.group_id);
+  const mine=Object.values(msgCache).filter(m=>inCur(m)&&m.sender_id===me.id&&$('m_'+m.id)).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
   const m=mine[mine.length-1];if(!m)return false;
   editingId=m.id;replyTo=null;
   $('rb').innerHTML='<span>Editing your message — Enter to save, Esc to cancel</span><span onclick="endEdit()" class="cursor-pointer">✕</span>';

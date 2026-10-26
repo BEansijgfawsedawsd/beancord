@@ -10,7 +10,36 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="tailwind.css">
-<style>.spoiler{background:#1e1f22;color:transparent;border-radius:4px;padding:0 3px;cursor:pointer;user-select:none}.spoiler.shown{background:#3f4147;color:inherit;user-select:auto;cursor:text}.bq{display:block;border-left:4px solid #4e5058;padding-left:10px;margin:2px 0}</style>
+<style>.spoiler{background:#1e1f22;color:transparent;border-radius:4px;padding:0 3px;cursor:pointer;user-select:none}.spoiler.shown{background:#3f4147;color:inherit;user-select:auto;cursor:text}.bq{display:block;border-left:4px solid #4e5058;padding-left:10px;margin:2px 0}
+.hl{background:rgba(250,166,26,.22)!important;transition:background 1s}
+.tk-c{color:#7d8590;font-style:italic}.tk-s{color:#a5d6a7}.tk-n{color:#f2a65a}.tk-k{color:#c792ea}.tk-f{color:#82aaff}
+.kbd{display:inline-block;background:#1e1f22;border:1px solid #3f4147;border-bottom-width:2px;border-radius:4px;padding:1px 6px;font-size:12px;color:#dbdee1;margin-left:2px}
+#msgs p.text-sm{font-size:var(--bc-chat,14px)!important}
+html.compact #msgs{padding:.5rem .75rem}
+html.compact #msgs.space-y-3>*+*{margin-top:.15rem!important}
+
+/* ---- light mode (Settings > Appearance). Overrides the hard-coded dark palette; !important so it also beats the colour themes ---- */
+html[data-mode=light] body,html[data-mode=light] .bg-\[\#313338\]{background:#ffffff!important}
+html[data-mode=light] .bg-\[\#2b2d31\],html[data-mode=light] .bg-\[\#2f3136\]{background:#f2f3f5!important}
+html[data-mode=light] .bg-\[\#1e1f22\],html[data-mode=light] .bg-\[\#232428\],html[data-mode=light] .bg-\[\#111214\]{background:#e3e5e8!important}
+html[data-mode=light] .bg-\[\#35373c\],html[data-mode=light] .bg-\[\#35363c\],html[data-mode=light] .bg-\[\#383a40\],html[data-mode=light] .bg-\[\#404249\],html[data-mode=light] .bg-\[\#3f4147\]{background:#d7d9de!important}
+html[data-mode=light] .hover\:bg-\[\#35373c\]:hover,html[data-mode=light] .hover\:bg-\[\#404249\]:hover{background:#d7d9de!important}
+html[data-mode=light] .text-white,html[data-mode=light] .hover\:text-white:hover{color:#060607!important}
+html[data-mode=light] .text-\[\#dbdee1\],html[data-mode=light] body{color:#2e3338!important}
+html[data-mode=light] .text-\[\#b5bac1\]{color:#4e5058!important}
+html[data-mode=light] .text-\[\#949ba4\],html[data-mode=light] .text-\[\#80848e\]{color:#5c5e66!important}
+html[data-mode=light] .text-\[\#c9cdfb\]{color:#3c45a5!important}
+html[data-mode=light] .border-\[\#3f4147\],html[data-mode=light] .border-\[\#35373c\],html[data-mode=light] .divide-\[\#3f4147\]>:not([hidden])~:not([hidden]){border-color:#d7d9de!important}
+html[data-mode=light] .bg-black\/20{background:rgba(0,0,0,.06)!important}
+html[data-mode=light] input,html[data-mode=light] textarea,html[data-mode=light] select{color:#2e3338!important}
+html[data-mode=light] ::placeholder{color:#80848e!important}
+/* things that sit on a saturated background keep white text */
+html[data-mode=light] .bg-\[\#5865f2\].text-white,html[data-mode=light] .bg-\[\#4752c4\].text-white,html[data-mode=light] .bg-\[\#23a55a\].text-white,html[data-mode=light] .bg-\[\#1a8044\].text-white,html[data-mode=light] .bg-\[\#f23f43\].text-white,html[data-mode=light] .bg-\[\#d7373b\].text-white,html[data-mode=light] .bg-\[\#4e5058\].text-white,html[data-mode=light] .bg-\[\#5d6068\].text-white,html[data-mode=light] .bg-\[\#8b5a2b\].text-white,html[data-mode=light] [style*="background"].text-white,html[data-mode=light] [class*="bg-amber"].text-white,html[data-mode=light] [class*="bg-fuchsia"].text-white,html[data-mode=light] [class*="bg-lime"].text-white,html[data-mode=light] [class*="bg-red"].text-white,html[data-mode=light] [class*="bg-green"].text-white,html[data-mode=light] [class*="bg-blue"].text-white,html[data-mode=light] [class*="bg-purple"].text-white,html[data-mode=light] [class*="bg-pink"].text-white,html[data-mode=light] [class*="bg-yellow"].text-white,html[data-mode=light] [class*="bg-orange"].text-white,html[data-mode=light] [class*="bg-cyan"].text-white,html[data-mode=light] [class*="bg-teal"].text-white,html[data-mode=light] [class*="bg-indigo"].text-white,html[data-mode=light] [class*="bg-violet"].text-white,html[data-mode=light] [class*="bg-emerald"].text-white,html[data-mode=light] [class*="bg-sky"].text-white,html[data-mode=light] [class*="bg-rose"].text-white{color:#ffffff!important}
+html[data-mode=light] [style*="color:#ffffff"],html[data-mode=light] [style*="color:#fff;"]{color:#2e3338!important}
+html[data-mode=light] .spoiler{background:#c9ccd1}html[data-mode=light] .spoiler.shown{background:#e3e5e8}
+html[data-mode=light] .kbd{background:#e3e5e8;border-color:#c4c7cc;color:#2e3338}
+html[data-mode=light] .tk-c{color:#6a737d}html[data-mode=light] .tk-s{color:#1a7f37}html[data-mode=light] .tk-n{color:#b35900}html[data-mode=light] .tk-k{color:#8250df}html[data-mode=light] .tk-f{color:#0550ae}
+</style>
 </head>
 <body class="bg-[#313338] text-[#dbdee1] h-screen overflow-hidden">
 
@@ -44,7 +73,7 @@
   <div id="sc" class="flex-1 overflow-y-auto p-2 space-y-0.5"></div>
   <div class="bg-[#232428] px-3 py-2.5 flex flex-col gap-1.5">
    <span id="me" class="font-bold text-white text-sm truncate"></span>
-   <span class="flex justify-between"><button onclick="openSwitcher()" title="Quick switcher (Ctrl+K)" class="text-xs text-[#949ba4] hover:text-white">Jump</button><button onclick="openShop()" class="text-xs text-[#949ba4] hover:text-white">Shop</button><button onclick="openProfile()" class="text-xs text-[#949ba4] hover:text-white">Profile</button><button onclick="togglePush()" title="Notifications when BEANCORD is closed" class="text-xs text-[#949ba4] hover:text-white">Alerts</button><button onclick="logout()" class="text-xs text-[#949ba4] hover:text-[#f23f43]">Log out</button></span>
+   <span class="flex flex-wrap justify-between gap-x-2"><button onclick="openSettings()" title="User settings (Ctrl+,)" class="text-xs text-[#949ba4] hover:text-white">Settings</button><button onclick="openSwitcher()" title="Quick switcher (Ctrl+K)" class="text-xs text-[#949ba4] hover:text-white">Jump</button><button onclick="openShop()" class="text-xs text-[#949ba4] hover:text-white">Shop</button><button onclick="openProfile()" class="text-xs text-[#949ba4] hover:text-white">Profile</button><button onclick="togglePush()" title="Notifications when BEANCORD is closed" class="text-xs text-[#949ba4] hover:text-white">Alerts</button><button onclick="logout()" class="text-xs text-[#949ba4] hover:text-[#f23f43]">Log out</button></span>
   </div>
  </div>
  </div>
@@ -60,6 +89,8 @@
    <button id="membtn" onclick="toggleMem()" title="Members" class="md:hidden text-sm text-[#949ba4] hover:text-white px-1">👥</button>
    <button id="pinbtn" onclick="togglePins()" title="Pinned messages" class="hidden text-sm text-[#949ba4] hover:text-white px-1">📌</button>
    <button id="searchbtn" onclick="toggleSearch()" title="Search messages" class="hidden text-sm text-[#949ba4] hover:text-white px-1">🔍</button>
+   <button onclick="openMentions()" title="Mentions" class="text-sm font-black text-[#949ba4] hover:text-white px-1">@</button>
+   <button onclick="openSaved()" title="Saved messages &amp; reminders" class="text-sm text-[#949ba4] hover:text-white px-1">🔖</button>
   </div>
   <div id="ringbanner" class="hidden mx-4 mt-2 bg-[#23a55a] rounded-lg px-4 py-3 flex items-center justify-between text-white">
    <span id="ringtext" class="font-bold text-sm"></span>
@@ -167,4 +198,7 @@
 <script src="app.js"></script>
 <script src="automod.js"></script>
 <script src="features.js"></script>
+<script src="extras.js"></script>
+<script src="settings.js"></script>
+<script src="servertools.js"></script>
 </body></html>
