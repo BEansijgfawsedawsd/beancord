@@ -7,13 +7,15 @@ function closeLeftMobile(){$('leftcol').classList.remove('open');$('backdrop').c
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 // ===== small modals (replace prompt/confirm/alert) =====
+// new windows go inside #app so the colour themes and raised-button skin in styles.css apply to them
+const bcHost=()=>{const a=document.getElementById('app');return a&&!a.classList.contains('hidden')?a:document.body};
 function _modal(cancel,html,init){return new Promise(res=>{
   const d=document.createElement('div');d.className='fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4';
   const done=v=>{d.remove();document.removeEventListener('keydown',key,true);res(v)};
   const key=e=>{if(e.key==='Escape'){e.stopPropagation();done(cancel)}};
   d.onclick=e=>{if(e.target===d)done(cancel)};
-  d.innerHTML='<div class="w-full max-w-sm bg-[#2b2d31] rounded-2xl p-5">'+html+'</div>';
-  document.body.appendChild(d);document.addEventListener('keydown',key,true);init(d,done);
+  d.innerHTML='<div class="bc-modal w-full max-w-sm bg-[#2b2d31] rounded-2xl p-5">'+html+'</div>';
+  bcHost().appendChild(d);document.addEventListener('keydown',key,true);init(d,done);
 })}
 const _btns='<div class="flex gap-2 mt-4"><button data-ok class="flex-1 bg-[#5865f2] hover:bg-[#4752c4] text-white py-2 rounded-lg text-sm font-semibold">OK</button><button data-no class="flex-1 bg-[#4e5058] hover:bg-[#5d6068] text-white py-2 rounded-lg text-sm">Cancel</button></div>';
 function askText(msg,value){
@@ -169,6 +171,7 @@ async function start(){
   if(!user){$('auth').classList.remove('hidden');$('app').classList.add('hidden');return}
   $('auth').classList.add('hidden');$('app').classList.remove('hidden');
   await loadProfiles();me=profiles[user.id];{const b=until(me,'banned_until');if(b)return kickOut(b)}
+  try{const dv=await getDeviceIds();const {data:evd}=await sb.rpc('bc_register_device',{hw:dv.h,dev:dv.d});if(evd===true)return kickDevice()}catch(e){}
   try{const dv=await getDeviceIds();const {data:devBanned,error:devErr}=await sb.rpc('register_device',{h:dv.h,d:dv.d});if(!devErr&&devBanned===true)return kickDevice()}catch(e){}
   pushRebind();
   await loadFriends();await loadBlocks();await loadShopTags();await loadChanMap();drawMeBox();
@@ -396,6 +399,8 @@ function buzz(vol){
   }catch(e){}
 }
 setInterval(()=>{try{if(callState==='ringing-in')buzz(0.5);else if(callState==='calling')buzz(0.22)}catch(e){}},1600);
+// belt and braces: notice a ban or mute within 30s even if realtime missed it
+setInterval(async()=>{if(!me||$('app').classList.contains('hidden'))return;try{const {data}=await sb.from('profiles').select('banned_until,muted_until').eq('id',me.id).single();if(!data)return;const wasB=until(me,'banned_until'),wasM=until(me,'muted_until');me={...me,...data};profiles[me.id]=me;if((until(me,'banned_until')&&!wasB)||(until(me,'muted_until')&&!wasM))location.reload()}catch(e){}},30000);
 function listen(){
   rt=sb.channel('live')
    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'profiles',filter:'id=eq.'+me.id},p=>{
@@ -1959,8 +1964,8 @@ function overlay(html){
   closeOverlay();
   const d=document.createElement('div');d.id='bc_overlay';d.className='fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4';
   d.onclick=e=>{if(e.target===d)closeOverlay()};
-  d.innerHTML='<div class="w-full max-w-sm bg-[#2b2d31] rounded-2xl p-5 max-h-[90vh] overflow-y-auto">'+html+'</div>';
-  document.body.appendChild(d);
+  d.innerHTML='<div class="bc-modal w-full max-w-sm bg-[#2b2d31] rounded-2xl p-5 max-h-[90vh] overflow-y-auto">'+html+'</div>';
+  bcHost().appendChild(d);
 }
 function closeOverlay(){const d=$('bc_overlay');if(d)d.remove()}
 

@@ -109,7 +109,7 @@ async function serverGate(sid,force){
   if(accepted&&!force&&!s.welcome&&!s.rules)return;
   const name=(servers.find(x=>String(x.id)===sid)||{}).name||'this server';
   const must=!accepted;
-  const html=`<div class="text-lg font-bold text-white mb-1">Welcome to ${esc(name)}</div>${s.welcome?`<div class="text-sm text-[#dbdee1] whitespace-pre-wrap mb-3">${esc(s.welcome)}</div>`:''}${s.rules?`<div class="text-[11px] font-bold uppercase text-[#949ba4] mb-1">Rules</div><div class="text-sm text-[#dbdee1] whitespace-pre-wrap bg-[#1e1f22] rounded-lg p-3 max-h-60 overflow-y-auto">${esc(s.rules)}</div>`:''}
+  const html=`<div class="bc-h text-lg font-bold text-white mb-1">Welcome to ${esc(name)}</div>${s.welcome?`<div class="text-sm text-[#dbdee1] whitespace-pre-wrap mb-3">${esc(s.welcome)}</div>`:''}${s.rules?`<div class="text-[11px] font-bold uppercase text-[#949ba4] mb-1">Rules</div><div class="text-sm text-[#dbdee1] whitespace-pre-wrap bg-[#1e1f22] rounded-lg p-3 max-h-60 overflow-y-auto">${esc(s.rules)}</div>`:''}
     <div class="flex gap-2 mt-4"><button data-ok class="flex-1 bg-[#23a55a] hover:bg-[#1a8044] text-white py-2 rounded-lg text-sm font-semibold">${must?'I agree to the rules':'Got it'}</button>${must?'<button data-no class="flex-1 bg-[#4e5058] hover:bg-[#5d6068] text-white py-2 rounded-lg text-sm">Not now</button>':''}</div>${must?'<p class="text-[11px] text-[#949ba4] mt-2">You can read this server, but you can’t post until you agree.</p>':''}`;
   const ok=await _modal(false,html,(d,done)=>{d.querySelector('[data-ok]').onclick=()=>done(true);const n=d.querySelector('[data-no]');if(n)n.onclick=()=>done(false)});
   if(!ok){gateSkip[sid]=true;return}
@@ -176,16 +176,16 @@ async function renderForum(cid){
   list.forEach(p=>{msgCache[p.id]=p;replyCount[p.id]=(reps[p.id]||{}).n||0});
   list.sort((a,b)=>new Date((reps[b.id]||b).last||b.created_at)-new Date((reps[a.id]||a).last||a.created_at));
   const can=canPostHere()&&!until(me,'muted_until');
-  k.innerHTML=`<div class="flex items-center justify-between mb-3"><div class="text-sm text-[#949ba4]">${list.length} post${list.length===1?'':'s'}</div>${can?'<button onclick="newForumPost()" class="bg-[#5865f2] hover:bg-[#4752c4] text-white text-sm font-semibold px-4 py-1.5 rounded-lg">New post</button>':''}</div>`+
+  k.innerHTML=`<div class="forum-wrap"><div class="flex items-center justify-between mb-3"><div class="text-sm text-[#949ba4]">${list.length} post${list.length===1?'':'s'}</div>${can?'<button onclick="newForumPost()" class="bg-[#5865f2] hover:bg-[#4752c4] text-white text-sm font-semibold px-4 py-1.5 rounded-lg">New post</button>':''}</div>`+
    (list.length?list.map(p=>{
      const a=profiles[p.sender_id]||{username:'?'},r=reps[p.id];
      return `<div id="m_${p.id}" onclick="openThread('${p.id}')" class="bg-[#2b2d31] hover:bg-[#35373c] rounded-lg px-4 py-3 mb-2 cursor-pointer"><div class="font-semibold text-white break-words">${esc(postTitle(p))}</div>${postBody(p)?`<div class="text-sm text-[#b5bac1] mt-0.5 line-clamp-2 break-words">${esc(plainText(postBody(p)).slice(0,200))}</div>`:''}<div class="flex items-center gap-2 mt-2 text-xs text-[#949ba4]"><span class="flex-shrink-0">${av(a,6)}</span><span style="color:${col(a)}">${esc(dn(a))}</span><span>· ${ago(p.created_at)}</span><span class="ml-auto">💬 ${r?r.n:0}${r?' · last reply '+ago(r.last):''}</span></div></div>`;
-   }).join(''):'<p class="text-sm text-[#949ba4] p-2">No posts yet. Be the first to start a discussion.</p>');
+   }).join(''):'<p class="text-sm text-[#949ba4] p-2">No posts yet. Be the first to start a discussion.</p>')+'</div>';
 }
 function scheduleForum(){clearTimeout(_forumT);_forumT=setTimeout(()=>{if(forumOn&&cur.type==='ch'&&cur.id===forumOn)renderForum(forumOn)},400)}
 async function newForumPost(){
   const cid=cur.id;
-  const ok=await _modal(false,`<div class="font-bold text-white mb-3">New post</div><input id="fp_t" maxlength="100" placeholder="Title" class="w-full bg-[#1e1f22] rounded-lg px-3 py-2 text-white text-sm outline-none mb-2"><textarea id="fp_b" rows="5" maxlength="1800" placeholder="What do you want to talk about?" class="w-full bg-[#1e1f22] rounded-lg px-3 py-2 text-white text-sm outline-none resize-none"></textarea>`+_btns,(d,done)=>{
+  const ok=await _modal(false,`<div class="bc-h font-bold text-white mb-3">New post</div><input id="fp_t" maxlength="100" placeholder="Title" class="w-full bg-[#1e1f22] rounded-lg px-3 py-2 text-white text-sm outline-none mb-2"><textarea id="fp_b" rows="5" maxlength="1800" placeholder="What do you want to talk about?" class="w-full bg-[#1e1f22] rounded-lg px-3 py-2 text-white text-sm outline-none resize-none"></textarea>`+_btns,(d,done)=>{
     setTimeout(()=>d.querySelector('#fp_t').focus(),30);
     d.querySelector('[data-ok]').onclick=()=>{
       const t=d.querySelector('#fp_t').value.trim(),b=d.querySelector('#fp_b').value.trim();

@@ -6,8 +6,8 @@ function sheet(title,html,wide){
   closeSheet();
   const d=document.createElement('div');d.id='bc_sheet';d.className='fixed inset-0 bg-black/70 z-[58] flex items-center justify-center p-4';
   d.onclick=e=>{if(e.target===d)closeSheet()};
-  d.innerHTML=`<div class="w-full ${wide?'max-w-2xl':'max-w-md'} bg-[#2b2d31] rounded-2xl max-h-[88vh] flex flex-col"><div class="flex items-center justify-between px-5 pt-4 pb-2"><h3 class="font-bold text-white">${esc(title)}</h3><button data-x class="text-[#949ba4] hover:text-white">✕</button></div><div data-body class="px-5 pb-5 overflow-y-auto">${html}</div></div>`;
-  d.querySelector('[data-x]').onclick=closeSheet;document.body.appendChild(d);return d.querySelector('[data-body]');
+  d.innerHTML=`<div class="bc-modal w-full ${wide?'max-w-2xl':'max-w-md'} bg-[#2b2d31] rounded-2xl max-h-[88vh] flex flex-col"><div class="flex items-center justify-between px-5 pt-4 pb-2"><h3 class="font-bold text-white">${esc(title)}</h3><button data-x class="text-[#949ba4] hover:text-white">✕</button></div><div data-body class="px-5 pb-5 overflow-y-auto">${html}</div></div>`;
+  d.querySelector('[data-x]').onclick=closeSheet;bcHost().appendChild(d);return d.querySelector('[data-body]');
 }
 function closeSheet(){const d=$('bc_sheet');if(d)d.remove()}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('bc_sheet')&&!document.querySelector('.z-\\[60\\]')){closeSheet();e.stopPropagation()}},true);

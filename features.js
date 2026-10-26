@@ -6,7 +6,7 @@ const LP_IMAGES=false;     // true = previews also show the page's image (the vi
 
 // ---------- small pickers (used by the quick switcher, forward, GIFs, mute) ----------
 function pickList(title,items,placeholder){
-  return _modal(null,`<div class="font-bold text-white mb-2">${esc(title)}</div><input class="w-full bg-[#1e1f22] rounded-lg px-3 py-2 text-white text-sm outline-none focus:ring-2 focus:ring-[#5865f2]/60" placeholder="${esc(placeholder||'Search...')}" autocomplete="off"><div class="mt-2 max-h-72 overflow-y-auto space-y-0.5"></div>`,(d,done)=>{
+  return _modal(null,`<div class="bc-h font-bold text-white mb-2">${esc(title)}</div><input class="w-full bg-[#1e1f22] rounded-lg px-3 py-2 text-white text-sm outline-none focus:ring-2 focus:ring-[#5865f2]/60" placeholder="${esc(placeholder||'Search...')}" autocomplete="off"><div class="mt-2 max-h-72 overflow-y-auto space-y-0.5"></div>`,(d,done)=>{
     const inp=d.querySelector('input'),box=d.querySelector('.overflow-y-auto');let sel=0,shown=[];
     const draw=()=>{const q=inp.value.trim().toLowerCase();shown=items.filter(i=>!q||(i.label+' '+(i.sub||'')).toLowerCase().includes(q)).slice(0,50);if(sel>=shown.length)sel=Math.max(0,shown.length-1);
       box.innerHTML=shown.map((i,n)=>`<div data-n="${n}" class="flex items-center justify-between gap-3 px-3 py-2 rounded-lg cursor-pointer text-sm ${n===sel?'bg-[#404249] text-white':'text-[#b5bac1] hover:bg-[#35373c]'}"><span class="truncate">${esc(i.label)}</span><span class="text-[11px] text-[#80848e] truncate flex-shrink-0">${esc(i.sub||'')}</span></div>`).join('')||'<div class="text-xs text-[#949ba4] px-3 py-2">Nothing found.</div>';
@@ -18,7 +18,7 @@ function pickList(title,items,placeholder){
   });
 }
 function askChoice(title,options){
-  return _modal(null,`<div class="font-bold text-white mb-3">${esc(title)}</div><div class="space-y-1.5">${options.map((o,n)=>`<button data-n="${n}" class="w-full text-left px-3 py-2 rounded-lg text-sm bg-[#1e1f22] text-[#dbdee1] hover:bg-[#35373c]">${esc(o[0])}</button>`).join('')}</div><button data-no class="w-full mt-3 text-xs text-[#949ba4] hover:text-white">Cancel</button>`,(d,done)=>{
+  return _modal(null,`<div class="bc-h font-bold text-white mb-3">${esc(title)}</div><div class="space-y-1.5">${options.map((o,n)=>`<button data-n="${n}" class="w-full text-left px-3 py-2 rounded-lg text-sm bg-[#1e1f22] text-[#dbdee1] hover:bg-[#35373c]">${esc(o[0])}</button>`).join('')}</div><button data-no class="w-full mt-3 text-xs text-[#949ba4] hover:text-white">Cancel</button>`,(d,done)=>{
     d.onclick=e=>{const b=e.target.closest('[data-n]');if(b)done(options[+b.dataset.n][1]);else if(e.target.closest('[data-no]')||e.target===d)done(null)}});
 }
 
@@ -150,7 +150,7 @@ function ensureThreadPanel(){
   if($('thread'))return;
   const d=document.createElement('div');d.id='thread';d.className='hidden fixed top-0 right-0 bottom-0 w-full sm:w-96 bg-[#2b2d31] border-l border-black/40 z-30 flex flex-col';
   d.innerHTML=`<div class="h-12 px-4 flex items-center justify-between border-b border-black/30 font-bold text-white flex-shrink-0"><span>🧵 Thread</span><button onclick="closeThread()" class="text-[#949ba4] hover:text-white">✕</button></div><div id="thrmsgs" class="flex-1 overflow-y-auto p-3 space-y-3"></div><form id="thrform" class="p-3 flex gap-2 flex-shrink-0"><textarea id="thri" rows="1" placeholder="Reply in thread..." class="flex-1 min-w-0 bg-[#383a40] rounded-lg px-3 py-2 text-white text-sm outline-none resize-none" style="max-height:8rem;field-sizing:content"></textarea><button class="bg-[#5865f2] hover:bg-[#4752c4] text-white font-bold px-4 rounded-lg text-sm">Send</button></form>`;
-  document.body.appendChild(d);
+  bcHost().appendChild(d);
   $('thrform').onsubmit=sendThread;
   $('thri').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!(matchMedia&&matchMedia('(pointer:coarse)').matches)){e.preventDefault();$('thrform').requestSubmit()}});
 }

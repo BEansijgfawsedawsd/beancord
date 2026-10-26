@@ -44,7 +44,7 @@ function openSettings(tab){
     <div class="md:mt-auto flex md:flex-col gap-1"><button data-x class="text-left px-3 py-1.5 rounded-md text-sm text-[#949ba4] hover:bg-[#35373c] hover:text-white">✕ Close (Esc)</button></div></nav>
     <main class="flex-1 overflow-y-auto"><div id="st_body" class="max-w-2xl mx-auto p-5 md:p-10"></div></main>`;
   d.onclick=e=>{const t=e.target.closest('[data-tab]');if(t){stTab=t.dataset.tab;drawSettings()}else if(e.target.closest('[data-x]'))closeSettings()};
-  document.body.appendChild(d);drawSettings();
+  bcHost().appendChild(d);drawSettings();
 }
 function closeSettings(){stopMicTest();const d=$('bc_settings');if(d)d.remove()}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('bc_settings')&&!$('bc_sheet')&&!document.querySelector('.z-\\[60\\]')){closeSettings();e.stopPropagation()}},true);

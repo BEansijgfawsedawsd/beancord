@@ -18,6 +18,17 @@
 html.compact #msgs{padding:.5rem .75rem}
 html.compact #msgs.space-y-3>*+*{margin-top:.15rem!important}
 
+/* ---- new windows (Settings, sheets, prompts) share the look of the profile / role dialogs in styles.css ---- */
+.bc-modal{border:1px solid rgba(255,255,255,.08);border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.55)}
+.bc-h,#bc_sheet h3,#bc_settings h2{font-family:'Russo One',Impact,system-ui,sans-serif;letter-spacing:.03em;font-weight:400;color:#efe8d6}
+#bc_settings nav{border-right:2px solid #34363b}
+#bc_settings input[type=range]{accent-color:#3448b4}
+#bc_settings nav button{border-radius:8px;transition:background .12s,color .12s}
+:is(#bc_settings,#bc_sheet,.bc-modal) :is(input:not([type=checkbox]):not([type=range]),select,textarea){border:1px solid rgba(255,255,255,.08);border-radius:10px;transition:border-color .15s,box-shadow .15s}
+:is(#bc_settings,#bc_sheet,.bc-modal) :is(input:not([type=checkbox]):not([type=range]),select,textarea):focus{border-color:#6b78e8;box-shadow:0 0 0 3px rgba(107,120,232,.18);outline:none}
+/* forum list sits in one wrapper so the chat's per-message padding/margin rules don't squash the cards */
+#msgs>div.forum-wrap{margin:0;padding:0}#msgs>div.forum-wrap:hover{background:none}
+
 /* ---- light mode (Settings > Appearance). Overrides the hard-coded dark palette; !important so it also beats the colour themes ---- */
 html[data-mode=light] body,html[data-mode=light] .bg-\[\#313338\]{background:#ffffff!important}
 html[data-mode=light] .bg-\[\#2b2d31\],html[data-mode=light] .bg-\[\#2f3136\]{background:#f2f3f5!important}
@@ -36,6 +47,12 @@ html[data-mode=light] ::placeholder{color:#80848e!important}
 /* things that sit on a saturated background keep white text */
 html[data-mode=light] .bg-\[\#5865f2\].text-white,html[data-mode=light] .bg-\[\#4752c4\].text-white,html[data-mode=light] .bg-\[\#23a55a\].text-white,html[data-mode=light] .bg-\[\#1a8044\].text-white,html[data-mode=light] .bg-\[\#f23f43\].text-white,html[data-mode=light] .bg-\[\#d7373b\].text-white,html[data-mode=light] .bg-\[\#4e5058\].text-white,html[data-mode=light] .bg-\[\#5d6068\].text-white,html[data-mode=light] .bg-\[\#8b5a2b\].text-white,html[data-mode=light] [style*="background"].text-white,html[data-mode=light] [class*="bg-amber"].text-white,html[data-mode=light] [class*="bg-fuchsia"].text-white,html[data-mode=light] [class*="bg-lime"].text-white,html[data-mode=light] [class*="bg-red"].text-white,html[data-mode=light] [class*="bg-green"].text-white,html[data-mode=light] [class*="bg-blue"].text-white,html[data-mode=light] [class*="bg-purple"].text-white,html[data-mode=light] [class*="bg-pink"].text-white,html[data-mode=light] [class*="bg-yellow"].text-white,html[data-mode=light] [class*="bg-orange"].text-white,html[data-mode=light] [class*="bg-cyan"].text-white,html[data-mode=light] [class*="bg-teal"].text-white,html[data-mode=light] [class*="bg-indigo"].text-white,html[data-mode=light] [class*="bg-violet"].text-white,html[data-mode=light] [class*="bg-emerald"].text-white,html[data-mode=light] [class*="bg-sky"].text-white,html[data-mode=light] [class*="bg-rose"].text-white{color:#ffffff!important}
 html[data-mode=light] [style*="color:#ffffff"],html[data-mode=light] [style*="color:#fff;"]{color:#2e3338!important}
+html[data-mode=light] #sh,html[data-mode=light] #ch,html[data-mode=light] #shop h2,html[data-mode=light] #rm h2,html[data-mode=light] .bc-h,html[data-mode=light] #bc_sheet h3,html[data-mode=light] #bc_settings h2{color:#2e3338!important}
+html[data-mode=light] #leftcol>div:first-child,html[data-mode=light] #leftcol>div:nth-child(2),html[data-mode=light] #mem,html[data-mode=light] #bc_settings nav{border-color:#d7d9de!important}
+html[data-mode=light] #sh,html[data-mode=light] #ch{border-bottom-color:#d7d9de!important}
+html[data-mode=light] #f #i,html[data-mode=light] #f button,html[data-mode=light] #sq,html[data-mode=light] .bc-modal,html[data-mode=light] #bc_sheet>div{border-color:#c9ccd1!important}
+html[data-mode=light] #msgs>div:hover{background:rgba(0,0,0,.04)}
+html[data-mode=light] .bc-modal,html[data-mode=light] #bc_sheet>div{box-shadow:0 12px 40px rgba(0,0,0,.18)}
 html[data-mode=light] .spoiler{background:#c9ccd1}html[data-mode=light] .spoiler.shown{background:#e3e5e8}
 html[data-mode=light] .kbd{background:#e3e5e8;border-color:#c4c7cc;color:#2e3338}
 html[data-mode=light] .tk-c{color:#6a737d}html[data-mode=light] .tk-s{color:#1a7f37}html[data-mode=light] .tk-n{color:#b35900}html[data-mode=light] .tk-k{color:#8250df}html[data-mode=light] .tk-f{color:#0550ae}
