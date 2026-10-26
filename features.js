@@ -1,6 +1,6 @@
 // ===== BEANCORD feature pack: loaded after app.js, uses its globals =====
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-const GIPHY_KEY='';        // free key from developers.giphy.com; leave empty to hide the GIF button
+const GIPHY_KEY='WBTOtCOWBWZnT0OEYbeXXXqXNLvcQKBj';        // free key from developers.giphy.com; leave empty to hide the GIF button
 const LINK_PREVIEWS=true;  // needs the link-preview edge function (setup/link-preview/index.ts); silently off if it is missing
 const LP_IMAGES=false;     // true = previews also show the page's image (the viewer's browser then contacts that site)
 
