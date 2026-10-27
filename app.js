@@ -1143,7 +1143,7 @@ async function toggleScreenShare(){
   if(videoKind==='screen')return stopLocalVideo();
   if(!(await canScreenShare()))return alert('Only verified members can share their screen.');
   try{
-    const ds=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:{ideal:60,max:60},width:{ideal:1920},height:{ideal:1080}},audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false,suppressLocalAudioPlayback:true}});
+    const ds=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:{ideal:60,max:60},width:{ideal:1920},height:{ideal:1080}},audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
     const track=ds.getVideoTracks()[0];
     try{track.contentHint='motion'}catch(e){} // tells the browser to keep the frame rate smooth instead of shrinking the picture
     track.onended=()=>{if(videoKind==='screen')stopLocalVideo()};
