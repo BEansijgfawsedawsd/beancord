@@ -543,7 +543,7 @@ async function runCmd(line){
   if(cmd==='delserver')return sys('/delserver has been retired. Right-click a server icon and choose Delete server instead.');
   if(cmd==='auditlog'){if(!srvId)return sys('Open a server first.');const {data,error}=await sb.from('audit_log').select('*').eq('server_id',srvId).order('created_at',{ascending:false}).limit(20);if(error)return sys(error.message);if(!data.length)return sys('No audit log entries yet.');data.forEach(e=>{const a=profiles[e.actor],t=profiles[e.target];sys((a?a.username:'someone')+' '+e.action+(t?' '+t.username:'')+(e.detail?' ('+e.detail+')':'')+' — '+new Date(e.created_at).toLocaleString())});return;}
   if(cmd==='iplog'){const {data,error}=await sb.rpc('get_ip_log_all',{lim:30});if(error)return sys(error.message);if(!data.length)return sys('No log entries yet.');data.forEach(r=>sys((r.success?'✓':'✗')+' '+r.action+' "'+r.username_tried+'" from '+r.ip+' — '+new Date(r.created_at).toLocaleString()));return;}
-  if(cmd==='reload'){if(!(await askConfirm('Reload the page for everyone online right now?')))return;const {error}=await sb.from('app_signals').insert({kind:'reload'});return sys(error?(/app_signals|permission|policy/i.test(error.message)?'Only owners and co-owners can do this (and setup/punishments.sql must be run).':error.message):'Reload sent.')}
+  if(cmd==='reload'){if(!(await askConfirm('Reload the page for everyone online right now?')))return;const {error}=await sb.from('app_signals').insert({kind:'reload'});return sys(error?'Reload failed: '+error.message+(error.code?' ('+error.code+')':''):'Reload sent.')}
   if(cmd==='reports')return showReports();const u=Object.values(profiles).find(p=>p.username===(name||'').toLowerCase().replace(/^@/,''));
   if(!u)return sys('No user named "'+(name||'')+'". Usage: /'+cmd+' username');
   if(['ban','unban','mute','unmute'].includes(cmd)){
@@ -1122,6 +1122,7 @@ async function renegotiate(pcx,channel,toId){
 
 // ===== local camera / screen-share (shared across call types) =====
 let myVideoTrack=null,videoKind=null,videoSender=null,groupVideoSenders={};
+let shareAudioTrack=null,shareAudioSender=null,groupShareAudioSenders={};
 
 async function toggleCamera(){
   if(callState==='idle'&&!groupCallActive)return;
@@ -1142,11 +1143,12 @@ async function toggleScreenShare(){
   if(videoKind==='screen')return stopLocalVideo();
   if(!(await canScreenShare()))return alert('Only verified members can share their screen.');
   try{
-    const ds=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:{ideal:60,max:60},width:{ideal:1920},height:{ideal:1080}},audio:false});
+    const ds=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:{ideal:60,max:60},width:{ideal:1920},height:{ideal:1080}},audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false,suppressLocalAudioPlayback:true}});
     const track=ds.getVideoTracks()[0];
     try{track.contentHint='motion'}catch(e){} // tells the browser to keep the frame rate smooth instead of shrinking the picture
     track.onended=()=>{if(videoKind==='screen')stopLocalVideo()};
     await setLocalVideo(track,'screen');
+    const at=ds.getAudioTracks()[0];if(at){shareAudioTrack=at;at.onended=()=>stopShareAudio();await sendShareAudio(at)}else toast('No sound is being shared. In the picker, pick a tab or screen and tick "Share audio".');
   }catch(e){/* person cancelled the share picker */}
 }
 // raise the sending quality: screen shares get up to 60fps / 8 Mbps, camera stays at 30fps
@@ -1159,7 +1161,19 @@ async function tuneSender(sender,kind){
     await sender.setParameters(p);
   }catch(e){}
 }
+async function sendShareAudio(at){
+  try{
+    if(activeCallWith&&pc){if(!shareAudioSender){shareAudioSender=pc.addTrack(at,localStream);await renegotiate(pc,callCh)}else await shareAudioSender.replaceTrack(at)}
+    else if(groupCallActive){for(const pid of Object.keys(groupPeers)){const pcx=groupPeers[pid];if(!groupShareAudioSenders[pid]){groupShareAudioSenders[pid]=pcx.addTrack(at,groupLocalStream);await renegotiate(pcx,groupCallCh,pid)}else await groupShareAudioSenders[pid].replaceTrack(at)}}
+  }catch(e){}
+}
+function stopShareAudio(){
+  if(shareAudioTrack){shareAudioTrack.stop();shareAudioTrack=null}
+  try{if(shareAudioSender)shareAudioSender.replaceTrack(null)}catch(e){}
+  Object.values(groupShareAudioSenders).forEach(x=>{try{x.replaceTrack(null)}catch(e){}});
+}
 async function setLocalVideo(track,kind){
+  if(kind!=='screen')stopShareAudio();
   if(myVideoTrack)myVideoTrack.stop();
   myVideoTrack=track;videoKind=kind;
   setTileVideo('me',new MediaStream([track]));
@@ -1177,6 +1191,7 @@ async function setLocalVideo(track,kind){
   }
 }
 function stopLocalVideo(){
+  stopShareAudio();
   if(myVideoTrack){myVideoTrack.stop();myVideoTrack=null}
   videoKind=null;clearTileVideo('me');
   $('camerabtn').classList.remove('bg-[#5865f2]');$('sharebtn').classList.remove('bg-[#5865f2]');
@@ -1186,6 +1201,7 @@ function stopLocalVideo(){
 function resetVideoState(){
   if(myVideoTrack){myVideoTrack.stop();myVideoTrack=null}
   videoKind=null;videoSender=null;groupVideoSenders={};
+  if(shareAudioTrack){shareAudioTrack.stop();shareAudioTrack=null}shareAudioSender=null;groupShareAudioSenders={};
   $('camerabtn').classList.remove('bg-[#5865f2]');$('sharebtn').classList.remove('bg-[#5865f2]');
 }
 
@@ -1348,7 +1364,7 @@ function declineCall(){
 
 function setupPeerConnection(peerId){
   pc=new RTCPeerConnection(RTC_CONFIG);
-  videoSender=null;
+  videoSender=null;shareAudioSender=null;
   localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
   ensureTile('me',dn(me));ensureTile(peerId,dn(profiles[peerId]||{username:'?'}));watchSpeaking('me',localStream);
   pc.onicecandidate=e=>{if(e.candidate&&callCh)callCh.send({type:'broadcast',event:'signal',payload:{type:'ice',candidate:e.candidate,from:me.id}})};
@@ -1827,7 +1843,7 @@ async function botCall(cmd,line){
 
 // ===== Beanchat: tabs + address bar, pages load through your proxy server =====
 // Paste the address of your deployed proxy server here, with https:// and no slash at the end.
-const PROXY_URL='https://bravebroswer.onrender.com';
+const PROXY_URL='https://beanchat-proxy.onrender.com';
 let PROXY_ORIGIN='';try{PROXY_ORIGIN=new URL(PROXY_URL).origin}catch(e){}
 
 // Quick links load inside this window. To add links for everyone, add lines to this list.
