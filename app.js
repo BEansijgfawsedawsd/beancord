@@ -1827,7 +1827,7 @@ async function botCall(cmd,line){
 
 // ===== Beanchat: tabs + address bar, pages load through your proxy server =====
 // Paste the address of your deployed proxy server here, with https:// and no slash at the end.
-const PROXY_URL='https://beanchat-proxy.onrender.com';
+const PROXY_URL='https://bravebroswer.onrender.com';
 let PROXY_ORIGIN='';try{PROXY_ORIGIN=new URL(PROXY_URL).origin}catch(e){}
 
 // Quick links load inside this window. To add links for everyone, add lines to this list.
