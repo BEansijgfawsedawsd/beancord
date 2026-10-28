@@ -1844,6 +1844,12 @@ async function botCall(cmd,line){
 
 // ===== Beanchat: tabs + address bar, pages load through your proxy server =====
 // Paste the address of your deployed proxy server here, with https:// and no slash at the end.
+// ===== Scramjet browser =====
+// Put the address of YOUR Scramjet site here (see the setup steps). While this is empty the old browser keeps working.
+const SCRAMJET_URL='https://beancord-proxy.onrender.com';
+// Optional: if your Scramjet site can open a page from a link, put the pattern here, with {url} where the address goes.
+// Example: 'https://browser.example.com/?url={url}'. Leave empty if you are not sure.
+const SCRAMJET_LINK='';
 const PROXY_URL='https://beanchat-proxy.onrender.com';
 let PROXY_ORIGIN='';try{PROXY_ORIGIN=new URL(PROXY_URL).origin}catch(e){}
 
@@ -1883,8 +1889,21 @@ const bSrc=e=>e.url?PROXY_URL+'/p?u='+encodeURIComponent(e.url):PROXY_URL+'/go?q
 const bDisp=e=>e?(e.q||e.url||''):'';
 function bTitle(t){const e=bEntry(t);return !e?'New tab':(t.title||(e.q?e.q:hostOf(e.url)))}
 
+function scramjetFrame(src){
+  ['btabs','qlinks','bform','bback','bfwd'].forEach(id=>{const e=$(id);if(e)e.classList.add('hidden')});
+  document.querySelectorAll('#web button[onclick="bReload()"]').forEach(b=>b.classList.add('hidden'));
+  let f=$('scramFrame');
+  if(!f){
+    $('bcont').innerHTML='';
+    f=document.createElement('iframe');f.id='scramFrame';f.className='absolute inset-0 w-full h-full border-0';
+    f.style.background='#121212';f.allow='fullscreen; autoplay; clipboard-write';
+    $('bcont').appendChild(f);
+    f.src=src||SCRAMJET_URL;
+  }else if(src)f.src=src;
+}
 function openWeb(){
   $('web').classList.remove('hidden');
+  if(SCRAMJET_URL){scramjetFrame();return}
   renderQuick();
   if(!PROXY_URL){
     $('bcont').innerHTML='<div class="absolute inset-0 flex items-center justify-center text-center p-6 text-[#949ba4] text-sm">Beanchat is not connected yet. The site owner needs to set the PROXY_URL line in index.html.</div>';
@@ -1934,6 +1953,10 @@ function bResolve(txt){
 }
 function bLoad(t){const e=bEntry(t);if(!e)return;t.expect=1;t.frame.src=bSrc(e);bShow()}
 function bGo(txt){
+  if(SCRAMJET_URL){
+    const e0=bResolve(txt);$('web').classList.remove('hidden');
+    scramjetFrame(e0&&e0.url&&SCRAMJET_LINK?SCRAMJET_LINK.replace('{url}',encodeURIComponent(e0.url)):undefined);return;
+  }
   const t=bCur()||bNewTab(),e=bResolve(txt);if(!e)return;
   t.hist=t.hist.slice(0,t.i+1);t.hist.push(e);t.i++;t.title='';
   bLoad(t);bSync();
@@ -1946,7 +1969,7 @@ function bNav(d){
   bSync();
 }
 function bReload(){const t=bCur();if(!t||t.i<0)return;const e=bEntry(t);t.expect=1;t.frame.src=bSrc(e)}
-function bExternal(){const e=bEntry(bCur());if(!e)return;window.open(e.url||('https://duckduckgo.com/?q='+encodeURIComponent(e.q)),'_blank','noopener,noreferrer')}
+function bExternal(){if(SCRAMJET_URL){window.open(SCRAMJET_URL,'_blank','noopener');return}const e=bEntry(bCur());if(!e)return;window.open(e.url||('https://duckduckgo.com/?q='+encodeURIComponent(e.q)),'_blank','noopener,noreferrer')}
 $('bform').onsubmit=ev=>{ev.preventDefault();bGo($('burl').value);$('burl').blur()};
 $('burl').addEventListener('focus',()=>$('burl').select());
 
