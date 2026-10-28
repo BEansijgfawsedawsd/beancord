@@ -1138,14 +1138,15 @@ async function canScreenShare(){
   if(!r){try{const ds=(servers||[]).find(x=>x.is_default);if(ds){const {data}=await sb.from('server_members').select('role').eq('server_id',ds.id).eq('user_id',me.id).maybeSingle();r=data&&data.role}}catch(e){}}
   return rank(r)>=SCREENSHARE_MIN_RANK;
 }
+const shareSmooth=()=>{try{return prefs_.share==='smooth'}catch(e){return false}};
 async function toggleScreenShare(){
   if(callState==='idle'&&!groupCallActive)return;
   if(videoKind==='screen')return stopLocalVideo();
   if(!(await canScreenShare()))return alert('Only verified members can share their screen.');
   try{
-    const ds=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:{ideal:60,max:60},width:{ideal:1920},height:{ideal:1080}},audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    const ds=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:{ideal:shareSmooth()?60:30,max:shareSmooth()?60:30},width:{ideal:1920},height:{ideal:1080}},audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
     const track=ds.getVideoTracks()[0];
-    try{track.contentHint='motion'}catch(e){} // tells the browser to keep the frame rate smooth instead of shrinking the picture
+    try{track.contentHint=shareSmooth()?'motion':'detail'}catch(e){} // 'detail' keeps the picture sharp, 'motion' keeps the frame rate up
     track.onended=()=>{if(videoKind==='screen')stopLocalVideo()};
     await setLocalVideo(track,'screen');
     const at=ds.getAudioTracks()[0];if(at){shareAudioTrack=at;at.onended=()=>stopShareAudio();await sendShareAudio(at)}else toast('No sound is being shared. In the picker, pick a tab or screen and tick "Share audio".');
@@ -1156,7 +1157,7 @@ async function tuneSender(sender,kind){
   try{
     const p=sender.getParameters();
     if(!p.encodings||!p.encodings.length)p.encodings=[{}];
-    if(kind==='screen'){p.encodings[0].maxBitrate=8000000;p.encodings[0].maxFramerate=60;p.degradationPreference='maintain-framerate'}
+    if(kind==='screen'){const sm=shareSmooth();p.encodings[0].maxBitrate=sm?8000000:10000000;p.encodings[0].maxFramerate=sm?60:30;p.encodings[0].scaleResolutionDownBy=1;p.degradationPreference=sm?'maintain-framerate':'maintain-resolution'}
     else{p.encodings[0].maxBitrate=2500000;p.encodings[0].maxFramerate=30}
     await sender.setParameters(p);
   }catch(e){}

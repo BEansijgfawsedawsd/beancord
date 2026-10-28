@@ -2,7 +2,7 @@
 // ===== font size, keyboard shortcuts, channel navigation keys, install prompt. Loaded after extras.js. =====
 
 // ---------- preferences (kept in this browser) ----------
-const PREF_DEF={mode:'dark',compact:false,font:14,sound:true,linkPrev:true,mic:'',spk:'',cam:'',ns:true,ec:true,agc:true};
+const PREF_DEF={mode:'dark',compact:false,font:14,sound:true,linkPrev:true,mic:'',spk:'',cam:'',ns:true,ec:true,agc:true,share:'sharp'};
 let prefs_=Object.assign({},PREF_DEF,LS.get('bc_prefs',{}));
 function setPref(k,v){prefs_[k]=v;LS.set('bc_prefs',prefs_);applyPrefs()}
 function applyPrefs(){
@@ -132,6 +132,7 @@ async function stVoice(el){
     ${stRow('Speaker / headphones',canSink?'':'Your browser picks the output; Chrome and Edge let you choose.',canSink?`<select id="st_spk" class="${stSel}">${opts('audiooutput',prefs_.spk,'Speaker')}</select>`:'')}
     ${stRow('Camera','Used when you start a video call.',`<select id="st_cam" class="${stSel}">${opts('videoinput',prefs_.cam,'Camera')}</select>`)}
    </div>
+   ${stSec('Screen sharing')}<div class="bg-[#2b2d31] rounded-xl px-5 py-2">${stRow('Quality','Sharp keeps text and detail crisp at about 30 fps. Smooth favours games at up to 60 fps but can blur when the connection is slow.',`<select id="st_share" class="${stSel}"><option value="sharp"${prefs_.share!=='smooth'?' selected':''}>Sharp (30 fps)</option><option value="smooth"${prefs_.share==='smooth'?' selected':''}>Smooth (60 fps)</option></select>`)}</div>
    ${stSec('Audio processing')}<div class="bg-[#2b2d31] rounded-xl px-5 py-2 divide-y divide-[#3f4147]">
     ${stRow('Noise suppression','Cuts keyboard clicks and background hum.',stSwitch('ns',prefs_.ns))}
     ${stRow('Echo cancellation','Stops people hearing themselves when you use speakers.',stSwitch('ec',prefs_.ec))}
@@ -142,6 +143,7 @@ async function stVoice(el){
   $('st_mic').onchange=e=>setPref('mic',e.target.value);
   if($('st_spk'))$('st_spk').onchange=e=>{setPref('spk',e.target.value);applySink()};
   $('st_cam').onchange=e=>setPref('cam',e.target.value);
+  $('st_share').onchange=e=>setPref('share',e.target.value);
   $('st_test').onclick=micTest;
   wireSwitches(el,(k,v)=>{setPref(k,v);stopMicTest();stVoice(el)});
 }
