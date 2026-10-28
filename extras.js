@@ -279,3 +279,4 @@ async function initExtras(){
   setInterval(checkReminders,30000);setTimeout(checkReminders,3000);
   openMsgLink();
 }
+

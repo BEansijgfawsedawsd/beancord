@@ -38,10 +38,10 @@ let stTab='account',_micTest=null;
 function openSettings(tab){
   if(!me)return;closeSettings();stTab=tab||stTab;
   const d=document.createElement('div');d.id='bc_settings';d.className='fixed inset-0 z-[57] bg-[#313338] flex flex-col md:flex-row';
-  d.innerHTML=`<nav class="md:w-56 flex-shrink-0 bg-[#2b2d31] p-3 flex md:flex-col gap-1 overflow-x-auto">
+  d.innerHTML=`<nav class="md:w-56 flex-shrink-0 bg-[#2b2d31] p-3 flex items-center md:items-stretch md:flex-col gap-1 overflow-x-auto">
     <div class="hidden md:block text-[11px] font-bold uppercase text-[#949ba4] px-2 pb-1">User settings</div>
     ${ST_TABS.map(([k,l])=>`<button data-tab="${k}" class="whitespace-nowrap text-left px-3 py-1.5 rounded-md text-sm"></button>`).join('')}
-    <div class="md:mt-auto flex md:flex-col gap-1"><button data-x class="text-left px-3 py-1.5 rounded-md text-sm text-[#949ba4] hover:bg-[#35373c] hover:text-white">✕ Close (Esc)</button></div></nav>
+    <div class="order-first md:order-none md:mt-auto flex md:flex-col gap-1 sticky left-0"><button data-x title="Close" class="text-left px-3 py-1.5 rounded-md text-sm text-[#949ba4] hover:bg-[#35373c] hover:text-white">✕<span class="hidden md:inline"> Close (Esc)</span></button></div></nav>
     <main class="flex-1 overflow-y-auto"><div id="st_body" class="max-w-2xl mx-auto p-5 md:p-10"></div></main>`;
   d.onclick=e=>{const t=e.target.closest('[data-tab]');if(t){stTab=t.dataset.tab;drawSettings()}else if(e.target.closest('[data-x]'))closeSettings()};
   bcHost().appendChild(d);drawSettings();

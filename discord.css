@@ -113,3 +113,11 @@ html body .pbtn{border-radius:3px}
 ::-webkit-scrollbar-track{background:#2b2d31;border:4px solid #2b2d31;background-clip:padding-box}
 html[data-theme="default"] #msgs::-webkit-scrollbar-thumb{border-color:#313338}
 html[data-theme="default"] #msgs::-webkit-scrollbar-track{background:#2b2d31;border-color:#2b2d31}
+
+/* typing indicator sits under the message box, like Discord */
+html body #typing{font-style:normal;font-size:12px;font-weight:600;color:#dbdee1;padding:0 20px}
+html body #f{padding-bottom:28px}
+@media (max-width:767px){html body #f{padding:0 10px calc(26px + env(safe-area-inset-bottom))}}
+
+/* settings: long ids wrap instead of stretching the card */
+html body #st_body code,html body #st_body .font-mono{word-break:break-all}
