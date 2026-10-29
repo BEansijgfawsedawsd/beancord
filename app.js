@@ -81,7 +81,7 @@ function md(s){
   return s.replace(/\u0001(\d+)\u0001/g,(_,i)=>st[i]);
 }
 const clean=u=>u.toLowerCase().replace(/[^a-z0-9_]/g,'');
-const RANK={owner:7,coowner:6,alter:6,manager:5,admin:4,goodgirl:4,mod:3,verified:2,member:1},BADGE={owner:'bg-[#8b5a2b]',coowner:'bg-amber-500 !text-black',alter:'bg-fuchsia-500',manager:'bg-lime-400 !text-black',admin:'bg-red-600',goodgirl:'bg-pink-500',mod:'bg-green-600',verified:'bg-sky-500',member:'bg-[#4e5058]'};
+const RANK={owner:8,alter:7,coowner:6,manager:5,admin:4,goodgirl:4,mod:3,verified:2,member:1},BADGE={owner:'bg-[#8b5a2b]',coowner:'bg-amber-500 !text-black',alter:'bg-fuchsia-500',manager:'bg-lime-400 !text-black',admin:'bg-red-600',goodgirl:'bg-pink-500',mod:'bg-green-600',verified:'bg-sky-500',member:'bg-[#4e5058]'};
 const rank=r=>RANK[r]||1;
 const dn=p=>(p&&p.nickname)||(p&&p.username)||'unknown';
 let friends=[];
@@ -205,7 +205,7 @@ function drawMembers(){
   members.forEach(m=>{
     const custom=m.custom_role?croles.find(r=>r.id===m.custom_role):null;
     const key=custom?('c_'+custom.id):('b_'+m.role);
-    if(!groupsMap[key])groupsMap[key]={key,label:custom?custom.name:m.role.charAt(0).toUpperCase()+m.role.slice(1),color:custom?custom.color:null,rankVal:rank(custom?custom.base:m.role),pos:custom?(custom.position||0):0,items:[]};
+    if(!groupsMap[key])groupsMap[key]={key,label:custom?custom.name:m.role.charAt(0).toUpperCase()+m.role.slice(1),color:custom?custom.color:null,rankVal:(!custom&&m.role==='alter')?5.9:rank(custom?custom.base:m.role),pos:custom?(custom.position||0):0,items:[]};
     groupsMap[key].items.push(m);
   });
   const groups=Object.values(groupsMap).sort((ga,gb)=>gb.rankVal-ga.rankVal||gb.pos-ga.pos||ga.label.localeCompare(gb.label));
@@ -784,7 +784,7 @@ function editChannel(id){openChannelForm(id)}
 function openChannelForm(id){
   chEditing=id;const c=id?channels.find(x=>x.id===id):null;if(id&&!c)return;
   const cats=[...new Set(channels.map(x=>x.category).filter(Boolean))];
-  const ranks='<option value="1">Everyone</option><option value="2">Verified and up</option><option value="3">Mods and up</option><option value="4">Admins and up</option><option value="5">Managers and up</option><option value="6">Co-owners and up</option><option value="7">Owner only</option>';
+  const ranks='<option value="1">Everyone</option><option value="2">Verified and up</option><option value="3">Mods and up</option><option value="4">Admins and up</option><option value="5">Managers and up</option><option value="6">Co-owners and up</option><option value="7">Alter and up</option><option value="8">Owner only</option>';
   $('vpc').innerHTML=`<div class="flex items-center justify-between mb-3"><h3 class="font-bold text-white">${c?'Edit channel':'New channel'}</h3><button onclick="closeVp()" class="text-[#949ba4] hover:text-white">✕</button></div>
   <div class="space-y-3">
    <label class="${FLD_LBL}">Channel name<input id="cf_name" maxlength="30" placeholder="general-chat" class="${FLD_INP}"><span class="block normal-case font-normal text-[#80848e] mt-1">Shown as #<span id="cf_shown"></span></span></label>
@@ -1991,7 +1991,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('web').classList
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 
 // ===== staff role changing, username/password changer, reset password =====
-const RESET_MIN_RANK=7; // 7 = owner only. Must match RESET_MIN_RANK in the account-tools edge function.
+const RESET_MIN_RANK=8; // 8 = owner only. Must match RESET_MIN_RANK in the account-tools edge function.
 const USERNAME_COOLDOWN_DAYS=7;
 const canChangeRole=u=>!!srvId&&u!==me.id&&rank(myRole())>=4&&rank(roles[u])<rank(myRole())&&roles[u]!=='owner';
 const canResetPw=u=>u!==me.id&&rank(myRole())>=RESET_MIN_RANK&&rank(roles[u])<rank(myRole());
@@ -2093,3 +2093,71 @@ function autoGrow(){
   });
   autoGrow();
 })();
+
+// ===== Music: official Spotify player inside the site =====
+// Paste a Spotify link (song, album, playlist, artist, podcast). Closing the panel only hides it, so the music keeps playing.
+const MUSIC_KEY='bc_music';
+let musicOpen=false;
+function musicEmbed(text){
+  text=String(text||'').trim();
+  let m=text.match(/^spotify:(track|album|playlist|artist|episode|show):([A-Za-z0-9]{10,30})$/);
+  if(!m)m=text.match(/^https?:\/\/open\.spotify\.com\/(?:intl-[a-z-]+\/)?(?:embed\/)?(track|album|playlist|artist|episode|show)\/([A-Za-z0-9]{10,30})(?:[?\/#].*)?$/i);
+  if(!m)return null;
+  const type=m[1].toLowerCase(),id=m[2];
+  return{type,id,src:'https://open.spotify.com/embed/'+type+'/'+id,height:(type==='track'||type==='episode')?152:352};
+}
+function musicStyles(){
+  if($('music_css'))return;
+  const st=document.createElement('style');st.id='music_css';
+  st.textContent='#music_panel{position:fixed;left:80px;bottom:16px;width:min(380px,calc(100vw - 96px));z-index:44;border-radius:14px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,.45);display:none}'
+   +'#music_panel.show{display:block}'
+   +'#music_panel iframe{display:block;width:100%;border:0;border-radius:12px;margin-top:10px}'
+   +'#music_dot{position:absolute;top:2px;right:2px;width:12px;height:12px;border-radius:50%;background:#23a55a;border:2px solid #1e1f22;display:none}'
+   +'@media (max-width:767px){#music_panel{left:8px;right:8px;width:auto;bottom:72px}}';
+  document.head.appendChild(st);
+}
+function musicBuild(){
+  if($('music_panel'))return;
+  musicStyles();
+  const p=document.createElement('div');p.id='music_panel';p.className='bg-[#2b2d31]';
+  p.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><b class="text-white text-sm" style="flex:1">🎵 Music</b>'
+   +'<button type="button" id="music_stop" class="text-xs text-[#949ba4] hover:text-white" title="Stop and remove the player">Stop</button>'
+   +'<button type="button" id="music_hide" class="text-[#949ba4] hover:text-white text-lg" style="line-height:1" title="Hide (music keeps playing)" aria-label="Hide">&minus;</button></div>'
+   +'<div style="display:flex;gap:8px"><input id="music_in" autocomplete="off" spellcheck="false" placeholder="Paste a Spotify link" class="bg-[#1e1f22] rounded-lg px-3 py-2 text-white text-sm outline-none" style="flex:1;min-width:0">'
+   +'<button type="button" id="music_go" class="bg-[#5865f2] hover:bg-[#4752c4] text-white font-bold px-4 rounded-lg text-sm">Load</button></div>'
+   +'<div id="music_msg" class="text-xs text-[#949ba4]" style="margin-top:8px">Song, album, playlist or podcast link from Spotify. Log in to Spotify in this browser to hear full songs.</div>'
+   +'<div id="music_host"></div>';
+  document.body.appendChild(p);
+  $('music_hide').onclick=()=>musicToggle(false);
+  $('music_go').onclick=()=>musicLoad($('music_in').value);
+  $('music_in').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();musicLoad($('music_in').value)}});
+  $('music_stop').onclick=musicStop;
+}
+function musicToggle(on){
+  musicBuild();
+  musicOpen=on===undefined?!musicOpen:on;
+  $('music_panel').classList.toggle('show',musicOpen);
+  if(musicOpen){
+    if(!$('music_host').firstChild){try{const s=localStorage.getItem(MUSIC_KEY);if(s){$('music_in').value=s;musicLoad(s,true)}}catch(e){}}
+    $('music_in').focus();
+  }
+}
+function openMusic(){musicToggle()}
+function musicLoad(text,quiet){
+  const e=musicEmbed(text);
+  if(!e){$('music_msg').textContent='That does not look like a Spotify link. Copy it from Spotify with Share, then Copy link.';return}
+  const host=$('music_host');host.innerHTML='';
+  const f=document.createElement('iframe');
+  f.src=e.src;f.height=e.height;f.loading='lazy';f.title='Spotify player';
+  f.allow='autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+  host.appendChild(f);
+  $('music_msg').textContent=quiet?'Loaded your last link.':'Loaded. Press play. You can hide this panel and the music keeps going.';
+  try{localStorage.setItem(MUSIC_KEY,String(text).trim())}catch(err){}
+  const d=$('music_dot');if(d)d.style.display='block';
+}
+function musicStop(){
+  $('music_host').innerHTML='';$('music_in').value='';
+  $('music_msg').textContent='Stopped.';
+  try{localStorage.removeItem(MUSIC_KEY)}catch(e){}
+  const d=$('music_dot');if(d)d.style.display='none';
+}
