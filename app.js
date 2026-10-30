@@ -2094,17 +2094,48 @@ function autoGrow(){
   autoGrow();
 })();
 
-// ===== Music: official Spotify player inside the site =====
-// Paste a Spotify link (song, album, playlist, artist, podcast). Closing the panel only hides it, so the music keeps playing.
-const MUSIC_KEY='bc_music';
-let musicOpen=false;
+// ===== Music: Spotify, YouTube Music and Tidal players inside the site =====
+// Pick a service, search, or paste a link. Closing the panel only hides it, so the music keeps playing.
+// Search for Spotify and YouTube needs the music-search function (see setup). Without it, the panel opens that service's own search in a new tab.
+const MUSIC_KEY='bc_music',MUSIC_SVC_KEY='bc_music_svc';
+const MUSIC_SERVICES={
+  spotify:{name:'Spotify',search:q=>'https://open.spotify.com/search/'+encodeURIComponent(q),api:true},
+  youtube:{name:'YouTube Music',search:q=>'https://music.youtube.com/search?q='+encodeURIComponent(q),api:true},
+  tidal:{name:'Tidal',search:q=>'https://listen.tidal.com/search?q='+encodeURIComponent(q),api:false}
+};
+let musicOpen=false,musicService='spotify';
+try{const s=localStorage.getItem(MUSIC_SVC_KEY);if(MUSIC_SERVICES[s])musicService=s}catch(e){}
+
+// turn a pasted link into something we can embed (or null)
 function musicEmbed(text){
   text=String(text||'').trim();
   let m=text.match(/^spotify:(track|album|playlist|artist|episode|show):([A-Za-z0-9]{10,30})$/);
   if(!m)m=text.match(/^https?:\/\/open\.spotify\.com\/(?:intl-[a-z-]+\/)?(?:embed\/)?(track|album|playlist|artist|episode|show)\/([A-Za-z0-9]{10,30})(?:[?\/#].*)?$/i);
-  if(!m)return null;
-  const type=m[1].toLowerCase(),id=m[2];
-  return{type,id,src:'https://open.spotify.com/embed/'+type+'/'+id,height:(type==='track'||type==='episode')?152:352};
+  if(m){const type=m[1].toLowerCase(),id=m[2];
+    return{service:'spotify',type,id,src:'https://open.spotify.com/embed/'+type+'/'+id,height:(type==='track'||type==='episode')?152:352}}
+  let u;try{u=new URL(text)}catch(e){return null}
+  if(u.protocol!=='https:'&&u.protocol!=='http:')return null;
+  const host=u.hostname.toLowerCase().replace(/^www\./,'');
+  if(host==='youtube.com'||host==='music.youtube.com'||host==='m.youtube.com'||host==='youtu.be'){
+    const vid=/^[A-Za-z0-9_-]{11}$/,pl=/^[A-Za-z0-9_-]{10,60}$/;
+    let v=null;
+    if(host==='youtu.be')v=u.pathname.slice(1).split('/')[0];
+    else if(u.pathname==='/watch')v=u.searchParams.get('v');
+    else{const p=u.pathname.match(/^\/(?:shorts|embed|live)\/([A-Za-z0-9_-]{11})/);if(p)v=p[1]}
+    if(v&&vid.test(v))return{service:'youtube',type:'video',id:v,src:'https://www.youtube.com/embed/'+v,ratio:'16/9'};
+    const list=u.searchParams.get('list');
+    if(list&&pl.test(list)&&(u.pathname==='/playlist'||u.pathname==='/watch'||u.pathname==='/embed/videoseries'))
+      return{service:'youtube',type:'playlist',id:list,src:'https://www.youtube.com/embed/videoseries?list='+list,ratio:'16/9'};
+    return null;
+  }
+  if(host==='tidal.com'||host==='listen.tidal.com'||host==='embed.tidal.com'){
+    const t=u.pathname.match(/^\/(?:browse\/)?(track|tracks|album|albums|playlist|playlists|video|videos)\/([A-Za-z0-9-]{4,40})/i);
+    if(!t)return null;
+    const type=t[1].toLowerCase().replace(/s$/,''),id=t[2];
+    if(type==='playlist'?!/^[0-9a-f-]{36}$/i.test(id):!/^[0-9]{3,12}$/.test(id))return null;
+    return{service:'tidal',type,id,src:'https://embed.tidal.com/'+type+'s/'+id+'?layout=gridify',height:type==='track'?300:400,link:'https://tidal.com/'+type+'/'+id};
+  }
+  return null;
 }
 function musicStyles(){
   if($('music_css'))return;
@@ -2112,6 +2143,16 @@ function musicStyles(){
   st.textContent='#music_panel{position:fixed;left:80px;bottom:16px;width:min(380px,calc(100vw - 96px));z-index:44;border-radius:14px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,.45);display:none}'
    +'#music_panel.show{display:block}'
    +'#music_panel iframe{display:block;width:100%;border:0;border-radius:12px;margin-top:10px}'
+   +'#music_tabs{display:flex;gap:6px;margin-bottom:8px}'
+   +'.music_tab{flex:1;padding:5px 4px;border-radius:8px;font-size:12px;font-weight:600;background:#1e1f22;color:#949ba4;border:1px solid transparent;cursor:pointer;white-space:nowrap}'
+   +'.music_tab:hover{color:#f2f3f5}.music_tab.on{background:#383a40;color:#fff;border-color:#5865f2}'
+   +'#music_results{max-height:250px;overflow-y:auto;margin-top:8px}'
+   +'.music_row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:6px;border-radius:8px;cursor:pointer;background:none;border:0;color:inherit}'
+   +'.music_row:hover{background:rgba(255,255,255,.07)}'
+   +'.music_row img,.music_row .ph{width:40px;height:40px;border-radius:6px;object-fit:cover;flex:none;background:#1e1f22}'
+   +'.music_row .t{font-size:13px;font-weight:600;color:#f2f3f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+   +'.music_row .s{font-size:12px;color:#949ba4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+   +'.music_row .k{margin-left:auto;font-size:10px;text-transform:uppercase;color:#949ba4;flex:none}'
    +'#music_dot{position:absolute;top:2px;right:2px;width:12px;height:12px;border-radius:50%;background:#23a55a;border:2px solid #1e1f22;display:none}'
    +'@media (max-width:767px){#music_panel{left:8px;right:8px;width:auto;bottom:72px}}';
   document.head.appendChild(st);
@@ -2123,15 +2164,30 @@ function musicBuild(){
   p.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><b class="text-white text-sm" style="flex:1">🎵 Music</b>'
    +'<button type="button" id="music_stop" class="text-xs text-[#949ba4] hover:text-white" title="Stop and remove the player">Stop</button>'
    +'<button type="button" id="music_hide" class="text-[#949ba4] hover:text-white text-lg" style="line-height:1" title="Hide (music keeps playing)" aria-label="Hide">&minus;</button></div>'
-   +'<div style="display:flex;gap:8px"><input id="music_in" autocomplete="off" spellcheck="false" placeholder="Paste a Spotify link" class="bg-[#1e1f22] rounded-lg px-3 py-2 text-white text-sm outline-none" style="flex:1;min-width:0">'
-   +'<button type="button" id="music_go" class="bg-[#5865f2] hover:bg-[#4752c4] text-white font-bold px-4 rounded-lg text-sm">Load</button></div>'
-   +'<div id="music_msg" class="text-xs text-[#949ba4]" style="margin-top:8px">Song, album, playlist or podcast link from Spotify. Log in to Spotify in this browser to hear full songs.</div>'
-   +'<div id="music_host"></div>';
+   +'<div id="music_tabs"></div>'
+   +'<div style="display:flex;gap:8px"><input id="music_in" autocomplete="off" spellcheck="false" class="bg-[#1e1f22] rounded-lg px-3 py-2 text-white text-sm outline-none" style="flex:1;min-width:0">'
+   +'<button type="button" id="music_go" class="bg-[#5865f2] hover:bg-[#4752c4] text-white font-bold px-4 rounded-lg text-sm">Go</button></div>'
+   +'<div id="music_msg" class="text-xs text-[#949ba4]" style="margin-top:8px"></div>'
+   +'<div id="music_results"></div><div id="music_host"></div>';
   document.body.appendChild(p);
+  const tabs=$('music_tabs');
+  Object.keys(MUSIC_SERVICES).forEach(k=>{
+    const b=document.createElement('button');b.type='button';b.className='music_tab';b.dataset.svc=k;b.textContent=MUSIC_SERVICES[k].name;
+    b.onclick=()=>musicPick(k);tabs.appendChild(b);
+  });
+  musicPick(musicService,true);
   $('music_hide').onclick=()=>musicToggle(false);
-  $('music_go').onclick=()=>musicLoad($('music_in').value);
-  $('music_in').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();musicLoad($('music_in').value)}});
+  $('music_go').onclick=()=>musicSubmit($('music_in').value);
+  $('music_in').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();musicSubmit($('music_in').value)}});
   $('music_stop').onclick=musicStop;
+}
+function musicPick(k,quiet){
+  musicService=k;
+  try{localStorage.setItem(MUSIC_SVC_KEY,k)}catch(e){}
+  document.querySelectorAll('.music_tab').forEach(b=>b.classList.toggle('on',b.dataset.svc===k));
+  $('music_in').placeholder='Search '+MUSIC_SERVICES[k].name+', or paste a link';
+  if(!quiet){$('music_results').innerHTML='';$('music_msg').textContent='Type a song or artist and press Enter, or paste a '+MUSIC_SERVICES[k].name+' link.'}
+  else $('music_msg').textContent='Type a song or artist and press Enter, or paste a link. Log in to the service in this browser to hear full songs.';
 }
 function musicToggle(on){
   musicBuild();
@@ -2143,20 +2199,73 @@ function musicToggle(on){
   }
 }
 function openMusic(){musicToggle()}
+function musicSubmit(text){
+  text=String(text||'').trim();
+  if(!text)return;
+  if(/^(https?:\/\/|spotify:)/i.test(text))return musicLoad(text);
+  musicSearch(text);
+}
+function musicFallback(q,problem){
+  const box=$('music_results'),svc=MUSIC_SERVICES[musicService];
+  $('music_msg').textContent='';
+  const note=document.createElement('div');note.className='text-xs text-[#949ba4]';
+  note.textContent=problem+' Find your song there, use Share, then Copy link, and paste it here.';
+  const a=document.createElement('a');a.href=svc.search(q);a.target='_blank';a.rel='noopener';a.className='text-sm';a.style.color='#00a8fc';
+  a.textContent='Search '+svc.name+' for \u201c'+q.slice(0,40)+'\u201d in a new tab';
+  box.appendChild(note);box.appendChild(a);
+}
+async function musicSearch(q){
+  const box=$('music_results'),msg=$('music_msg'),svcKey=musicService,svc=MUSIC_SERVICES[svcKey];
+  box.innerHTML='';
+  if(!svc.api){musicFallback(q,'Searching inside the site is not available for '+svc.name+'.');return}
+  msg.textContent='Searching...';
+  let list=null,problem='';
+  try{
+    const {data,error}=await sb.functions.invoke('music-search',{body:{q:q.slice(0,100),service:svcKey}});
+    if(error)problem='Search is not set up yet.';
+    else if(data&&data.error)problem=data.error;
+    else list=(data&&data.results)||[];
+  }catch(e){problem='Search is not available right now.'}
+  if(svcKey!==musicService)return; // they switched tabs while waiting
+  if(!list){musicFallback(q,problem);return}
+  if(!list.length){msg.textContent='Nothing found for \u201c'+q.slice(0,40)+'\u201d.';return}
+  msg.textContent='Pick one:';
+  list.forEach(r=>{
+    const okId=svcKey==='youtube'?/^[A-Za-z0-9_-]{11}$/.test(r.id):/^[A-Za-z0-9]{10,30}$/.test(r.id);
+    const okType=svcKey==='youtube'?r.type==='video':/^(track|album|playlist|artist|episode|show)$/.test(r.type);
+    if(!okId||!okType)return;
+    const b=document.createElement('button');b.type='button';b.className='music_row';
+    let pic;
+    if(typeof r.img==='string'&&/^https:\/\/[a-z0-9.-]+\.(scdn\.co|spotifycdn\.com|ytimg\.com)\//i.test(r.img)){pic=document.createElement('img');pic.src=r.img;pic.alt='';pic.loading='lazy'}
+    else{pic=document.createElement('div');pic.className='ph'}
+    const mid=document.createElement('div');mid.style.cssText='min-width:0;flex:1';
+    const t=document.createElement('div');t.className='t';t.textContent=String(r.name||'');
+    const s=document.createElement('div');s.className='s';s.textContent=String(r.sub||'');
+    mid.appendChild(t);mid.appendChild(s);
+    const k=document.createElement('span');k.className='k';k.textContent=r.type==='video'?'song':r.type;
+    b.appendChild(pic);b.appendChild(mid);b.appendChild(k);
+    b.onclick=()=>{box.innerHTML='';musicLoad(svcKey==='youtube'?'https://music.youtube.com/watch?v='+r.id:'https://open.spotify.com/'+r.type+'/'+r.id)};
+    box.appendChild(b);
+  });
+}
 function musicLoad(text,quiet){
   const e=musicEmbed(text);
-  if(!e){$('music_msg').textContent='That does not look like a Spotify link. Copy it from Spotify with Share, then Copy link.';return}
-  const host=$('music_host');host.innerHTML='';
+  if(!e){$('music_msg').textContent='That link is not one I can play. I can play Spotify, YouTube / YouTube Music and Tidal links (song, album or playlist).';return}
+  if(e.service!==musicService)musicPick(e.service,true);
+  const host=$('music_host');host.innerHTML='';$('music_results').innerHTML='';
   const f=document.createElement('iframe');
-  f.src=e.src;f.height=e.height;f.loading='lazy';f.title='Spotify player';
+  f.src=e.src;f.title=MUSIC_SERVICES[e.service].name+' player';f.loading='lazy';
+  if(e.ratio)f.style.aspectRatio=e.ratio;else f.height=e.height;
   f.allow='autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+  f.setAttribute('allowfullscreen','');
   host.appendChild(f);
   $('music_msg').textContent=quiet?'Loaded your last link.':'Loaded. Press play. You can hide this panel and the music keeps going.';
+  if(e.service==='youtube'){const a=document.createElement('div');a.className='text-xs text-[#949ba4]';a.style.marginTop='6px';a.textContent='If it says the video is unavailable, the owner does not allow playing it outside YouTube. Try another version.';host.appendChild(a)}
   try{localStorage.setItem(MUSIC_KEY,String(text).trim())}catch(err){}
   const d=$('music_dot');if(d)d.style.display='block';
 }
 function musicStop(){
-  $('music_host').innerHTML='';$('music_in').value='';
+  $('music_host').innerHTML='';$('music_results').innerHTML='';$('music_in').value='';
   $('music_msg').textContent='Stopped.';
   try{localStorage.removeItem(MUSIC_KEY)}catch(e){}
   const d=$('music_dot');if(d)d.style.display='none';
