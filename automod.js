@@ -8,7 +8,33 @@ function slurNorm(t){
   return String(t).slice(0,4000).normalize('NFKD').replace(/[\u0300-\u036f\u200b-\u200d\u2060\ufeff\u00ad]/g,'').toLowerCase()
     .replace(/[аеорсхіуѕјονιαε]/g,c=>_HOMO_TO[_HOMO_FROM.indexOf(c)]);
 }
-function hasSlur(t){return !!t&&SLUR_RE.test(slurNorm(t))}
+// ===== false-positive guard =====
+// The pattern above treats some digits/letters as look-alikes (q and 6 and 9 for "g", 0 for "o") and allows spaces
+// between letters. That makes it catch ordinary text like "FAQ", "600k", "go ok" or "wet back". Every hit is now
+// double-checked against this list of known-innocent matches before it counts.
+const SLUR_RE_G=new RegExp(SLUR_RE.source,'giu');
+// exact innocent matches (compared after lowercasing, dropping punctuation and collapsing spaces)
+const SAFE_PHRASES=new Set(['faq','faqs','go ok','wet back']);
+// a hit is innocent when its surroundings make the everyday meaning obvious
+const SAFE_CONTEXT=[
+  {core:/^coons?$/,before:/\bmaine[\s-]+$/},                                                                  // Maine Coon cats
+  {core:/^chinks?$/,after:/^\s*in\s+(?:the|my|his|her|their|your|our|its)\s+armou?r/}                         // "a chink in the armor"
+];
+function isSafeMatch(text,m){
+  const raw=m[0];
+  const phrase=raw.toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
+  const core=phrase.replace(/ /g,'');
+  if(SAFE_PHRASES.has(phrase))return true;
+  if(/^\d+k+s?$/.test(core))return true;   // numbers like 600k, 900k, 6000k (digits only, then k)
+  const before=text.slice(Math.max(0,m.index-12),m.index),after=text.slice(m.index+raw.length,m.index+raw.length+30);
+  return SAFE_CONTEXT.some(c=>c.core.test(core)&&(!c.before||c.before.test(before))&&(!c.after||c.after.test(after)));
+}
+function hasSlur(t){
+  if(!t)return false;
+  const s=slurNorm(t);
+  for(const m of s.matchAll(SLUR_RE_G)){if(!isSafeMatch(s,m))return true}
+  return false;
+}
 // returns true (and tells the user) when the text must not be sent
 function slurBlock(t,what){
   if(!hasSlur(t))return false;
