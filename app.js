@@ -544,7 +544,11 @@ async function runCmd(line){
   if(cmd==='auditlog'){if(!srvId)return sys('Open a server first.');const {data,error}=await sb.from('audit_log').select('*').eq('server_id',srvId).order('created_at',{ascending:false}).limit(20);if(error)return sys(error.message);if(!data.length)return sys('No audit log entries yet.');data.forEach(e=>{const a=profiles[e.actor],t=profiles[e.target];sys((a?a.username:'someone')+' '+e.action+(t?' '+t.username:'')+(e.detail?' ('+e.detail+')':'')+' — '+new Date(e.created_at).toLocaleString())});return;}
   if(cmd==='iplog'){const {data,error}=await sb.rpc('get_ip_log_all',{lim:30});if(error)return sys(error.message);if(!data.length)return sys('No log entries yet.');data.forEach(r=>sys((r.success?'✓':'✗')+' '+r.action+' "'+r.username_tried+'" from '+r.ip+' — '+new Date(r.created_at).toLocaleString()));return;}
   if(cmd==='reload'){if(!(await askConfirm('Reload the page for everyone online right now?')))return;const {error}=await sb.from('app_signals').insert({kind:'reload'});return sys(error?'Reload failed: '+error.message+(error.code?' ('+error.code+')':''):'Reload sent.')}
-  if(cmd==='reports')return showReports();const u=Object.values(profiles).find(p=>p.username===(name||'').toLowerCase().replace(/^@/,''));
+  if(cmd==='reports')return showReports();let u=Object.values(profiles).find(p=>p.username===(name||'').toLowerCase().replace(/^@/,''));
+  if(!u&&name){ // not in the list already loaded in the page: ask the database directly (the list can be incomplete or out of date)
+    const {data:du}=await sb.from('profiles').select('*').eq('username',String(name).toLowerCase().replace(/^@/,'')).maybeSingle();
+    if(du){u=du;profiles[du.id]=du}
+  }
   if(!u)return sys('No user named "'+(name||'')+'". Usage: /'+cmd+' username');
   if(['ban','unban','mute','unmute'].includes(cmd)){
     const kind=cmd.replace('un',''),undo=cmd.startsWith('un');let mins=0;
