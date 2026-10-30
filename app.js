@@ -563,6 +563,7 @@ async function runCmd(line){
   if(cmd==='banip'){const {data,error}=await sb.rpc('ban_ip',{target_uid:u.id});if(error)return sys(error.message);return sys('Banned the address on record for '+u.username+' ('+data+'). This does not remove their account access on its own — pair it with /ban if needed.')}
   if(cmd==='hwidban'){const {data,error}=await sb.rpc('ban_device',{target_uid:u.id});if(error)return sys(error.message);return sys('Banned '+data+' device'+(data===1?'':'s')+' tied to '+u.username+'. They are blocked the next time they open the site. Pair it with /ban to cut off the account right away.')}
   if(cmd==='unhwidban'){const {data,error}=await sb.rpc('unban_device',{target_uid:u.id});if(error)return sys(error.message);return sys('Removed '+data+' device ban'+(data===1?'':'s')+' tied to '+u.username)}
+  if(cmd==='devalts'){const {data,error}=await sb.rpc('get_device_alts',{target_uid:u.id});if(error)return sys(error.message);if(!data||!data.length)return sys('No other accounts have used the same browser or device as '+u.username+' (only devices seen since device tracking started are known).');sys('Accounts on the same device as '+u.username+':');data.forEach(r=>sys('\u2022 '+r.alt_name+' ('+r.via+')'));return sys('Use /ban or /deleteuser on the ones you want gone.')}
   if(cmd==='unbanip'){const {error}=await sb.rpc('unban_ip',{target_uid:u.id});if(error)return sys(error.message);return sys('Removed the IP ban tied to '+u.username)}
   if(cmd==='ips'){const {data,error}=await sb.rpc('get_ip_log',{target_uid:u.id,lim:20});if(error)return sys(error.message);if(!data.length)return sys('No log entries for '+u.username+' yet.');data.forEach(r=>sys((r.success?'✓':'✗')+' '+r.action+' from '+r.ip+' — '+new Date(r.created_at).toLocaleString()));return;}
   if(cmd==='alts'){const mine=await sb.rpc('get_ip_log',{target_uid:u.id,lim:200});if(mine.error)return sys(mine.error.message);const ips=new Set((mine.data||[]).map(r=>r.ip));if(!ips.size)return sys('No IPs on record for '+u.username+' yet.');const all=await sb.rpc('get_ip_log_all',{lim:5000});if(all.error)return sys(all.error.message);const by={};(all.data||[]).forEach(r=>{if(!ips.has(r.ip))return;const n=(r.username_tried||'').toLowerCase();if(n&&n!==u.username&&Object.values(profiles).some(p=>p.username===n))(by[n]=by[n]||new Set()).add(r.ip)});const names=Object.keys(by);if(!names.length)return sys('No other accounts share an IP with '+u.username+'.');sys('Accounts sharing an IP with '+u.username+' ('+names.length+'):');names.forEach(n=>sys('• '+n+' — '+[...by[n]].join(', ')));return sys('Shared IPs (school, VPN or mobile networks) can link unrelated people, so treat this as a lead, not proof.')}
@@ -644,7 +645,7 @@ loadEmojiMap();
 function suggest(){
   const el=$('i'),v=el.value.slice(0,el.selectionStart);let m,list=[],start=0;sugAt=false;sugEmoji=false;
   if(m=v.match(/^\/(\w*)$/)){start=1;list=CMDS.filter(c=>c.startsWith(m[1].toLowerCase()))}
-  else if(m=v.match(/^\/(ban|unban|mute|unmute|kick|unblock|nick|giverole|deleteuser|gift|switch|banip|unbanip|hwidban|unhwidban|ips)\s+@?(\w*)$/i)){start=v.length-m[2].length;list=names().filter(n=>n.startsWith(m[2].toLowerCase()))}
+  else if(m=v.match(/^\/(ban|unban|mute|unmute|kick|unblock|nick|giverole|deleteuser|gift|switch|banip|unbanip|devalts|hwidban|unhwidban|ips)\s+@?(\w*)$/i)){start=v.length-m[2].length;list=names().filter(n=>n.startsWith(m[2].toLowerCase()))}
   else if(m=v.match(/^\/role\s+\S+\s+(\w*)$/i)){start=v.length-m[1].length;list=ROLES.filter(r=>r.startsWith(m[1].toLowerCase()))}
   else if(m=v.match(/(?:^|\s)@(\w*)$/)){sugAt=true;start=v.length-m[1].length;
     const q=m[1].toLowerCase();
@@ -1824,7 +1825,7 @@ async function sendGift(){
 
 // ===== BeanBot =====
 const BOT_FN='beanbot'; // name of the Supabase edge function that runs BeanBot
-const STAFF_CMDS=new Set(['help','bold','newrole','delrole','banword','unbanword','banwords','delserver','auditlog','iplog','reports','reload','ban','unban','mute','unmute','nick','giverole','deleteuser','banip','hwidban','unhwidban','unbanip','ips','alts','gift','switch','unblock','kick','role']);
+const STAFF_CMDS=new Set(['help','bold','newrole','delrole','banword','unbanword','banwords','delserver','auditlog','iplog','reports','reload','ban','unban','mute','unmute','nick','giverole','deleteuser','banip','hwidban','unhwidban','unbanip','devalts','ips','alts','gift','switch','unblock','kick','role']);
 async function botCall(cmd,line){
   if(!cmd)return sys('Type /help to see the commands.');
   if(cur.type!=='ch')return sys('BeanBot commands only work in server channels.');
