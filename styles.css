@@ -228,10 +228,13 @@ html body #bc_sheet,html body .fixed.inset-0.z-\[60\]{background:rgba(0,0,0,.85)
 
 /* context menu: Discord item look */
 html body #ctx{min-width:188px;padding:6px 8px}
-html body #ctx>*,html body #ctx button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:6px 8px;margin:0;border-radius:2px;font-size:14px;font-weight:500;color:#b5bac1;line-height:18px}
+html body #ctx>div[onclick],html body #ctx button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:6px 8px;margin:0;border-radius:2px;font-size:14px;font-weight:500;color:#b5bac1;line-height:18px}
 html body #ctx button:hover{background:#5865f2;color:#fff}
-html body #ctx button[class*="f23f43"],html body #ctx button[class*="red"]{color:#f23f43}
-html body #ctx button[class*="f23f43"]:hover,html body #ctx button[class*="red"]:hover{background:#da373c;color:#fff}
+html body #ctx>div[onclick].text-\[\#f23f43\],html body #ctx button.text-\[\#f23f43\]{color:#f23f43}
+html body #ctx>div[onclick]:hover,html body #ctx>div[onclick].hover\:bg-\[\#35373c\]:hover{background:#5865f2;color:#fff}
+html body #ctx>div[onclick].text-\[\#f23f43\]:hover{background:#da373c;color:#fff}
+html body #ctx .h-px{height:1px;margin:4px 0;background:#3f4147}
+html body #ctx .grid{display:grid;gap:2px;padding:4px}
 
 /* settings page */
 html body #bc_settings nav{border:0;background:#2b2d31}
@@ -246,3 +249,113 @@ html body #mem select{padding-right:22px !important}
 html body #vpc button[class*="rounded-full"],html body #vpc .pbtn{border-radius:3px}
 html body #vpc{background-color:#111214}
 html body #vpc [class*="bg-[#2b2d31]"]{background-color:#1e1f22}
+
+
+/* ===================== global sweep: shapes, chips, bars, panels ===================== */
+html body .rounded-md,html body .rounded{border-radius:4px}
+html body .rounded-lg{border-radius:4px}
+html body .rounded-xl,html body .rounded-2xl{border-radius:8px}
+html body button.rounded-full:not([class*="w-"]):not([class*="h-"]){border-radius:3px}
+html body :is(button,[role=button]){font-weight:500;cursor:pointer}
+html body button:disabled{cursor:not-allowed}
+html body a{color:#00a8fc}
+html body a:hover{text-decoration:underline}
+html body :focus-visible{outline:2px solid #00a8fc;outline-offset:1px}
+html body input:focus-visible,html body textarea:focus-visible,html body select:focus-visible{outline:0}
+
+/* signed-in user panel (bottom of the channel list) */
+html body #leftcol>div:nth-child(2)>div:last-child{height:auto;min-height:52px;padding:8px;gap:2px;background:#232428}
+html body #me{font-size:14px;font-weight:600;line-height:18px;color:#f2f3f5}
+html body #leftcol>div:nth-child(2)>div:last-child>span:last-child{gap:0 2px;justify-content:flex-start}
+html body #leftcol>div:nth-child(2)>div:last-child button{font-size:12px;font-weight:500;padding:2px 6px;border-radius:4px;color:#b5bac1}
+html body #leftcol>div:nth-child(2)>div:last-child button:hover{background:#35373c;color:#fff}
+
+/* header toolbar icons */
+html body #ch button:not([class*="hover:bg"]),html body #sh button{min-width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:4px;color:#b5bac1;font-size:16px;transition:background-color .1s,color .1s}
+html body #ch button:not([class*="hover:bg"]):hover,html body #sh button:hover{background:#35373c;color:#dbdee1}
+html body #ch #callbtn,html body #ch #groupcallbtn{color:#b5bac1}
+html body #ch #callbtn:hover,html body #ch #groupcallbtn:hover{color:#23a55a}
+html body #chtitle{font-size:16px;font-weight:600;color:#f2f3f5}
+
+/* call banner + call bar */
+html body #ringbanner{border-radius:8px;background:#248046}
+html body #ringbanner button{border-radius:3px;font-size:14px;font-weight:500;padding:6px 16px}
+html body #callbar>div:first-child{background:#111214;border-radius:8px}
+html body #callbar>div:last-child{background:#111214;border-radius:999px}
+html body #callbar button.rounded-full{background:#2b2d31;transition:background-color .1s,border-radius .1s}
+html body #callbar button.rounded-full:hover{background:#3f4147}
+
+/* search + reply + autocomplete bars */
+html body #searchbar{margin:8px 16px}
+html body #sq{height:36px;padding:0 10px;font-size:14px}
+html body #rb{background:#2b2d31;border-radius:8px 8px 0 0;padding:8px 12px;font-size:14px;color:#b5bac1}
+html body #sug{background:#2b2d31;border-radius:8px;padding:8px;box-shadow:0 8px 16px rgba(0,0,0,.24)}
+html body #sug>*{border-radius:4px;padding:6px 8px;cursor:pointer}
+html body #sug>*:hover,html body #sug>.bg-\[\#35373c\]{background:#35373c}
+html body #sqres>*{background:#2b2d31;border-radius:4px}
+
+/* reactions: Discord pills */
+html body [id^="rx_"]{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+html body [id^="rx_"] button{height:24px;padding:0 6px;border-radius:8px;font-size:14px;font-weight:500;line-height:22px;color:#b5bac1;border:1px solid transparent;background:#2b2d31;transition:none}
+html body [id^="rx_"] button:hover{border-color:#80848e}
+html body [id^="rx_"] button[class*="border-[#5865f2]"]{background:rgba(88,101,242,.15);border-color:#5865f2;color:#dee0fc}
+
+/* embeds, link previews, replies, quotes, code */
+html body #msgs [style*="border-left:4px solid"]{border-radius:4px;background:#2b2d31;box-shadow:0 0 0 1px rgba(30,31,34,.5)}
+html body #msgs .bq{border-left:4px solid #4e5058;border-radius:2px;padding-left:12px}
+html body #msgs pre{background:#2b2d31;border:1px solid #1e1f22;border-radius:4px;padding:8px;font-size:14px;line-height:1.3}
+html body #msgs code{background:#2b2d31;border-radius:3px;padding:.1em .3em;font-size:85%}
+html body #msgs pre code{background:transparent;padding:0;font-size:inherit}
+html body #msgs img[class*="max-h"],html body #msgs video{border-radius:8px}
+html body .spoiler{border-radius:3px}
+
+/* toasts */
+html body #toasts>div{background:#111214;border-radius:4px;border-left-width:4px;box-shadow:0 8px 16px rgba(0,0,0,.24);color:#dbdee1;padding:12px 16px;font-size:14px}
+
+/* tag chips and badges: small flat, like role tags */
+html body #msgs span[class*="rounded"][class*="font-black"],html body #mem span[class*="rounded"][class*="font-black"]{border-radius:3px}
+
+/* member list headers */
+html body #mem [class*="uppercase"]{font-size:12px;font-weight:600;letter-spacing:.02em;color:#949ba4}
+html body #mem [data-uid]:hover{background:#35373c}
+
+/* channel category headers */
+html body #sc [class*="uppercase"]{font-size:12px;font-weight:600;letter-spacing:.02em;color:#949ba4}
+html body #sc [class*="uppercase"]:hover{color:#dbdee1}
+
+/* DM / friend rows */
+html body #sc [data-friend-uid],html body #sc [data-dm]{border-radius:4px}
+
+/* in-app browser */
+html body #web #btabs{background:#1e1f22}
+html body #web #burl{border:0 !important;border-radius:4px;background:#1e1f22;height:36px;padding:0 12px;font-size:14px}
+html body #web #burl:focus{box-shadow:0 0 0 1px #5865f2}
+html body #web>div:nth-child(2){border-bottom:1px solid #1e1f22;background:#2b2d31}
+html body #web button{border-radius:4px}
+
+/* shop */
+html body #shop h2{font-size:20px;font-weight:600}
+html body #shopg>*{background:#2b2d31;border-radius:8px;border:0 !important}
+html body #shopg>*:hover{background:#35373c}
+
+/* role manager */
+html body #rm #rmlist>*{background:#2b2d31;border-radius:8px}
+html body #rm>div>div:first-child{border-bottom:0;padding:16px}
+html body #rm [class*="border-black/30"]{border-color:#3f4147}
+html body #rm button[class*="border"][style*="dashed"]{border-radius:3px}
+
+/* generic link-like buttons in dialogs */
+html body :is(.bc-modal,#bc_sheet,#rm,#vpc,#pm) button[class*="text-[#5865f2]"],html body :is(.bc-modal,#bc_sheet,#rm,#vpc,#pm) button[class*="text-[#00a8fc]"]{color:#00a8fc}
+
+/* danger buttons everywhere */
+html body button[class*="bg-[#f23f43]"],html body button[class*="bg-red-"]{background:#da373c;color:#fff;border-radius:3px}
+html body button[class*="bg-[#f23f43]"]:hover,html body button[class*="bg-red-"]:hover{background:#a12828}
+
+/* Discord-style tooltips for the custom title popups are native; keep text selection colour like Discord */
+::selection{background:rgba(0,104,224,.5)}
+html body #sh{padding-left:16px;padding-right:8px;gap:2px}
+html body #sh>*:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+html body #sh button{min-width:24px;width:24px;height:28px;font-size:14px}
+html body #sh>*:not(:first-child){flex-shrink:0}
+html body #vpc .bc-foot{margin:16px -20px -20px}
+html body #rm [class~="space-y-3"]>#rmlist:empty{display:none}

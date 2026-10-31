@@ -805,7 +805,7 @@ function openChannelForm(id){
    <label class="${FLD_LBL}">Slow mode (seconds between messages, 0 = off)<input id="cf_slow" type="number" min="0" step="1" inputmode="numeric" class="${FLD_INP}"></label>
   </div>
   <div id="cf_msg" class="text-xs text-[#f23f43] mt-3 min-h-[1rem]"></div>
-  <div class="flex gap-2 mt-2"><button onclick="saveChannelForm()" class="flex-1 bg-[#23a55a] hover:bg-[#1a8044] text-white py-2 rounded-lg text-sm font-semibold">${c?'Save changes':'Create channel'}</button><button onclick="closeVp()" class="flex-1 bg-[#4e5058] hover:bg-[#5d6068] text-white py-2 rounded-lg text-sm">Cancel</button></div>`;
+  <div class="bc-foot"><button onclick="closeVp()" class="bc-link">Cancel</button><button onclick="saveChannelForm()" class="bg-[#5865f2] hover:bg-[#4752c4] text-white">${c?'Save changes':'Create channel'}</button></div>`;
   const nm=x=>String(x).trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
   $('cf_name').value=c?c.name:'';$('cf_topic').value=c?(c.topic||''):'';$('cf_cat').value=c?(c.category||''):'';
   $('cf_voice').checked=!!(c&&c.is_voice);$('cf_forum').checked=!!(c&&c.is_forum);$('cf_read').value=String(c?c.min_read_rank||1:1);$('cf_post').value=String(c?c.min_post_rank||1:1);$('cf_slow').value=c?(c.slow_seconds||0):0;
@@ -1461,9 +1461,9 @@ async function deleteMe(){const n=(await askText('This permanently deletes your 
 $('mem').addEventListener('contextmenu',e=>{const d=e.target.closest('[data-uid]');if(!d)return;e.preventDefault();const u=d.dataset.uid;let h=mi('◉','View profile',`showProfile('${u}')`);if(u!==me.id)h+=mi('@','Mention',`mentionUser('${u}')`);
   if(canNickname()&&u!==me.id&&rank(roles[u])<rank(myRole()))h+=mi('✎','Change nickname',`promptNick('${u}')`);
   if(canChangeRole(u))h+=mi('🎖','Change role',`openRoleDialog('${u}')`);
-  if(canResetPw(u))h+=mi('🔑','RESET PASSWORD',`resetPw('${u}')`,1);
-  if(defRole==='owner'&&u!==me.id)h+=sep+mi('⇄','Switch to this account',`switchTo('${u}')`,1);
   if(u!==me.id&&fr(u)&&fr(u).status==='accepted')h+=mi('👥','Add to group chat',`groupAddMenu('${u}',${e.clientX},${e.clientY})`);
+  if(defRole==='owner'&&u!==me.id)h+=sep+mi('⇄','Switch to this account',`switchTo('${u}')`,1);
+  if(canResetPw(u))h+=mi('🔑','Reset password',`resetPw('${u}')`,1);
   if(u!==me.id&&(myRole()==='owner'||(myPerm('delete_accounts')&&roles[u]!=='owner'&&rank(roles[u])<effRank())))h+=mi('🗑','Delete account',`delAcct('${u}')`,1);
   showCtx(e.clientX,e.clientY,h)});
 $('sc').addEventListener('contextmenu',e=>{const d=e.target.closest('[data-friend-uid]');if(!d)return;e.preventDefault();groupAddMenu(d.dataset.friendUid,e.clientX,e.clientY)});
