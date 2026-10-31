@@ -2,7 +2,7 @@
 // ===== font size, keyboard shortcuts, channel navigation keys, install prompt. Loaded after extras.js. =====
 
 // ---------- preferences (kept in this browser) ----------
-const PREF_DEF={mode:'dark',compact:false,font:16,sound:true,linkPrev:true,mic:'',spk:'',cam:'',ns:true,ec:true,agc:true,share:'sharp'};
+const PREF_DEF={mode:'dark',compact:false,font:16,sound:true,linkPrev:true,mic:'',spk:'',cam:'',ns:true,ec:true,agc:true,share:'sharp',rr:true};
 let prefs_=Object.assign({},PREF_DEF,LS.get('bc_prefs',{}));
 function setPref(k,v){prefs_[k]=v;LS.set('bc_prefs',prefs_);applyPrefs()}
 function applyPrefs(){
@@ -81,13 +81,15 @@ function stLook(el){
   el.innerHTML=stH('Appearance')+`<div class="bg-[#2b2d31] rounded-xl px-5 py-2 divide-y divide-[#3f4147]">
     ${stRow('Brightness','Dark is the default.',`<select id="st_mode" class="${stSel}"><option value="dark">Dark</option><option value="light">Light</option></select>`)}
     ${stRow('Message spacing','Compact packs more messages on screen.',`<select id="st_dens" class="${stSel}"><option value="0">Cozy</option><option value="1">Compact</option></select>`)}
+    ${stRow('Read receipts','Show "Seen" under your DMs once they are read. Turn off and nobody sees when you read theirs, and you will not see theirs.',`<select id="st_rr" class="${stSel}"><option value="1">On</option><option value="0">Off</option></select>`)}
     ${stRow('Chat font size',`<span id="st_fsv">${prefs_.font}px</span>`,`<input id="st_font" type="range" min="12" max="20" step="1" value="${prefs_.font}" class="w-40">`)}
     ${stRow('Link previews','Show a small card under links. Turning this off also stops your browser asking the link-preview service.',stSwitch('linkPrev',prefs_.linkPrev))}
    </div>
    ${stSec('Preview')}<div class="bg-[#313338] border border-[#3f4147] rounded-xl p-4"><div class="flex gap-3">${av(me,9)}<div><span class="font-bold text-sm" style="color:${col(me)}">${esc(dn(me))}</span> <span class="text-[10px] text-[#949ba4]">Today</span><p class="text-sm" style="font-size:var(--bc-chat,14px)!important">This is how your messages will look. 🫘</p></div></div></div>`;
-  $('st_mode').value=prefs_.mode;$('st_dens').value=prefs_.compact?'1':'0';
+  $('st_mode').value=prefs_.mode;$('st_dens').value=prefs_.compact?'1':'0';$('st_rr').value=prefs_.rr===false?'0':'1';
   $('st_mode').onchange=e=>setPref('mode',e.target.value);
   $('st_dens').onchange=e=>setPref('compact',e.target.value==='1');
+  $('st_rr').onchange=e=>{setPref('rr',e.target.value==='1');if(typeof rrChanged==='function')rrChanged()};
   $('st_font').oninput=e=>{setPref('font',+e.target.value);$('st_fsv').textContent=e.target.value+'px'};
   wireSwitches(el,(k,v)=>{setPref(k,v);stLook(el)});
 }
