@@ -723,3 +723,6 @@ html[data-theme="plum"] [class~="bg-[#111214]"]{background-color:#0c0612 !import
 html[data-theme="plum"] [class~="hover:bg-[#111214]"]:hover{background-color:#0c0612 !important}
 html[data-theme="plum"] [class~="bg-[#4e5058]"]{background-color:#4a3068 !important}
 html[data-theme="plum"] [class~="hover:bg-[#4e5058]"]:hover{background-color:#4a3068 !important}
+
+/* The chat area in the middle sits on #app (and <html>), which styles.css paints plain grey. Let the theme colour show through. */
+html[data-theme]:not([data-mode=light]),html[data-theme]:not([data-mode=light]) #app{background-color:transparent !important}
