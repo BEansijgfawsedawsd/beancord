@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <title>BEANCORD</title>
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#1b1c1f">
+<meta name="theme-color" content="#1e1f22">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2064%2064%27%3E%3Cpath%20d=%27M46%209C36%201%2018%207%2012%2022C6%2036%2014%2055%2030%2059C44%2063%2057%2052%2054%2041C52.5%2035%2046%2035%2043%2040C40%2045%2033%2044%2032%2038C31%2032%2038%2031%2043%2026C48%2021%2051%2014%2046%209Z%27%20fill=%27%238e2b25%27%20stroke=%27%235a1512%27%20stroke-width=%273%27%20stroke-linejoin=%27round%27/%3E%3Cpath%20d=%27M20%2024C23%2017%2030%2013%2037%2012%27%20fill=%27none%27%20stroke=%27%23ffffff%27%20stroke-opacity=%27.45%27%20stroke-width=%273.5%27%20stroke-linecap=%27round%27/%3E%3C/svg%3E">
@@ -14,7 +14,7 @@
 .hl{background:rgba(250,166,26,.22)!important;transition:background 1s}
 .tk-c{color:#7d8590;font-style:italic}.tk-s{color:#a5d6a7}.tk-n{color:#f2a65a}.tk-k{color:#c792ea}.tk-f{color:#82aaff}
 .kbd{display:inline-block;background:#1e1f22;border:1px solid #3f4147;border-bottom-width:2px;border-radius:4px;padding:1px 6px;font-size:12px;color:#dbdee1;margin-left:2px}
-#msgs p.text-sm{font-size:var(--bc-chat,14px)!important}
+#msgs p.text-sm{font-size:var(--bc-chat,16px)!important}
 html.compact #msgs{padding:.5rem .75rem}
 html.compact #msgs.space-y-3>*+*{margin-top:.15rem!important}
 
@@ -29,7 +29,7 @@ html.compact #msgs.space-y-3>*+*{margin-top:.15rem!important}
 /* forum list sits in one wrapper so the chat's per-message padding/margin rules don't squash the cards */
 #msgs>div.forum-wrap{margin:0;padding:0}#msgs>div.forum-wrap:hover{background:none}
 
-/* ---- light mode (Settings > Appearance). Overrides the hard-coded dark palette; !important so it also beats the colour themes ---- */
+/* ---- light mode (Settings > Appearance). Overrides the hard-coded dark palette ---- */
 html[data-mode=light] body,html[data-mode=light] .bg-\[\#313338\]{background:#ffffff!important}
 html[data-mode=light] .bg-\[\#2b2d31\],html[data-mode=light] .bg-\[\#2f3136\]{background:#f2f3f5!important}
 html[data-mode=light] .bg-\[\#1e1f22\],html[data-mode=light] .bg-\[\#232428\],html[data-mode=light] .bg-\[\#111214\]{background:#e3e5e8!important}
@@ -57,7 +57,6 @@ html[data-mode=light] .spoiler{background:#c9ccd1}html[data-mode=light] .spoiler
 html[data-mode=light] .kbd{background:#e3e5e8;border-color:#c4c7cc;color:#2e3338}
 html[data-mode=light] .tk-c{color:#6a737d}html[data-mode=light] .tk-s{color:#1a7f37}html[data-mode=light] .tk-n{color:#b35900}html[data-mode=light] .tk-k{color:#8250df}html[data-mode=light] .tk-f{color:#0550ae}
 </style>
-<link rel="stylesheet" href="discord.css">
 </head>
 <body class="bg-[#313338] text-[#dbdee1] h-screen overflow-hidden">
 
@@ -194,7 +193,6 @@ html[data-mode=light] .tk-c{color:#6a737d}html[data-mode=light] .tk-s{color:#1a7
   <label class="block text-[11px] font-bold uppercase tracking-wide text-[#949ba4]">Nickname<input id="pn" maxlength="24" placeholder="Shown instead of your username" class="block mt-1.5 w-full bg-[#1e1f22] rounded-lg px-3 py-2 text-white text-sm font-normal normal-case outline-none focus:ring-2 focus:ring-[#5865f2]/60"></label>
   <label class="block text-[11px] font-bold uppercase tracking-wide text-[#949ba4]">About me<textarea id="pb" maxlength="200" rows="3" placeholder="Tell people about yourself" class="block mt-1.5 w-full bg-[#1e1f22] rounded-lg px-3 py-2 text-white text-sm font-normal normal-case outline-none focus:ring-2 focus:ring-[#5865f2]/60"></textarea></label>
   <div class="flex gap-6 text-[11px] font-bold uppercase tracking-wide text-[#949ba4]"><label class="flex items-center gap-2">Name color<input id="pc" type="color"></label><label class="flex items-center gap-2">Banner color<input id="pbn" type="color"></label></div>
-  <label class="block text-[11px] font-bold uppercase tracking-wide text-[#949ba4]">Background style<select id="pt" class="block mt-1.5 w-full bg-[#1e1f22] rounded-lg px-3 py-2 text-white text-sm font-normal normal-case outline-none"><option value="default">Default dark</option><option value="maroon">Maroon</option><option value="midnight">Midnight blue</option><option value="forest">Forest</option><option value="plum">Plum</option><option value="purple">Purple</option><option value="midnightblack">Midnight black</option><option value="bubblegum">Bubblegum Pink</option><option value="hotpink">Hot Pink Night</option><option value="blossom">Cherry Blossom</option><option value="coral">Coral</option><option value="peach">Peach</option><option value="rosegold">Rose Gold</option><option value="sunset">Sunset</option><option value="amber">Amber</option><option value="gold">Gold</option><option value="lime">Lime</option><option value="matrix">Matrix Green</option><option value="mint">Mint</option><option value="seafoam">Seafoam</option><option value="teal">Teal</option><option value="ice">Ice</option><option value="sky">Sky</option><option value="ocean">Ocean</option><option value="abyss">Abyss</option><option value="royal">Royal Blue</option><option value="lavender">Lavender</option><option value="neon">Neon</option><option value="grape">Grape</option><option value="berry">Berry</option><option value="crimson">Crimson</option><option value="bloodmoon">Blood Moon</option><option value="mocha">Mocha</option><option value="slate">Slate</option><option value="graphite">Graphite</option></select></label>
   <div><div class="text-[11px] font-bold uppercase tracking-wide text-[#949ba4] mb-1">Blocked users</div><div id="pblk" class="space-y-1"></div></div>
   <div class="flex gap-2 pt-1"><button onclick="saveProfile()" class="flex-1 bg-[#5865f2] hover:bg-[#4752c4] text-white py-2 rounded-lg text-sm font-semibold">Save</button><button onclick="$('pm').classList.add('hidden')" class="flex-1 bg-[#4e5058] hover:bg-[#5d6068] text-white py-2 rounded-lg text-sm">Cancel</button></div>
   <div class="rounded-xl bg-black/20 p-3 space-y-2">

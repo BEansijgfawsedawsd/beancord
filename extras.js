@@ -163,7 +163,7 @@ async function openMentions(){
   const {data,error}=await sb.from('messages').select('*').neq('sender_id',me.id)
     .or(`content.ilike.%@${u}%,content.ilike.%@everyone%,content.ilike.%@here%`).order('created_at',{ascending:false}).limit(80);
   if(error){body.innerHTML='<p class="text-sm text-[#f23f43]">'+esc(error.message)+'</p>';return}
-  if(!data.every(m=>profiles[m.sender_id]))await loadProfiles();
+  if(!data.every(m=>profiles[m.sender_id]))await loadProfiles(20000);
   const list=data.filter(m=>!blocked.has(m.sender_id)&&mentionsMe(m)).slice(0,40);
   if(!$('bc_sheet'))return;
   body.innerHTML=list.length?'<div class="space-y-2">'+list.map(m=>msgRowHtml('ch',m)).join('')+'</div>':'<p class="text-sm text-[#949ba4]">Nobody has mentioned you recently.</p>';
@@ -212,7 +212,7 @@ async function doSearch(){
   if(f.text)q=q.ilike('content','%'+f.text.replace(/[\\%_]/g,'\\$&')+'%');
   const {data,error}=await q.order('created_at',{ascending:false}).limit(40);
   if(error)return bad(error.message);
-  if(!data.every(m=>profiles[m.sender_id]))await loadProfiles();
+  if(!data.every(m=>profiles[m.sender_id]))await loadProfiles(20000);
   box.innerHTML=data.length?data.map(m=>{
     const p=profiles[m.sender_id]||{username:'?'},c=multi?allChans.find(x=>x.id===m.channel_id):null;
     return `<div data-jump="${kind}|${esc(msgCtx(m))}|${esc(m.id)}" class="p-2 rounded bg-[#2b2d31] cursor-pointer hover:bg-[#35373c]"><b style="color:${col(p)}">${esc(dn(p))}</b> ${c?`<span class="text-[10px] text-[#80848e]">#${esc(c.name)}</span> `:''}<span class="text-[10px] text-[#949ba4]">${new Date(m.created_at).toLocaleString()}</span><p>${esc(plainText(m.content)||(m.image_url?'🖼 image':m.file_url?'📄 file':''))}</p></div>`;
@@ -280,3 +280,6 @@ async function initExtras(){
   openMsgLink();
 }
 
+
+// phones: never let the whole page scroll (it hides the header and the menu button)
+window.addEventListener('scroll',()=>{if(window.scrollY||window.scrollX)window.scrollTo(0,0)},{passive:true});

@@ -7,7 +7,7 @@ function closeLeftMobile(){$('leftcol').classList.remove('open');$('backdrop').c
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 // ===== small modals (replace prompt/confirm/alert) =====
-// new windows go inside #app so the colour themes and raised-button skin in styles.css apply to them
+// new windows go inside #app so the styles in styles.css apply to them
 const bcHost=()=>{const a=document.getElementById('app');return a&&!a.classList.contains('hidden')?a:document.body};
 function _modal(cancel,html,init){return new Promise(res=>{
   const d=document.createElement('div');d.className='fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4';
@@ -163,7 +163,8 @@ async function doAuth(mode){
 }
 async function logout(){if(callState!=='idle'||groupCallActive)hangupCall();if(ringCh)sb.removeChannel(ringCh);try{await pushDetach()}catch(e){}await sb.auth.signOut();if(rt)sb.removeChannel(rt);location.reload()}
 let _profAt=0;
-async function loadProfiles(maxAge){if(maxAge&&Date.now()-_profAt<maxAge)return;const {data}=await sb.from('profiles').select('*');_profAt=Date.now();profiles={};(data||[]).forEach(p=>profiles[p.id]=p);if(me&&profiles[me.id]){me=profiles[me.id];const b=until(me,'banned_until');if(b)kickOut(b)}}
+let _profP=null;
+async function loadProfiles(maxAge){if(maxAge&&Date.now()-_profAt<maxAge)return;if(_profP)return _profP;_profP=(async()=>{const {data}=await sb.from('profiles').select('*');_profAt=Date.now();profiles={};(data||[]).forEach(p=>profiles[p.id]=p);if(me&&profiles[me.id]){me=profiles[me.id];const b=until(me,'banned_until');if(b)kickOut(b)}})().finally(()=>{_profP=null});return _profP}
 async function kickOut(b){await sb.auth.signOut();$('app').classList.add('hidden');$('auth').classList.remove('hidden');$('err').textContent='This account is banned until '+b.toLocaleString()}
 function until(p,k){const v=p&&p[k];return v&&new Date(v)>new Date()?new Date(v):null}
 async function start(){
@@ -171,7 +172,7 @@ async function start(){
   if(!user){$('auth').classList.remove('hidden');$('app').classList.add('hidden');return}
   $('auth').classList.add('hidden');$('app').classList.remove('hidden');
   await loadProfiles();me=profiles[user.id];{const b=until(me,'banned_until');if(b)return kickOut(b)}
-  try{const dv=await getDeviceIds();const {data:evd}=await sb.rpc('bc_register_device',{hw:dv.h,dev:dv.d});if(evd===true)return kickDevice()}catch(e){}
+  try{const dv=await getDeviceIds();await sb.rpc('bc_register_device',{hw:dv.h,dev:dv.d})}catch(e){}
   try{const dv=await getDeviceIds();const {data:devBanned,error:devErr}=await sb.rpc('register_device',{h:dv.h,d:dv.d});if(!devErr&&devBanned===true)return kickDevice()}catch(e){}
   pushRebind();
   await loadFriends();await loadBlocks();await loadShopTags();await loadChanMap();drawMeBox();
@@ -186,7 +187,7 @@ async function newServer(){
   await loadServers();openServer(servers[servers.length-1].id);
 }
 async function openServer(id){
-  srvId=id;delete unreadSrv[id];delete mentSrv[id];await loadProfiles(30000);await loadServers();
+  srvId=id;delete unreadSrv[id];delete mentSrv[id];await loadProfiles(120000);await loadServers();
   const s=servers.find(x=>x.id===id);
   const [c,m]=await Promise.all([sb.from('channels').select('*').eq('server_id',id).order('position',{nullsFirst:false}).order('created_at'),sb.from('server_members').select('*').eq('server_id',id)]);
   channels=c.data||[];channels.forEach(x=>chanSrv[x.id]=id);members=m.data||[];roles={};members.forEach(x=>roles[x.user_id]=x.role);if((servers.find(x=>x.id===id)||{}).is_default){defRole=roles[me.id];const nb=$('newsrvbtn');if(nb)nb.classList.toggle('hidden',defRole!=='owner')}
@@ -273,7 +274,7 @@ async function openChannel(id){
   draw(data||[],since);
 }
 async function showDMs(){
-  srvId=null;members=[];roles={};$('mem').classList.add('hidden');await loadProfiles(30000);await loadFriends();await loadGroups();await loadServers();cur={};$('sh').innerHTML='<span class="truncate">Direct Messages</span><span class="flex items-center gap-2 flex-shrink-0"><button onclick="openWeb()" title="Beanchat — search the web" class="text-base text-[#949ba4] hover:text-white">🫘</button></span>';$('chtitle').textContent='Pick someone to message';$('msgs').innerHTML='';$('pinbtn').classList.add('hidden');$('searchbtn').classList.add('hidden');$('searchbar').classList.add('hidden');$('callbtn').classList.add('hidden');$('groupcallbtn').classList.add('hidden');$('groupsettingsbtn').classList.add('hidden');subscribeTyping();
+  srvId=null;members=[];roles={};$('mem').classList.add('hidden');await loadProfiles(120000);await loadFriends();await loadGroups();await loadServers();cur={};$('sh').innerHTML='<span class="truncate">Direct Messages</span><span class="flex items-center gap-2 flex-shrink-0"><button onclick="openWeb()" title="Beanchat — search the web" class="text-base text-[#949ba4] hover:text-white">🫘</button></span>';$('chtitle').textContent='Pick someone to message';$('msgs').innerHTML='';$('pinbtn').classList.add('hidden');$('searchbtn').classList.add('hidden');$('searchbar').classList.add('hidden');$('callbtn').classList.add('hidden');$('groupcallbtn').classList.add('hidden');$('groupsettingsbtn').classList.add('hidden');subscribeTyping();
   drawPeople();
 }
 function drawPeople(){
@@ -331,7 +332,7 @@ function row(m,pm){
   const t2=new Date(m.created_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
   return `<div id="m_${m.id}" class="group flex gap-3 ${compact?'!mt-0.5 ':''}${mentionsMe(m)?'bg-yellow-500/10 border-l-2 border-yellow-500 pl-2':''}">${compact?`<span class="w-9 flex-shrink-0 text-[9px] leading-5 text-center text-[#949ba4] opacity-0 group-hover:opacity-100 select-none whitespace-nowrap">${t2}</span>`:`<span onclick="showProfile('${m.sender_id}')" class="cursor-pointer flex-shrink-0">${av(p,9)}</span>`}<div class="min-w-0">${compact?`${m.pinned?'📌 ':''}${del?`<button onclick="delMsg('${m.id}')" class="hidden group-hover:inline float-right text-[10px] text-[#949ba4] hover:text-[#f23f43]">delete</button>`:''}`:`<span onclick="showProfile('${m.sender_id}')" class="font-bold text-sm cursor-pointer hover:underline" style="color:${col(p)}">${esc(dn(p))}</span>${isBot(p)?' '+BOTBADGE:''}${utag(p)}${r&&r!=='member'?` ${tag(p,r)}`:''} <span class="text-[10px] text-[#949ba4]">${t}</span>${m.pinned?' 📌':''}${del?` <button onclick="delMsg('${m.id}')" class="hidden group-hover:inline text-[10px] text-[#949ba4] hover:text-[#f23f43]">delete</button>`:''}`}${replyLine(m)}${m.file_url&&m.file_url.startsWith(FILEBASE)?`<a href="${esc(m.file_url)}" target="_blank" class="mt-1 flex items-center gap-2 bg-[#2b2d31] border border-[#3f4147] rounded-lg px-3 py-2 w-fit text-xs text-[#5865f2] hover:underline">📄 ${esc(m.file_name||'file')}</a>`:''}${m.image_url&&m.image_url.startsWith(IMGBASE)?`<img src="${esc(m.image_url)}" loading="lazy" onclick="lightbox(this.src)" class="mt-1 max-h-64 max-w-xs rounded-lg cursor-pointer">`:''}<p class="text-sm" data-t>${fmt(m)}${m.edited_at?' <span class="text-[10px] text-[#949ba4]">(edited)</span>':''}</p><div id="rx_${m.id}" class="flex flex-wrap gap-1 mt-1"></div><div id="lp_${m.id}"></div>${m.channel_id?`<button id="thr_${m.id}" onclick="openThread('${m.id}')" class="hidden mt-1 text-xs text-[#00a8fc] hover:underline"></button>`:''}</div></div>`;
 }
-const PAGE=100;
+const PAGE=50;
 let msgOldest=null,msgMore=false,msgLast=null,loadingOlder=false;
 const dayKey=d=>new Date(d).toDateString();
 function daySep(iso){const d=new Date(iso),n=new Date(),y=new Date(Date.now()-864e5);const label=d.toDateString()===n.toDateString()?'Today':d.toDateString()===y.toDateString()?'Yesterday':d.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric',year:d.getFullYear()===n.getFullYear()?undefined:'numeric'});
@@ -399,8 +400,8 @@ function buzz(vol){
   }catch(e){}
 }
 setInterval(()=>{try{if(callState==='ringing-in')buzz(0.5);else if(callState==='calling')buzz(0.22)}catch(e){}},1600);
-// belt and braces: notice a ban or mute within 30s even if realtime missed it
-setInterval(async()=>{if(!me||$('app').classList.contains('hidden'))return;try{const {data}=await sb.from('profiles').select('banned_until,muted_until').eq('id',me.id).single();if(!data)return;const wasB=until(me,'banned_until'),wasM=until(me,'muted_until');me={...me,...data};profiles[me.id]=me;if((until(me,'banned_until')&&!wasB)||(until(me,'muted_until')&&!wasM))location.reload()}catch(e){}},30000);
+// belt and braces: notice a ban or mute within 2 minutes even if realtime missed it
+setInterval(async()=>{if(!me||$('app').classList.contains('hidden'))return;try{const {data:sm}=await sb.from('server_members').select('server_id').eq('user_id',me.id);if(sm){const ids=sm.map(x=>x.server_id).join(',');if(window._memIds&&window._memIds.split(',').some(i=>i&&!ids.split(',').includes(i)))return location.reload();window._memIds=ids}const {data}=await sb.from('profiles').select('banned_until,muted_until').eq('id',me.id).single();if(!data)return;const wasB=until(me,'banned_until'),wasM=until(me,'muted_until');me={...me,...data};profiles[me.id]=me;if((until(me,'banned_until')&&!wasB)||(until(me,'muted_until')&&!wasM))location.reload()}catch(e){}},120000);
 function listen(){
   rt=sb.channel('live')
    .on('postgres_changes',{event:'INSERT',schema:'public',table:'app_signals'},p=>{if(p.new&&p.new.kind==='reload'&&Date.now()-new Date(p.new.created_at)<120000)setTimeout(()=>location.reload(),400+Math.random()*2500)})
@@ -411,7 +412,7 @@ function listen(){
      if((nowB&&!wasB)||(nowM&&!wasM))location.reload();
    })
    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},async p=>{
-     if(!profiles[p.new.sender_id])await loadProfiles();
+     if(!profiles[p.new.sender_id])await loadProfiles(20000);
      if(cur.type==='ch'&&cur.id===p.new.channel_id){add(p.new);if(mentionsMe(p.new)&&!isMutedCh(p.new.channel_id))ping()}else if(p.new.sender_id!==me.id&&!isMutedCh(p.new.channel_id)){const cid=p.new.channel_id,sv=chanSrv[cid];unreadCh[cid]=1;if(sv)unreadSrv[sv]=(unreadSrv[sv]||0)+1;
        if(mentionsMe(p.new)){ment[cid]=(ment[cid]||0)+1;if(sv)mentSrv[sv]=(mentSrv[sv]||0)+1;const ch=channels.find(x=>x.id===cid);toast((profiles[p.new.sender_id]||{username:'Someone'}).username+' mentioned you'+(ch?' in #'+ch.name:''));ping()}
        if(srvId)drawChannels();drawServerNav()}})
@@ -424,12 +425,12 @@ function listen(){
    .on('postgres_changes',{event:'*',schema:'public',table:'friendships'},async()=>{await loadFriends();if(!srvId)drawPeople()})
    .on('postgres_changes',{event:'INSERT',schema:'public',table:'dm_messages'},async p=>{
      const m=p.new,peer=m.sender_id===me.id?m.recipient_id:m.sender_id;
-     if(!profiles[peer])await loadProfiles();
+     if(!profiles[peer])await loadProfiles(20000);
      if(cur.type==='dm'&&cur.id===peer){add(m);if(m.sender_id!==me.id){if(_watching())markRead(peer);else ping()}}
      else if(m.sender_id!==me.id){unread[peer]=(unread[peer]||0)+1;ping();updateTot();if(!srvId)drawPeople()}})
    .on('postgres_changes',{event:'INSERT',schema:'public',table:'group_dm_messages'},async p=>{
      const m=p.new;
-     if(!profiles[m.sender_id])await loadProfiles();
+     if(!profiles[m.sender_id])await loadProfiles(20000);
      if(cur.type==='group'&&cur.id===m.group_id){add(m);if(m.sender_id!==me.id){if(_watching())markRead(m.group_id);else ping()}}
      else if(m.sender_id!==me.id){unread[m.group_id]=(unread[m.group_id]||0)+1;ping();updateTot();if(!srvId)drawPeople()}})
    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'dm_messages'},p=>dmUpd(p.new))
@@ -499,8 +500,8 @@ function pickAvatar(f){return new Promise((res,rej)=>{const r=new FileReader();r
     await loadProfiles();me=profiles[me.id];
     $('pm').classList.add('hidden');if(srvId)openServer(srvId);else showDMs();
   }
-async function punish(uid,kind,mins){const {error}=await sb.rpc('punish',{uid,kind,mins});if(error)alert(error.message);await loadProfiles();drawMembers()}
-async function askBan(uid){const h=(await askText('Ban this account for how many hours? (0 = remove ban)'));if(h===null)return;punish(uid,'ban',Math.round(parseFloat(h)*60)||0)}
+async function punish(uid,kind,mins){const {error}=await sb.rpc('punish',{uid,kind,mins});if(error)alert(error.message);await loadProfiles();if(kind==='ban'&&srvId)await openServer(srvId);else drawMembers()}
+async function askBan(uid){const h=(await askText('Ban from the main server for how many hours? (0 = remove ban)'));if(h===null)return;punish(uid,'ban',Math.round(parseFloat(h)*60)||0)}
 async function askMute(uid){const m=(await askText('Mute for how many minutes? (0 = unmute)'));if(m===null)return;punish(uid,'mute',Math.round(parseFloat(m))||0)}
 async function removeFriend(id,noConfirm){if(!noConfirm&&!(await askConfirm('Remove this friend?')))return;const f=fr(id);if(!f)return;const {data,error}=await sb.from('friendships').delete().eq('id',f.id).select();if(error)alert(error.message);else if(!(data&&data.length))alert('That did not save. A database rule blocked it, or the request no longer exists.');await loadFriends();drawPeople()}
 async function addFriend(id){const {error}=await sb.from('friendships').insert({requester:me.id,addressee:id,status:'pending'});if(error)alert(error.message);await loadFriends();drawPeople()}
@@ -554,8 +555,8 @@ async function runCmd(line){
     const kind=cmd.replace('un',''),undo=cmd.startsWith('un');let mins=0;
     if(!undo){const n=parseFloat(arg);if(!(n>0))return sys('Usage: /'+cmd+' username '+(kind==='ban'?'hours':'minutes'));mins=Math.round(n*(kind==='ban'?60:1))}
     const {error}=await sb.rpc('punish',{uid:u.id,kind,mins});if(error)return sys(error.message);
-    await loadProfiles();if(srvId)drawMembers();
-    return sys(undo?cmd+' '+u.username+': done':u.username+(kind==='ban'?' banned for '+arg+' hours':' muted for '+arg+' minutes'));
+    await loadProfiles();if(kind==='ban'&&srvId)await openServer(srvId);else if(srvId)drawMembers();
+    return sys(undo?cmd+' '+u.username+': done':u.username+(kind==='ban'?' banned from the main server for '+arg+' hours':' muted for '+arg+' minutes'));
   }
   if(cmd==='nick'){if(!canNickname())return sys('Only the owner and co-owners can change nicknames.');const nk=P.slice(2).join(' ').trim();return rpc('force_nick',{uid:u.id,nick:nk||null},nk?u.username+' is now called '+nk:'Nickname of '+u.username+' was reset')}
   if(cmd==='giverole'){if(!srvId)return sys('Open a server first.');const rn=(P[2]||'').toLowerCase(),r=croles.find(x=>x.name.toLowerCase()===rn);if(!r&&rn!=='none')return sys('No custom role "'+(P[2]||'')+'". Make one with /newrole, or use /giverole user none');return rpc('give_role',{sid:srvId,uid:u.id,rid:r?r.id:null},'Updated '+u.username)}
@@ -879,10 +880,7 @@ $('i').addEventListener('paste',e=>{
     }
   }
 });
-let shopTags={},owned=new Set(),theme='default';
-try{theme=localStorage.getItem('theme')||'default'}catch(e){}
-function applyTheme(n){document.documentElement.dataset.theme=n;try{localStorage.setItem('theme',n)}catch(e){}}
-applyTheme(theme);$('pt').onchange=e=>{theme=e.target.value;applyTheme(theme)};
+let shopTags={},owned=new Set();try{localStorage.removeItem('theme')}catch(e){}
 const chip=t=>`<span class="text-[9px] font-black uppercase px-1.5 rounded" style="background:${esc(t.color)};color:${esc(t.text_color)}">${esc(t.label)}</span>`;
 const MAX_TAGS=2;
 const canNickname=()=>rank(defRole)>=6; // owner and co-owner only
@@ -1770,18 +1768,18 @@ function updateTot(){
 }
 async function loadUnread(){
   lrLoad();
-  const init=new Date(lastRead._init);
+  const init=new Date(Math.max(new Date(lastRead._init).getTime(),Date.now()-3*864e5));   // only look back 3 days: keeps the first load small
   const after=(iso,key)=>new Date(iso)>new Date(lastRead[key]||lastRead._init);
   try{
-    const {data:dms}=await sb.from('dm_messages').select('sender_id,created_at').eq('recipient_id',me.id).gt('created_at',init.toISOString()).limit(1000);
+    const {data:dms}=await sb.from('dm_messages').select('sender_id,created_at').eq('recipient_id',me.id).gt('created_at',init.toISOString()).limit(300);
     (dms||[]).forEach(m=>{if(typeof blocked!=='undefined'&&blocked.has(m.sender_id))return;if(after(m.created_at,m.sender_id))unread[m.sender_id]=(unread[m.sender_id]||0)+1});
     if(groups.length){
-      const {data:gms}=await sb.from('group_dm_messages').select('group_id,sender_id,created_at').in('group_id',groups.map(g=>g.id)).neq('sender_id',me.id).gt('created_at',init.toISOString()).limit(1000);
+      const {data:gms}=await sb.from('group_dm_messages').select('group_id,sender_id,created_at').in('group_id',groups.map(g=>g.id)).neq('sender_id',me.id).gt('created_at',init.toISOString()).limit(300);
       (gms||[]).forEach(m=>{if(after(m.created_at,m.group_id))unread[m.group_id]=(unread[m.group_id]||0)+1});
     }
     const cids=Object.keys(chanSrv);
     if(cids.length){
-      const {data:cms}=await sb.from('messages').select('channel_id,sender_id,content,created_at').in('channel_id',cids).neq('sender_id',me.id).gt('created_at',init.toISOString()).limit(1000);
+      const {data:cms}=await sb.from('messages').select('channel_id,sender_id,content,created_at').in('channel_id',cids).neq('sender_id',me.id).gt('created_at',init.toISOString()).limit(300);
       (cms||[]).forEach(m=>{if(blocked.has(m.sender_id)||isMutedCh(m.channel_id)||!after(m.created_at,m.channel_id))return;const sv=chanSrv[m.channel_id];
         if(!unreadCh[m.channel_id]){unreadCh[m.channel_id]=1;if(sv)unreadSrv[sv]=(unreadSrv[sv]||0)+1}
         if(mentionsMe(m)){ment[m.channel_id]=(ment[m.channel_id]||0)+1;if(sv)mentSrv[sv]=(mentSrv[sv]||0)+1}});

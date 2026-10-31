@@ -166,7 +166,7 @@ async function renderForum(cid){
   if(forumOn!==cid)return;
   if(error){k.innerHTML='<p class="text-sm text-[#f23f43] p-2">'+esc(error.message)+'</p>';return}
   const list=(posts||[]).filter(p=>!blocked.has(p.sender_id));
-  if(list.some(p=>!profiles[p.sender_id]))await loadProfiles();
+  if(list.some(p=>!profiles[p.sender_id]))await loadProfiles(20000);
   const reps={};
   if(list.length){
     const {data:r}=await sb.from('messages').select('reply_to,created_at').in('reply_to',list.map(p=>p.id)).order('created_at',{ascending:false}).limit(2000);
