@@ -110,7 +110,7 @@ html body{height:100dvh;-webkit-font-smoothing:antialiased;line-height:1.375}
 #ctx{border:0 !important;border-radius:4px;padding:6px 8px;background:#111214;box-shadow:0 0 0 1px rgba(30,31,34,.6),0 8px 16px rgba(0,0,0,.24)}
 #ctx button{border-radius:2px;padding:6px 8px;font-size:14px}
 .bc-modal input,.bc-modal select,.bc-modal textarea,#bc_sheet input,#bc_sheet select,#bc_sheet textarea,#bc_settings input[type=text],#bc_settings select,#pm input:not([type=color]):not([type=file]),#pm textarea,#pm select{
-  border:0 !important;border-radius:3px;background:#1e1f22;box-shadow:none !important}
+  border:0 !important;border-radius:3px;background-color:#1e1f22;box-shadow:none !important}
 .bc-modal input:focus,#bc_sheet input:focus,#bc_settings input:focus{box-shadow:0 0 0 1px #5865f2 !important}
 #bc_settings input[type=range]{accent-color:#5865f2}
 #pm input[type=color],#vpc input[type=color]{width:30px;height:30px;border:0;border-radius:50%;padding:0;background:none;cursor:pointer}
@@ -151,3 +151,98 @@ html body{height:100dvh;-webkit-font-smoothing:antialiased;line-height:1.375}
   #ch{padding-left:8px;padding-right:8px;position:relative;z-index:2}
   #vpc,#pm>div{max-height:88vh}
 }
+
+/* ===================== Discord components: dialogs, forms, menus ===================== */
+html body .bc-modal,html body #vpc,html body #pm>div,html body #rm>div,html body #bc_settings{background-color:#313338}
+html body .bc-modal,html body #vpc,html body #pm>div,html body #rm>div{border-radius:8px}
+html body .bc-modal{max-width:440px}
+html body #bc_sheet>.bc-modal.max-w-2xl{max-width:672px}
+html body .bc-modal>div:first-child h3,html body .bc-h,html body #rm h2,html body #bc_settings h2{font-size:20px;line-height:24px;font-weight:600;color:#f2f3f5}
+html body #bc_sheet h3{font-size:20px;font-weight:600}
+html body #bc_sheet [data-x]{width:32px;height:32px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:16px}
+html body #bc_sheet [data-x]:hover{background:#3f4147}
+html body #bc_sheet>.bc-modal>div:first-child{padding:16px 16px 8px}
+html body #bc_sheet [data-body]{padding:0 16px 16px}
+
+/* footer bar with Cancel as a text link and a flat primary button, like Discord */
+.bc-foot{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin:16px -16px -16px;padding:16px;background:#2b2d31;border-radius:0 0 8px 8px}
+.bc-foot button{height:38px;min-width:96px;padding:2px 16px;border:0;border-radius:3px;font-size:14px;font-weight:500;cursor:pointer;color:#fff}
+.bc-foot .bc-link{background:transparent;min-width:0;color:#fff}
+.bc-foot .bc-link:hover{text-decoration:underline}
+
+/* labels */
+html body :is(.bc-modal,#bc_sheet,#pm,#bc_settings) label,html body :is(.bc-modal,#bc_sheet,#pm) .uppercase{letter-spacing:.02em}
+html body :is(.bc-modal,#pm) label[class*="uppercase"],html body :is(#bc_sheet,#pm,#rm) [class*="uppercase"][class*="font-bold"]{font-size:12px;font-weight:700;color:#b5bac1}
+
+/* text fields: flat, 40px, no outline ring */
+html body :is(.bc-modal,#bc_sheet,#pm,#rm,#bc_settings,#shop) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]),textarea){
+  background-color:#1e1f22;border:0 !important;border-radius:3px;color:#dbdee1;padding:10px;font-size:16px;line-height:1.25;outline:none;box-shadow:none !important}
+html body :is(.bc-modal,#bc_sheet,#pm,#rm,#bc_settings) input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]){min-height:40px}
+html body :is(.bc-modal,#bc_sheet,#pm,#rm,#bc_settings) :is(input,textarea):focus{box-shadow:0 0 0 1px #5865f2 !important}
+html body textarea{resize:vertical}
+::placeholder{color:#80848e}
+html body :is(.bc-modal,#bc_sheet,#pm,#rm,#bc_settings) textarea{padding:10px}
+
+/* dropdowns: dark field with Discord's chevron */
+html body :is(select){appearance:none;-webkit-appearance:none;background-color:#1e1f22;color:#dbdee1;border:0 !important;border-radius:3px;min-height:40px;padding:8px 32px 8px 10px;font-size:14px;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23b5bac1' d='M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 6px center;background-size:20px;outline:none}
+html body select:focus{box-shadow:0 0 0 1px #5865f2}
+html body select:hover{background-color:#1a1b1e}
+html body #mem select{min-height:28px;padding:2px 22px 2px 8px;font-size:12px;border-radius:3px;background-position:right 2px center;background-size:16px}
+option,optgroup{background:#2b2d31;color:#dbdee1}
+
+/* checkboxes + radios */
+html body input[type=checkbox]{appearance:none;-webkit-appearance:none;flex:none;width:24px;height:24px;margin:0;border:2px solid #80848e;border-radius:4px;background:transparent;cursor:pointer;position:relative;transition:background-color .1s,border-color .1s}
+html body input[type=checkbox]:hover{border-color:#b5bac1}
+html body input[type=checkbox]:checked{background:#5865f2;border-color:#5865f2}
+html body input[type=checkbox]:checked::after{content:"";position:absolute;left:6px;top:2px;width:6px;height:11px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+html body input[type=checkbox]:focus-visible{outline:2px solid #00a8fc;outline-offset:2px}
+html body input[type=radio]{accent-color:#5865f2;width:20px;height:20px}
+
+/* sliders */
+html body input[type=range]{appearance:none;-webkit-appearance:none;height:8px;border-radius:4px;background:#4e5058;outline:none;cursor:pointer}
+html body input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:10px;height:24px;border-radius:3px;background:#fff;border:1px solid #c7ccd1;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+html body input[type=range]::-moz-range-thumb{width:10px;height:24px;border-radius:3px;background:#fff;border:1px solid #c7ccd1}
+
+/* list cards inside dialogs */
+html body :is(.bc-modal,#bc_sheet,#rm) :is(div,label,li)[class*="rounded-lg"][class*="bg-[#1e1f22]"],
+html body #rm [class*="rounded-lg"][class*="bg-[#"]{border-radius:4px}
+html body #bc_sheet [class*="rounded-xl"],html body #rm [class*="rounded-xl"],html body #bc_settings [class*="rounded-xl"]{border-radius:8px}
+html body :is(.bc-modal,#bc_sheet,#rm,#pm) button[class*="rounded-lg"]:not([class*="rounded-full"]){border-radius:3px}
+html body :is(.bc-modal,#bc_sheet,#rm,#pm,#bc_settings) button[class*="bg-[#4e5058]"]{background:#4e5058;color:#fff;border-radius:3px;font-weight:500}
+html body :is(.bc-modal,#bc_sheet,#rm,#pm,#bc_settings) button[class*="bg-[#4e5058]"]:hover{background:#6d6f78}
+html body :is(.bc-modal,#bc_sheet,#rm,#pm,#bc_settings) button[class*="bg-[#f23f43]"],html body :is(.bc-modal,#bc_sheet,#rm,#pm) button[class*="bg-red-"]{border-radius:3px}
+html body :is(.bc-modal,#bc_sheet,#rm,#pm) [class*="rounded-full"][class*="bg-[#1e1f22]"],html body #bc_sheet [class*="rounded-full"]:not(img):not([class*="w-"]):not([class*="h-"]){border-radius:4px}
+html body :is(.bc-modal,#bc_sheet,#rm,#pm,#bc_settings) hr,html body #bc_sheet [class*="border-t"]{border-color:#3f4147}
+
+/* thin dark scrollbars inside windows */
+html body :is(.bc-modal,#bc_sheet,#vpc,#pm,#rm,#bc_settings,#ctx) ::-webkit-scrollbar,html body :is(#vpc,#pm>div,#rm>div,#bc_sheet [data-body]){scrollbar-width:thin;scrollbar-color:#1a1b1e transparent}
+:is(#vpc,#pm,#rm,#bc_sheet,#bc_settings) ::-webkit-scrollbar{width:8px;height:8px}
+:is(#vpc,#pm,#rm,#bc_sheet,#bc_settings) ::-webkit-scrollbar-thumb{background:#1a1b1e;border:0;border-radius:4px}
+:is(#vpc,#pm,#rm,#bc_sheet,#bc_settings) ::-webkit-scrollbar-track{background:transparent;border:0}
+
+/* backdrop */
+html body :is(#vp,#pm,#rm){background:rgba(0,0,0,.85)}
+html body #bc_sheet,html body .fixed.inset-0.z-\[60\]{background:rgba(0,0,0,.85)}
+
+/* context menu: Discord item look */
+html body #ctx{min-width:188px;padding:6px 8px}
+html body #ctx>*,html body #ctx button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:6px 8px;margin:0;border-radius:2px;font-size:14px;font-weight:500;color:#b5bac1;line-height:18px}
+html body #ctx button:hover{background:#5865f2;color:#fff}
+html body #ctx button[class*="f23f43"],html body #ctx button[class*="red"]{color:#f23f43}
+html body #ctx button[class*="f23f43"]:hover,html body #ctx button[class*="red"]:hover{background:#da373c;color:#fff}
+
+/* settings page */
+html body #bc_settings nav{border:0;background:#2b2d31}
+html body #bc_settings nav button{border-radius:4px;padding:6px 10px;font-size:16px;font-weight:500;color:#b5bac1}
+html body #bc_settings nav button:hover{background:#35373c;color:#dbdee1}
+html body #bc_settings nav button[class~="bg-[#404249]"]{background:#404249;color:#fff}
+
+/* toasts */
+html body #toast,html body .toast{border-radius:8px}
+html body select{padding-right:32px !important}
+html body #mem select{padding-right:22px !important}
+html body #vpc button[class*="rounded-full"],html body #vpc .pbtn{border-radius:3px}
+html body #vpc{background-color:#111214}
+html body #vpc [class*="bg-[#2b2d31]"]{background-color:#1e1f22}

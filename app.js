@@ -14,10 +14,10 @@ function _modal(cancel,html,init){return new Promise(res=>{
   const done=v=>{d.remove();document.removeEventListener('keydown',key,true);res(v)};
   const key=e=>{if(e.key==='Escape'){e.stopPropagation();done(cancel)}};
   d.onclick=e=>{if(e.target===d)done(cancel)};
-  d.innerHTML='<div class="bc-modal w-full max-w-sm bg-[#2b2d31] rounded-2xl p-5">'+html+'</div>';
+  d.innerHTML='<div class="bc-modal w-full max-w-sm bg-[#313338] p-4">'+html+'</div>';
   bcHost().appendChild(d);document.addEventListener('keydown',key,true);init(d,done);
 })}
-const _btns='<div class="flex gap-2 mt-4"><button data-ok class="flex-1 bg-[#5865f2] hover:bg-[#4752c4] text-white py-2 rounded-lg text-sm font-semibold">OK</button><button data-no class="flex-1 bg-[#4e5058] hover:bg-[#5d6068] text-white py-2 rounded-lg text-sm">Cancel</button></div>';
+const _btns='<div class="bc-foot"><button data-no class="bc-link">Cancel</button><button data-ok class="bg-[#5865f2] hover:bg-[#4752c4] text-white text-sm font-medium">OK</button></div>';
 function askText(msg,value){
   return _modal(null,`<div class="text-sm text-white whitespace-pre-wrap mb-3">${esc(msg)}</div><input class="w-full bg-[#1e1f22] rounded-lg px-3 py-2 text-white text-sm outline-none focus:ring-2 focus:ring-[#5865f2]/60" autocomplete="off">`+_btns,(d,done)=>{
     const i=d.querySelector('input');i.value=value==null?'':value;setTimeout(()=>{i.focus();i.select()},30);
@@ -1921,7 +1921,7 @@ function closeWeb(){$('web').classList.add('hidden')}
 function bNewTab(){
   const t={id:++bseq,hist:[],i:-1,title:'',expect:0};
   const home=document.createElement('div');home.id='bp_'+t.id;home.className='absolute inset-0 overflow-y-auto';
-  home.innerHTML=`<div class="min-h-full flex flex-col items-center justify-center p-4 text-center"><h1 style="font-family:'Russo One',Impact,system-ui,sans-serif;font-size:2.2rem;letter-spacing:.04em;color:#efe8d6;line-height:1">BEANCHAT</h1><p class="mt-2 text-sm text-[#949ba4]">Search the web</p><form class="mt-6 w-full max-w-xl flex items-center gap-2" onsubmit="event.preventDefault();bGo(this.q.value)"><input name="q" id="bh_${t.id}" autocomplete="off" placeholder="Search or enter an address" class="flex-1 min-w-0 rounded-[10px] border-2 border-[#4a4d55] bg-[#383a40] px-3 py-3 text-white text-sm outline-none focus:border-[#6b78e8]"><button type="submit" class="px-5 py-3 rounded-[10px] text-white text-sm font-bold" style="background:#3448b4;border:2px solid #4a5fd0;box-shadow:0 3px 0 #222f80">Search</button></form></div>`;
+  home.innerHTML=`<div class="min-h-full flex flex-col items-center justify-center p-4 text-center"><h1 style="font-size:2.2rem;font-weight:600;color:#efe8d6;line-height:1">BEANCHAT</h1><p class="mt-2 text-sm text-[#949ba4]">Search the web</p><form class="mt-6 w-full max-w-xl flex items-center gap-2" onsubmit="event.preventDefault();bGo(this.q.value)"><input name="q" id="bh_${t.id}" autocomplete="off" placeholder="Search or enter an address" class="flex-1 min-w-0 rounded-[10px] border-2 border-[#4a4d55] bg-[#383a40] px-3 py-3 text-white text-sm outline-none focus:border-[#6b78e8]"><button type="submit" class="px-5 py-3 rounded-[10px] text-white text-sm font-bold" style="background:#3448b4;border:2px solid #4a5fd0;box-shadow:0 3px 0 #222f80">Search</button></form></div>`;
   const fr=document.createElement('iframe');fr.id='bf_'+t.id;fr.className='absolute inset-0 w-full h-full border-0 hidden';fr.style.background='#121212';fr.allow='fullscreen';
   $('bcont').appendChild(home);$('bcont').appendChild(fr);
   t.home=home;t.frame=fr;btabs.push(t);bact=t.id;bShow();bSync();
