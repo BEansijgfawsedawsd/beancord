@@ -480,7 +480,7 @@ function pickAvatar(f){return new Promise((res,rej)=>{const r=new FileReader();r
     $('pavwrap').innerHTML=av({...me,avatar:newAvatar||me.avatar},20);
     $('pprev').innerHTML=`<div class="font-bold text-xl" style="color:${$('pc').value}">${esc($('pn').value.trim()||me.username)}</div><div class="text-sm text-[#949ba4]">${esc(me.username)}</div>`;
   }
-  function openProfile(){newAvatar=null;newAvatarBlob=null;newBannerBlob=null;bannerCleared=false;$('pc').value=col(me);$('pn').value=me.nickname||'';$('pn').disabled=!canNickname();$('pn').placeholder=canNickname()?'Shown instead of your username':'Only the owner and co-owners can change nicknames';$('pb').value=me.bio||'';$('pbn').value=/^#[0-9a-fA-F]{6}$/.test(me.banner||'')?me.banner:'#5865f2';drawBlocked();$('pf').value='';prev();accInit();$('pm').classList.remove('hidden')}
+  function openProfile(){newAvatar=null;newAvatarBlob=null;newBannerBlob=null;bannerCleared=false;$('pc').value=col(me);$('pn').value=me.nickname||'';$('pn').disabled=!canNickname();$('pn').placeholder=canNickname()?'Shown instead of your username':'Only the owner and co-owners can change nicknames';$('pb').value=me.bio||'';$('pbn').value=/^#[0-9a-fA-F]{6}$/.test(me.banner||'')?me.banner:'#5865f2';$('pt').value=theme;drawBlocked();$('pf').value='';prev();accInit();$('pm').classList.remove('hidden')}
   $('pf').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{newAvatarBlob=await pickAvatar(f);if(newAvatar)URL.revokeObjectURL(newAvatar);newAvatar=URL.createObjectURL(newAvatarBlob);prev()}catch(_){alert('Could not read that image.')}e.target.value=''};
   $('pbi').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const b=await shrinkBanner(f);if(newBannerUrl)URL.revokeObjectURL(newBannerUrl);newBannerBlob=b;newBannerUrl=URL.createObjectURL(b);bannerCleared=false;prev()}catch(_){alert('Could not read that image.')}e.target.value=''};
   function clearBannerImg(){newBannerBlob=null;bannerCleared=true;prev()}
@@ -887,7 +887,10 @@ $('i').addEventListener('paste',e=>{
     }
   }
 });
-let shopTags={},owned=new Set();try{localStorage.removeItem('theme')}catch(e){}
+let shopTags={},owned=new Set(),theme='default';
+try{theme=localStorage.getItem('theme')||'default'}catch(e){}
+function applyTheme(n){const r=document.documentElement;if(n&&n!=='default')r.dataset.theme=n;else delete r.dataset.theme;try{localStorage.setItem('theme',n||'default')}catch(e){}}
+applyTheme(theme);$('pt').onchange=e=>{theme=e.target.value;applyTheme(theme)};
 const chip=t=>`<span class="text-[9px] font-black uppercase px-1.5 rounded" style="background:${esc(t.color)};color:${esc(t.text_color)}">${esc(t.label)}</span>`;
 const MAX_TAGS=2;
 const canNickname=()=>rank(defRole)>=6; // owner and co-owner only
