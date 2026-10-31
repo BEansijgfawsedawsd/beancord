@@ -95,12 +95,13 @@ async function serverGate(sid,force){
   let s=gateCache[sid];
   if(s===undefined||force){
     const {data,error}=await sb.from('server_settings').select('*').eq('server_id',sid).maybeSingle();
-    if(error)return;s=gateCache[sid]=data||null;
+    if(error&&!force)return;s=gateCache[sid]=data||null;
+    if(!s&&force)s={welcome:'',rules:'',require_rules:true};   // the post was refused for the rules, so show the box even if the settings can't be read
   }
-  if(!s||(!s.welcome&&!s.rules))return;
+  if(!s||(!s.welcome&&!s.rules&&!s.require_rules))return;
   const seenKey='bc_welcome_'+sid+'_'+me.id,staff=isStaff();
   let accepted=true;
-  if(s.require_rules&&!staff){
+  if(s.require_rules&&!staff||force&&!staff&&s.require_rules){
     const {data}=await sb.from('rules_accepted').select('server_id').eq('server_id',sid).eq('user_id',me.id).maybeSingle();
     accepted=!!data;
   }
@@ -109,7 +110,7 @@ async function serverGate(sid,force){
   if(accepted&&!force&&!s.welcome&&!s.rules)return;
   const name=(servers.find(x=>String(x.id)===sid)||{}).name||'this server';
   const must=!accepted;
-  const html=`<div class="bc-h text-lg font-bold text-white mb-1">Welcome to ${esc(name)}</div>${s.welcome?`<div class="text-sm text-[#dbdee1] whitespace-pre-wrap mb-3">${esc(s.welcome)}</div>`:''}${s.rules?`<div class="text-[11px] font-bold uppercase text-[#949ba4] mb-1">Rules</div><div class="text-sm text-[#dbdee1] whitespace-pre-wrap bg-[#1e1f22] rounded-lg p-3 max-h-60 overflow-y-auto">${esc(s.rules)}</div>`:''}
+  const html=`<div class="bc-h text-lg font-bold text-white mb-1">Welcome to ${esc(name)}</div>${s.welcome?`<div class="text-sm text-[#dbdee1] whitespace-pre-wrap mb-3">${esc(s.welcome)}</div>`:''}${!s.rules&&!s.welcome?'<div class="text-sm text-[#dbdee1] mb-1">This server asks you to agree to its rules before you can post. Ask a moderator if you can\'t see them.</div>':''}${s.rules?`<div class="text-[11px] font-bold uppercase text-[#949ba4] mb-1">Rules</div><div class="text-sm text-[#dbdee1] whitespace-pre-wrap bg-[#1e1f22] rounded-lg p-3 max-h-60 overflow-y-auto">${esc(s.rules)}</div>`:''}
     <div class="flex gap-2 mt-4"><button data-ok class="flex-1 bg-[#23a55a] hover:bg-[#1a8044] text-white py-2 rounded-lg text-sm font-semibold">${must?'I agree to the rules':'Got it'}</button>${must?'<button data-no class="flex-1 bg-[#4e5058] hover:bg-[#5d6068] text-white py-2 rounded-lg text-sm">Not now</button>':''}</div>${must?'<p class="text-[11px] text-[#949ba4] mt-2">You can read this server, but you can’t post until you agree.</p>':''}`;
   const ok=await _modal(false,html,(d,done)=>{d.querySelector('[data-ok]').onclick=()=>done(true);const n=d.querySelector('[data-no]');if(n)n.onclick=()=>done(false)});
   if(!ok){gateSkip[sid]=true;return}

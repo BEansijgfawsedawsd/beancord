@@ -444,7 +444,7 @@ $('f').onsubmit=async e=>{
   e.preventDefault();$('i').value=emojify($('i').value);if(editingId){const id=editingId,t0=$('i').value.trim(),m0=msgCache[id];endEdit();if(!t0||!m0||t0===m0.content)return;if(slurBlock(t0,'That edit'))return;const {error}=await sb.from(tblOf(m0)).update({content:t0,edited_at:new Date().toISOString()}).eq('id',id);if(error)alert(error.message.includes('auto-mod')?'That edit was blocked by auto-mod.':error.message);return}const t=$('i').value.trim();if(t&&slurBlock(t))return;if(t.startsWith('/')){$('i').value='';return runCmd(t)}if(!t||!cur.type)return;if(!canPostHere())return alert('You do not have permission to type in this channel.');if(cur.type==='ch'&&/@(everyone|here)\b/i.test(t)&&myRole()!=='owner')return alert('Only the owner can use @everyone and @here.');{const mu=until(me,'muted_until');if(mu)return alert('You are muted until '+mu.toLocaleString())}$('i').value='';
   const r=cur.type==='ch'?await sb.from('messages').insert({channel_id:cur.id,content:t,reply_to:replyTo})
     :cur.type==='group'?await sb.from('group_dm_messages').insert({group_id:cur.id,content:t,reply_to:replyTo})
-    :await sb.from('dm_messages').insert({recipient_id:cur.id,content:t});
+    :await sb.from('dm_messages').insert(replyTo?{recipient_id:cur.id,content:t,reply_to:replyTo}:{recipient_id:cur.id,content:t});
   if(!r.error){replyTo=null;$('rb').classList.add('hidden')}if(r.error)$('i').value=t;if(r.error&&/accept the server rules/.test(r.error.message||''))serverGate(srvId,true);if(r.error&&cur.type==='ch')sb.rpc('automod_word_strike',{chan:String(cur.id),txt:t}).then(()=>{},()=>{});if(r.error)alert(cur.type==='dm'?dmWhy(r.error):cur.type==='group'?'Could not send: '+r.error.message:'Could not send: '+r.error.message);
 };
 function dmWhy(err){
@@ -703,7 +703,7 @@ const emo=(id,e)=>`<span onclick="toggleRx('${id}','${e}')" class="w-9 h-9 flex 
 function msgMenu(id,x,y){const m=msgCache[id];if(!m)return;const ch=!!m.channel_id,self=m.sender_id===me.id,mod=ch&&(rank(myRole())>=3||myPerm('manage_messages'));let h='';
   h+=`<div class="flex gap-2 px-1 pt-1 pb-2">${QUICK.map(e=>emo(id,e)).join('')}</div>`+mi('☺','Add reaction',`moreRx('${id}',${x},${y})`,0,1,1)+sep;
   if(self&&!isBot(profiles[m.sender_id]))h+=mi('✎','Edit message',`editMsg('${id}')`);
-  if(ch||m.group_id)h+=mi('↩','Reply',`startReply('${id}')`);
+  h+=mi('↩','Reply',`startReply('${id}')`);
   h+=mi('➡','Forward',`forwardMsg('${id}')`);
   if(ch)h+=mi('🧵',replyCount[id]?'Open thread':'Start thread',`openThread('${id}')`);
   h+=sep+mi('⧉','Copy text',`navigator.clipboard.writeText(msgCache['${id}'].content)`);
@@ -874,7 +874,7 @@ async function sendImage(f){
   const cap=$('i').value.trim();$('i').value='';base.content=cap||'\u200b';
   const r=cur.type==='ch'?await sb.from('messages').insert({...base,channel_id:cur.id,reply_to:replyTo})
     :cur.type==='group'?await sb.from('group_dm_messages').insert({...base,group_id:cur.id,reply_to:replyTo})
-    :await sb.from('dm_messages').insert({...base,recipient_id:cur.id});
+    :await sb.from('dm_messages').insert(replyTo?{...base,recipient_id:cur.id,reply_to:replyTo}:{...base,recipient_id:cur.id});
   if(r.error)alert('Could not send: '+r.error.message);else{replyTo=null;$('rb').classList.add('hidden')}
 }
 $('imgf').onchange=e=>{sendImage(e.target.files[0]);e.target.value=''};
