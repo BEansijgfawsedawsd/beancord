@@ -2,6 +2,7 @@
 :root{--dc-font:'gg sans','Noto Sans','Helvetica Neue',Helvetica,Arial,sans-serif}
 html body,html body input,html body button,html body select,html body textarea{font-family:var(--dc-font)}
 html,html body{height:100%;overflow:clip;overscroll-behavior:none}
+html:not([data-mode=light]),html:not([data-mode=light]) body,html:not([data-mode=light]) #app{background-color:#313338;color:#dbdee1}
 html body{height:100dvh;-webkit-font-smoothing:antialiased;line-height:1.375}
 #app{height:100%;overflow:hidden}
 
@@ -55,7 +56,11 @@ html body{height:100dvh;-webkit-font-smoothing:antialiased;line-height:1.375}
 #msgs.space-y-3>*+*{margin-top:0 !important}
 #msgs>div{margin:0;padding:2px 48px 2px 16px;border-radius:0;gap:16px;transition:none;position:relative}
 #msgs>div[id^="m_"]:hover{background:rgba(2,2,2,.06)}
-#msgs>div[id^="m_"].group.flex.gap-3:not(.compact-row){margin-top:17px}
+#msgs>div[id^="m_"].group.flex.gap-3{margin-top:17px}
+#msgs>div[id^="m_"]:has(>span.w-9){margin-top:0}
+/* hover-only buttons float over the row so hovering never changes its height */
+#msgs button[class*="group-hover:inline"]{display:inline !important;position:absolute;top:2px;right:16px;float:none;visibility:hidden;background:#313338;padding:0 6px;border-radius:3px;font-size:12px}
+#msgs .group:hover button[class*="group-hover:inline"]{visibility:visible}
 #msgs>div.forum-wrap,#msgs>div.forum-wrap:hover{margin:0;padding:0;background:none}
 #msgs .w-9{width:40px;flex-shrink:0}
 #msgs img.w-9,#msgs div.w-9,#msgs img.h-9{height:40px}

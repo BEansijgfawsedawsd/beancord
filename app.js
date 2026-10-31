@@ -618,7 +618,9 @@ function fmt(m){
   h='<span style="white-space:pre-wrap">'+h+'</span>';
   return h;
 }
-function mention(t){return t.replace(/@(everyone|here|[a-z0-9_]+)/gi,(x,n)=>{const l=n.toLowerCase();return(l==='everyone'||l==='here'||Object.values(profiles).some(p=>p.username===l)||Object.keys(RANK).includes(l))?`<span class="bg-[#5865f2]/30 text-[#c9cdfb] rounded px-0.5">@${l}</span>`:x})}
+function mention(t){return t.replace(/@(everyone|here|[a-z0-9_]+)/gi,(x,n)=>{const l=n.toLowerCase();const u=Object.values(profiles).find(p=>p.username===l);
+  if(u)return `<span onclick="showProfile('${u.id}')" class="mention cursor-pointer bg-[#5865f2]/30 text-[#c9cdfb] hover:bg-[#5865f2] hover:text-white rounded px-0.5">@${l}</span>`;
+  return(l==='everyone'||l==='here'||Object.keys(RANK).includes(l))?`<span class="bg-[#5865f2]/30 text-[#c9cdfb] rounded px-0.5">@${l}</span>`:x})}
 function mentionsMe(m){if(m.sender_id===me.id)return false;
   if(m.channel_id){if(/@(everyone|here)\b/i.test(m.content))return true;const myR=roles[me.id];if(myR&&new RegExp('@'+myR+'\\b','i').test(m.content))return true;}
   return new RegExp('@'+me.username+'\\b','i').test(m.content);
