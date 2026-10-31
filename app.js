@@ -698,19 +698,24 @@ async function toggleRx(id,emoji){
 function hideCtx(){$('ctx').classList.add('hidden')}
 function showCtx(x,y,h){const c=$('ctx');c.innerHTML=h;c.classList.remove('hidden');c.style.left=Math.max(4,Math.min(x,innerWidth-c.offsetWidth-8))+'px';c.style.top=Math.max(4,Math.min(y,innerHeight-c.offsetHeight-8))+'px'}
 const sep='<div class="h-px bg-[#35373c] my-1"></div>';
-const mi=(ic,t,fn,red,keep)=>`<div onclick="${keep?'event.stopPropagation();':''}${fn}" class="flex items-center gap-3 px-3 py-1.5 rounded cursor-pointer hover:bg-[#35373c] ${red?'text-[#f23f43]':'text-[#dbdee1]'}"><span class="w-5 text-center text-xs">${ic}</span>${t}</div>`;
+const mi=(ic,t,fn,red,keep,arrow)=>`<div onclick="${keep?'event.stopPropagation();':''}${fn}" class="flex items-center gap-3 px-3 py-1.5 rounded cursor-pointer hover:bg-[#35373c] ${red?'text-[#f23f43]':'text-[#dbdee1]'}"><span class="ic w-5 text-center text-xs">${ic}</span><span class="flex-1">${t}</span>${arrow?'<span class="ar">›</span>':''}</div>`;
 const emo=(id,e)=>`<span onclick="toggleRx('${id}','${e}')" class="w-9 h-9 flex items-center justify-center text-xl rounded-full hover:bg-[#35373c] cursor-pointer">${e}</span>`;
-function msgMenu(id,x,y){const m=msgCache[id];if(!m)return;const ch=!!m.channel_id,self=m.sender_id===me.id;let h='';
-  h+=`<div class="flex justify-between px-1 py-1">${QUICK.map(e=>emo(id,e)).join('')}</div>`+sep+mi('☺','Add reaction',`moreRx('${id}',${x},${y})`,0,1)+sep;if(ch||m.group_id)h+=mi('↩','Reply',`startReply('${id}')`);
-  h+=mi('⧉','Copy text',`navigator.clipboard.writeText(msgCache['${id}'].content)`);
-  if(ch)h+=mi('@','Mention',`mentionUser('${m.sender_id}')`);
-  h+=mi('◉','View profile',`showProfile('${m.sender_id}')`)+sep;
-  if(!self)h+=mi('⊘','Block user',`blockUser('${m.sender_id}')`);
-  if(ch&&!self)h+=mi('⚑','Report message',`reportMsg('${id}')`,1);
+function msgMenu(id,x,y){const m=msgCache[id];if(!m)return;const ch=!!m.channel_id,self=m.sender_id===me.id,mod=ch&&(rank(myRole())>=3||myPerm('manage_messages'));let h='';
+  h+=`<div class="flex gap-2 px-1 pt-1 pb-2">${QUICK.map(e=>emo(id,e)).join('')}</div>`+mi('☺','Add reaction',`moreRx('${id}',${x},${y})`,0,1,1)+sep;
   if(self&&!isBot(profiles[m.sender_id]))h+=mi('✎','Edit message',`editMsg('${id}')`);
-  if(ch&&(rank(myRole())>=3||myPerm('manage_messages')))h+=(m.pinned?mi('📌','Unpin message',`setPinned('${id}',false)`):mi('📌','Pin message',`setPinned('${id}',true)`));
-  if(self||(ch&&(rank(myRole())>=3||myPerm('manage_messages'))))h+=mi('🗑','Delete message',`delMsg('${id}')`,1);
-  h+=msgExtraMenu(id)+sep+mi('ID','Copy message ID',`navigator.clipboard.writeText('${id}')`);showCtx(x,y,h)}
+  if(ch||m.group_id)h+=mi('↩','Reply',`startReply('${id}')`);
+  h+=mi('➡','Forward',`forwardMsg('${id}')`);
+  if(ch)h+=mi('🧵',replyCount[id]?'Open thread':'Start thread',`openThread('${id}')`);
+  h+=sep+mi('⧉','Copy text',`navigator.clipboard.writeText(msgCache['${id}'].content)`);
+  if(mod)h+=m.pinned?mi('📌','Unpin message',`setPinned('${id}',false)`):mi('📌','Pin message',`setPinned('${id}',true)`);
+  h+=mi('🔖',isSaved(id)?'Remove bookmark':'Bookmark message',`toggleSaved('${id}')`)+mi('⏰','Remind me…',`remindMe('${id}')`)+mi('◐','Mark unread',`markUnread('${id}')`)+mi('🔗','Copy message link',`copyMsgLink('${id}')`);
+  h+=sep+mi('◉','View profile',`showProfile('${m.sender_id}')`);
+  if(ch&&!self)h+=mi('@','Mention',`mentionUser('${m.sender_id}')`);
+  if(!self)h+=mi('⊘','Block user',`blockUser('${m.sender_id}')`);
+  if((ch&&!self)||self||mod)h+=sep;
+  if(ch&&!self)h+=mi('⚑','Report message',`reportMsg('${id}')`,1);
+  if(self||mod)h+=mi('🗑','Delete message',`delMsg('${id}')`,1);
+  h+=sep+mi('ID','Copy message ID',`navigator.clipboard.writeText('${id}')`);showCtx(x,y,h)}
 function moreRx(id,x,y){showCtx(x,y,`<div class="grid grid-cols-4 gap-1 p-1">${EMOJIS.map(e=>emo(id,e)).join('')}</div>`)}
 function chanMenu(id,x,y){let h='';if(isStaff()||myPerm('manage_channels'))h+=mi('⬆','Move up',`moveChannel('${id}',-1)`)+mi('⬇','Move down',`moveChannel('${id}',1)`)+sep+mi('✎','Edit channel',`editChannel('${id}')`)+mi('🗑','Delete channel',`deleteChannel('${id}')`,1)+sep;showCtx(x,y,h+chanExtraMenu(id)+mi('ID','Copy channel ID',`navigator.clipboard.writeText('${id}')`))}
 async function moveChannel(id,delta){const {error}=await sb.rpc('set_channel_position',{cid:id,delta});if(error)return alert(error.message);await openServer(srvId)}
@@ -1458,13 +1463,17 @@ $('sif').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f||!
 async function renameSrv(id){const s=servers.find(x=>x.id===id),n=(await askText('Server name',s.name));if(!n||!n.trim())return;const {error}=await sb.from('servers').update({name:n.trim()}).eq('id',id);if(error)alert(error.message);await loadServers();if(srvId===id)openServer(id)}
 async function editMsg(id){const m=msgCache[id],t=(await askText('Edit message',m.content));if(t===null||!t.trim()||t.trim()===m.content)return;if(slurBlock(t,'That edit'))return;const {error}=await sb.from(tblOf(m)).update({content:t.trim(),edited_at:new Date().toISOString()}).eq('id',id);if(error)alert(error.message.includes('auto-mod')?'That edit was blocked by auto-mod.':error.message)}
 async function deleteMe(){const n=(await askText('This permanently deletes your account. Type your username ('+me.username+') to confirm:'));if(n!==me.username)return;const {error}=await sb.rpc('delete_my_account');if(error)return alert(error.message);await sb.auth.signOut();location.reload()}
-$('mem').addEventListener('contextmenu',e=>{const d=e.target.closest('[data-uid]');if(!d)return;e.preventDefault();const u=d.dataset.uid;let h=mi('◉','View profile',`showProfile('${u}')`);if(u!==me.id)h+=mi('@','Mention',`mentionUser('${u}')`);
-  if(canNickname()&&u!==me.id&&rank(roles[u])<rank(myRole()))h+=mi('✎','Change nickname',`promptNick('${u}')`);
-  if(canChangeRole(u))h+=mi('🎖','Change role',`openRoleDialog('${u}')`);
-  if(u!==me.id&&fr(u)&&fr(u).status==='accepted')h+=mi('👥','Add to group chat',`groupAddMenu('${u}',${e.clientX},${e.clientY})`);
-  if(defRole==='owner'&&u!==me.id)h+=sep+mi('⇄','Switch to this account',`switchTo('${u}')`,1);
-  if(canResetPw(u))h+=mi('🔑','Reset password',`resetPw('${u}')`,1);
-  if(u!==me.id&&(myRole()==='owner'||(myPerm('delete_accounts')&&roles[u]!=='owner'&&rank(roles[u])<effRank())))h+=mi('🗑','Delete account',`delAcct('${u}')`,1);
+$('mem').addEventListener('contextmenu',e=>{const d=e.target.closest('[data-uid]');if(!d)return;e.preventDefault();const u=d.dataset.uid;let h=mi('','Profile',`showProfile('${u}')`);if(u!==me.id)h+=mi('','Mention',`mentionUser('${u}')`)+mi('','Message',`openDM('${u}')`);
+  const staff=[];
+  if(u!==me.id&&fr(u)&&fr(u).status==='accepted')staff.push(mi('','Add to group chat',`groupAddMenu('${u}',${e.clientX},${e.clientY})`));
+  if(canNickname()&&u!==me.id&&rank(roles[u])<rank(myRole()))staff.push(mi('','Change nickname',`promptNick('${u}')`));
+  if(canChangeRole(u))staff.push(mi('','Roles',`openRoleDialog('${u}')`));
+  if(staff.length)h+=sep+staff.join('');
+  const danger=[];
+  if(defRole==='owner'&&u!==me.id)danger.push(mi('','Switch to this account',`switchTo('${u}')`,1));
+  if(canResetPw(u))danger.push(mi('','Reset password',`resetPw('${u}')`,1));
+  if(u!==me.id&&(myRole()==='owner'||(myPerm('delete_accounts')&&roles[u]!=='owner'&&rank(roles[u])<effRank())))danger.push(mi('','Delete account',`delAcct('${u}')`,1));
+  if(danger.length)h+=sep+danger.join('');
   showCtx(e.clientX,e.clientY,h)});
 $('sc').addEventListener('contextmenu',e=>{const d=e.target.closest('[data-friend-uid]');if(!d)return;e.preventDefault();groupAddMenu(d.dataset.friendUid,e.clientX,e.clientY)});
 async function promptNick(uid){const cur=(profiles[uid]||{}).nickname||'';const n=(await askText('New nickname for '+(profiles[uid]||{}).username+' (blank to reset)',cur));if(n===null)return;

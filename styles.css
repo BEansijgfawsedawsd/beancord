@@ -359,3 +359,17 @@ html body #sh button{min-width:24px;width:24px;height:28px;font-size:14px}
 html body #sh>*:not(:first-child){flex-shrink:0}
 html body #vpc .bc-foot{margin:16px -20px -20px}
 html body #rm [class~="space-y-3"]>#rmlist:empty{display:none}
+
+/* Discord-style context menu details */
+html body #ctx{width:auto;min-width:188px;max-width:320px;padding:6px 8px}
+html body #ctx>div[onclick]{padding:6px 8px;min-height:32px}
+html body #ctx .ic{width:20px;flex:none;font-size:14px;color:#b5bac1;text-align:center}
+html body #ctx .ic:empty{display:none}
+html body #ctx>div[onclick]:hover .ic{color:#fff}
+html body #ctx .ar{color:#b5bac1;font-size:18px;line-height:1}
+html body #ctx>div[onclick]:hover .ar{color:#fff}
+html body #ctx>div.flex.gap-2{padding:0 0 8px}
+html body #ctx>div.flex.gap-2>span{flex:1;width:auto;height:40px;border-radius:4px;background:#1e1f22;font-size:20px}
+html body #ctx>div.flex.gap-2>span:hover{background:#35373c}
+html body #ctx .h-px{margin:4px -4px}
+html body #ctx .ic{filter:grayscale(1) brightness(1.4)}
